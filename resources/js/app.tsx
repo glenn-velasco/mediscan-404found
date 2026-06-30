@@ -3,8 +3,11 @@ import { configureEcho } from '@laravel/echo-react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
+import AdaptiveAppLayout from '@/layouts/adaptive-app-layout';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
+import AuthWideLayout from '@/layouts/auth/auth-wide-layout';
+import UsersLayout from '@/layouts/user-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 
 configureEcho({
@@ -17,12 +20,17 @@ createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {
         switch (true) {
-            case name === 'welcome':
-                return null;
+            case name === 'auth/register':
+            case name === 'auth/accept-invitation':
+                return AuthWideLayout;
             case name.startsWith('auth/'):
                 return AuthLayout;
+            case name === 'dashboard':
+            case name.startsWith('medical-information/'):
+            case name === 'welcome':
+                return UsersLayout;
             case name.startsWith('settings/'):
-                return [AppLayout, SettingsLayout];
+                return [AdaptiveAppLayout, SettingsLayout];
             default:
                 return AppLayout;
         }

@@ -1,16 +1,20 @@
 import AppLogoIcon from '@/components/app-logo-icon';
+import { useInitials } from '@/hooks/use-initials';
+import { Link } from '@inertiajs/react';
+import { ComponentProps } from 'react';
 
-export default function AppLogo() {
+interface AppLogoProps extends ComponentProps<typeof Link> {
+    sidebar?: boolean;
+}
+
+export default function AppLogo({  sidebar = true, ...props }: AppLogoProps) {
+    const getInitials = useInitials();
+    
     return (
         <>
-            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                <AppLogoIcon className="size-5 fill-current text-white dark:text-black" />
-            </div>
-            <div className="ml-1 grid flex-1 text-left text-sm">
-                <span className="mb-0.5 truncate leading-tight font-semibold">
-                    Laravel Starter Kit
-                </span>
-            </div>
+            <Link className="flex items-center gap-2 text-foreground hover:opacity-80 transition-opacity" {...props} tabIndex={-1}> 
+                <span className="font-semibold tracking-tight">{sidebar ? 'Mediscan' : getInitials('Mediscan')}</span>
+            </Link>
         </>
     );
 }
