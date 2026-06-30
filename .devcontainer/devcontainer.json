@@ -1,6 +1,6 @@
 // https://aka.ms/devcontainer.json
 {
-	"name": "Existing Docker Compose (Extend)",
+	"name": "Mediscan",
 	"dockerComposeFile": [
 		"../compose.yaml"
 	],
@@ -11,16 +11,11 @@
 			"extensions": [
 				"laravel.vscode-laravel",
 				"mikestead.dotenv",
-				"amiralizadeh9480.laravel-extra-intellisense",
-				"ryannaddy.laravel-artisan",
-				"onecentlin.laravel5-snippets",
-				"onecentlin.laravel-blade",
-				"bmewburn.vscode-intelephense-client",
 				"ms-azuretools.vscode-docker",
-				"mohamedbenhida.laravel-intellisense",
-				"DEVSENSE.phptools-vscode",
-				"DEVSENSE.profiler-php-vscode",
-				"bradlc.vscode-tailwindcss"
+				"bradlc.vscode-tailwindcss",
+				"Anthropic.claude-code",
+				"georgykurian.laravel-ide-helper",
+				"zobo.php-intellisense"
 			],
 			"settings": {}
 		}
