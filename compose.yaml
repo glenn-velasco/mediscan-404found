@@ -147,6 +147,7 @@ services:
         depends_on:
             - pgsql
             - redis
+            - reverb
 networks:
     sail:
         driver: bridge
