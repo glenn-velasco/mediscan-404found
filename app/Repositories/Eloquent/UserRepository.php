@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Repositories\Eloquent;
+
+use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+class UserRepository extends BaseRepository
+{
+    public function __construct(User $user)
+    {
+        parent::__construct($user);
+    }
+
+    public function paginate(int $perPage, array $filters = []): LengthAwarePaginator
+    {
+        $search = $filters['search'] ?? '';
+        $role   = $filters['role']   ?? '';
+        $status = $filters['status'] ?? '';
+
+        return $this->model->query()
+            ->leftJoin('medical_information as mi', 'mi.user_id', '=', 'users.id')
+            ->select('users.*')
+            ->with(['roles:id,name', 'medicalInformation:user_id,full_name'])
+            ->when($search !== '', fn ($q) => $q->search($search))
+            ->when($role   !== '', fn ($q) => $q->filterByRole($role))
+            ->when($status !== '', fn ($q) => $q->filterByStatus($status))
+            ->latest('users.created_at')
+            ->paginate($perPage);
+    }
+
+    public function updateEmail(User $user, string $email): bool
+    {
+        return $user->forceFill([
+            'email'             => $email,
+            'email_verified_at' => null,
+        ])->save();
+    }
+
+    public function countAll(): int
+    {
+        return $this->model->count();
+    }
+
+    public function countActive(): int
+    {
+        return $this->model->whereActive()->count();
+    }
+
+    public function countByRole(string $role): int
+    {
+        return $this->model->filterByRole($role)->count();
+    }
+
+    /** @return array<string, mixed> */
+    public function transform(User $user): array
+    {
+        $user->loadMissing(['roles', 'medicalInformation']);
+
+        return [
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'full_name'  => $user->medicalInformation?->full_name,
+            'email'      => $user->email,
+            'role'       => $user->roles->pluck('name')->first(),
+            'is_active'  => $user->isActive(),
+            'created_at' => $user->created_at?->toDateString(),
+        ];
+    }
+}
