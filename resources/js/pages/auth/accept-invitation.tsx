@@ -1,19 +1,18 @@
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
 import { RegistrationFormFields } from '@/components/registration-form-fields';
-import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { login } from '@/routes';
-import { store } from '@/routes/register';
+import invitation from '@/routes/invitation';
 
-type Props = {
-    passwordRules: string;
-};
+interface AcceptInvitationProps {
+    email: string;
+    token: string;
+    passwordRules?: string;
+}
 
-export default function Register({ passwordRules }: Props) {
+export default function AcceptInvitation({ email, token, passwordRules }: AcceptInvitationProps) {
     const { data, setData, post, processing, errors } = useForm({
-        email: '',
         password: '',
         password_confirmation: '',
         first_name: '',
@@ -36,19 +35,18 @@ export default function Register({ passwordRules }: Props) {
 
     function submit(e: FormEvent) {
         e.preventDefault();
-        post(store.url());
+        post(invitation.store(token).url);
     }
 
     return (
         <>
-            <Head title="Create account" />
+            <Head title="Accept Invitation" />
             <form onSubmit={submit} className="flex flex-col gap-4">
                 <RegistrationFormFields
                     data={data}
                     setData={setData}
                     errors={errors}
-                    email={data.email}
-                    onEmailChange={(v) => setData('email', v)}
+                    email={email}
                     passwordRules={passwordRules}
                 />
 
@@ -56,17 +54,12 @@ export default function Register({ passwordRules }: Props) {
                     {processing && <Spinner />}
                     Create account
                 </Button>
-
-                <p className="text-center text-sm text-muted-foreground">
-                    Already have an account?{' '}
-                    <TextLink href={login()}>Log in</TextLink>
-                </p>
             </form>
         </>
     );
 }
 
-Register.layout = {
-    title: 'Create your account',
-    description: 'Fill in your details to get started with MediScan',
+AcceptInvitation.layout = {
+    title: 'Accept your invitation',
+    description: 'Complete your profile to activate your account',
 };

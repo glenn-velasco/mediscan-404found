@@ -6,15 +6,23 @@ import { Spinner } from '@/components/ui/spinner';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
 
-export default function VerifyEmail({ status }: { status?: string }) {
+export default function VerifyEmail({
+    status,
+    emailChangeBackUrl,
+    emailChangeBackLabel,
+}: {
+    status?: string;
+    emailChangeBackUrl?: string | null;
+    emailChangeBackLabel?: string | null;
+}) {
     return (
         <>
             <Head title="Email verification" />
 
             {status === 'verification-link-sent' && (
                 <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+                    A new verification link has been sent to your email
+                    address.
                 </div>
             )}
 
@@ -25,6 +33,15 @@ export default function VerifyEmail({ status }: { status?: string }) {
                             {processing && <Spinner />}
                             Resend verification email
                         </Button>
+
+                        {emailChangeBackUrl && (
+                            <TextLink
+                                href={emailChangeBackUrl}
+                                className="mx-auto block text-sm"
+                            >
+                                {emailChangeBackLabel}
+                            </TextLink>
+                        )}
 
                         <TextLink
                             href={logout()}
