@@ -1,7 +1,9 @@
 import { Head, useForm } from '@inertiajs/react';
-import { CountryCode, getCountryCallingCode } from 'libphonenumber-js';
-import { AlertCircle, Pencil, Plus, Shield, ShieldAlert, Trash2 } from 'lucide-react';
-import { ReactElement, useState } from 'react';
+import type { CountryCode } from 'libphonenumber-js';
+import { getCountryCallingCode } from 'libphonenumber-js';
+import { Pencil, Plus, Shield, ShieldAlert, Trash2 } from 'lucide-react';
+import type { ReactElement } from 'react';
+import { useState } from 'react';
 import AllergyController from '@/actions/App/Http/Controllers/AllergyController';
 import EmergencyContactController from '@/actions/App/Http/Controllers/EmergencyContactController';
 import { PhoneInput } from '@/components/phone-input';
@@ -18,36 +20,68 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    Sheet,
+    SheetContent,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { cn, formatDate } from '@/lib/utils';
-import { allergySeverityBadgeVariant, AllergySeverityLabel, allergySeverityOptions, BloodType } from '@/types';
+import {
+    allergySeverityBadgeVariant,
+    AllergySeverityLabel,
+    allergySeverityOptions,
+    BloodType,
+} from '@/types';
 import type { Allergy, EmergencyContact, MedicalInfo } from '@/types';
 
 interface DashboardProps {
     medicalInfo: MedicalInfo;
 }
 
-function SectionTitle({ title }: { title: string}) {
+function SectionTitle({ title }: { title: string }) {
     return (
         <div className="flex items-center gap-3">
             <div className="h-px w-8 bg-muted-foreground/40" />
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                 {title}
             </span>
         </div>
     );
 }
 
-function Stat({ label, value, span }: { label: string; value?: string | null; span?: ReactElement<'span'> }) {
+function Stat({
+    label,
+    value,
+    span,
+}: {
+    label: string;
+    value?: string | null;
+    span?: ReactElement<'span'>;
+}) {
     return (
         <div className="flex flex-col gap-1">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                 {label}
             </span>
             <span className="text-base font-medium text-foreground">
@@ -57,10 +91,16 @@ function Stat({ label, value, span }: { label: string; value?: string | null; sp
     );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) {
     return (
         <div className="flex flex-col gap-1.5">
-            <Label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            <Label className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                 {label}
             </Label>
             {children}
@@ -69,8 +109,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function AllergySeverityBadge({ severity }: { severity: string }) {
-    const variant = allergySeverityBadgeVariant[severity as keyof typeof allergySeverityBadgeVariant] ?? 'outline';
-    const label = AllergySeverityLabel[severity as keyof typeof AllergySeverityLabel] ?? severity;
+    const variant =
+        allergySeverityBadgeVariant[
+            severity as keyof typeof allergySeverityBadgeVariant
+        ] ?? 'outline';
+    const label =
+        AllergySeverityLabel[severity as keyof typeof AllergySeverityLabel] ??
+        severity;
 
     return <Badge variant={variant}>{label}</Badge>;
 }
@@ -86,8 +131,8 @@ function AllergyFormDialog({
 }) {
     const form = useForm({
         allergen: allergy?.allergen ?? '',
-        reaction:  allergy?.reaction ?? '',
-        severity:  allergy?.severity ?? '',
+        reaction: allergy?.reaction ?? '',
+        severity: allergy?.severity ?? '',
     });
 
     function submit(e: React.FormEvent) {
@@ -112,39 +157,65 @@ function AllergyFormDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{allergy ? 'Edit allergy' : 'Add allergy'}</DialogTitle>
+                    <DialogTitle>
+                        {allergy ? 'Edit allergy' : 'Add allergy'}
+                    </DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={submit} className="flex flex-col gap-4">
                     <Field label="Allergen">
                         <Input
                             value={form.data.allergen}
-                            onChange={e => form.setData('allergen', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('allergen', e.target.value)
+                            }
                         />
-                        {form.errors.allergen && <p className="text-xs text-destructive">{form.errors.allergen}</p>}
+                        {form.errors.allergen && (
+                            <p className="text-xs text-destructive">
+                                {form.errors.allergen}
+                            </p>
+                        )}
                     </Field>
 
                     <Field label="Severity">
-                        <Select value={form.data.severity} onValueChange={v => form.setData('severity', v)}>
+                        <Select
+                            value={form.data.severity}
+                            onValueChange={(v) => form.setData('severity', v)}
+                        >
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Select…" />
                             </SelectTrigger>
                             <SelectContent>
-                                {allergySeverityOptions.map(opt => (
-                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                {allergySeverityOptions.map((opt) => (
+                                    <SelectItem
+                                        key={opt.value}
+                                        value={opt.value}
+                                    >
+                                        {opt.label}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
-                        {form.errors.severity && <p className="text-xs text-destructive">{form.errors.severity}</p>}
+                        {form.errors.severity && (
+                            <p className="text-xs text-destructive">
+                                {form.errors.severity}
+                            </p>
+                        )}
                     </Field>
 
                     <Field label="Reaction">
                         <Textarea
                             value={form.data.reaction}
                             placeholder="Optional details about the reaction…"
-                            onChange={e => form.setData('reaction', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('reaction', e.target.value)
+                            }
                         />
-                        {form.errors.reaction && <p className="text-xs text-destructive">{form.errors.reaction}</p>}
+                        {form.errors.reaction && (
+                            <p className="text-xs text-destructive">
+                                {form.errors.reaction}
+                            </p>
+                        )}
                     </Field>
 
                     <DialogFooter>
@@ -180,14 +251,20 @@ function DeleteAllergyAlert({
         <AlertDialog open={open} onOpenChange={onOpenChange}>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Remove {allergy.allergen}?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                        Remove {allergy.allergen}?
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                        This will permanently delete this allergy record, including any reaction details.
+                        This will permanently delete this allergy record,
+                        including any reaction details.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction disabled={form.processing} onClick={destroy}>
+                    <AlertDialogAction
+                        disabled={form.processing}
+                        onClick={destroy}
+                    >
                         Remove
                     </AlertDialogAction>
                 </AlertDialogFooter>
@@ -199,20 +276,31 @@ function DeleteAllergyAlert({
 function AllergiesSection({ allergies }: { allergies: Allergy[] }) {
     return (
         <div className="flex flex-col gap-4">
-            <SectionTitle title='Allergies' />
+            <SectionTitle title="Allergies" />
 
             {allergies.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No known allergies on record.</p>
+                <p className="text-sm text-muted-foreground">
+                    No known allergies on record.
+                </p>
             ) : (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {allergies.map(allergy => (
-                        <div key={allergy.id} className="flex flex-col gap-1 rounded-lg border px-4 py-3">
+                    {allergies.map((allergy) => (
+                        <div
+                            key={allergy.id}
+                            className="flex flex-col gap-1 rounded-lg border px-4 py-3"
+                        >
                             <div className="flex items-center gap-2">
-                                <span className="font-medium text-foreground">{allergy.allergen}</span>
-                                <AllergySeverityBadge severity={allergy.severity} />
+                                <span className="font-medium text-foreground">
+                                    {allergy.allergen}
+                                </span>
+                                <AllergySeverityBadge
+                                    severity={allergy.severity}
+                                />
                             </div>
                             {allergy.reaction && (
-                                <p className="text-sm text-muted-foreground">{allergy.reaction}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {allergy.reaction}
+                                </p>
                             )}
                         </div>
                     ))}
@@ -234,11 +322,11 @@ function EmergencyContactFormDialog({
     isFirstContact: boolean;
 }) {
     const form = useForm({
-        name:                contact?.name ?? '',
-        relationship:        contact?.relationship ?? '',
-        phone_country_code:  contact?.phone_country_code ?? '',
-        phone:               contact?.phone ?? '',
-        is_primary:          contact?.is_primary ?? false,
+        name: contact?.name ?? '',
+        relationship: contact?.relationship ?? '',
+        phone_country_code: contact?.phone_country_code ?? '',
+        phone: contact?.phone ?? '',
+        is_primary: contact?.is_primary ?? false,
     });
 
     function submit(e: React.FormEvent) {
@@ -253,7 +341,10 @@ function EmergencyContactFormDialog({
         };
 
         if (contact) {
-            form.patch(EmergencyContactController.update.url(contact.id), options);
+            form.patch(
+                EmergencyContactController.update.url(contact.id),
+                options,
+            );
         } else {
             form.post(EmergencyContactController.store.url(), options);
         }
@@ -263,24 +354,40 @@ function EmergencyContactFormDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{contact ? 'Edit emergency contact' : 'Add emergency contact'}</DialogTitle>
+                    <DialogTitle>
+                        {contact
+                            ? 'Edit emergency contact'
+                            : 'Add emergency contact'}
+                    </DialogTitle>
                 </DialogHeader>
 
                 <form onSubmit={submit} className="flex flex-col gap-4">
                     <Field label="Name">
                         <Input
                             value={form.data.name}
-                            onChange={e => form.setData('name', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('name', e.target.value)
+                            }
                         />
-                        {form.errors.name && <p className="text-xs text-destructive">{form.errors.name}</p>}
+                        {form.errors.name && (
+                            <p className="text-xs text-destructive">
+                                {form.errors.name}
+                            </p>
+                        )}
                     </Field>
 
                     <Field label="Relationship">
                         <Input
                             value={form.data.relationship}
-                            onChange={e => form.setData('relationship', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('relationship', e.target.value)
+                            }
                         />
-                        {form.errors.relationship && <p className="text-xs text-destructive">{form.errors.relationship}</p>}
+                        {form.errors.relationship && (
+                            <p className="text-xs text-destructive">
+                                {form.errors.relationship}
+                            </p>
+                        )}
                     </Field>
 
                     <Field label="Phone">
@@ -288,26 +395,34 @@ function EmergencyContactFormDialog({
                             idPrefix="ec"
                             countryValue={form.data.phone_country_code}
                             phoneValue={form.data.phone}
-                            onCountryChange={v => form.setData('phone_country_code', v)}
-                            onPhoneChange={v => form.setData('phone', v)}
+                            onCountryChange={(v) =>
+                                form.setData('phone_country_code', v)
+                            }
+                            onPhoneChange={(v) => form.setData('phone', v)}
                             countryError={form.errors.phone_country_code}
                             phoneError={form.errors.phone}
                         />
                     </Field>
 
                     {isFirstContact ? (
-                        <p className="text-xs text-muted-foreground">This will be set as your primary contact.</p>
+                        <p className="text-xs text-muted-foreground">
+                            This will be set as your primary contact.
+                        </p>
                     ) : contact?.is_primary ? (
                         <div className="flex items-center gap-2">
                             <Checkbox checked disabled />
-                            <Label className="text-sm text-muted-foreground">This is your primary contact.</Label>
+                            <Label className="text-sm text-muted-foreground">
+                                This is your primary contact.
+                            </Label>
                         </div>
                     ) : (
                         <div className="flex items-center gap-2">
                             <Checkbox
                                 id="is_primary"
                                 checked={form.data.is_primary}
-                                onCheckedChange={v => form.setData('is_primary', Boolean(v))}
+                                onCheckedChange={(v) =>
+                                    form.setData('is_primary', Boolean(v))
+                                }
                             />
                             <Label htmlFor="is_primary" className="text-sm">
                                 Set as primary contact
@@ -351,12 +466,16 @@ function DeleteEmergencyContactAlert({
                     <AlertDialogTitle>Remove {contact.name}?</AlertDialogTitle>
                     <AlertDialogDescription>
                         This will permanently delete this emergency contact.
-                        {contact.is_primary && ' This is your primary contact — deleting it will leave no primary contact until you mark another one.'}
+                        {contact.is_primary &&
+                            ' This is your primary contact — deleting it will leave no primary contact until you mark another one.'}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction disabled={form.processing} onClick={destroy}>
+                    <AlertDialogAction
+                        disabled={form.processing}
+                        onClick={destroy}
+                    >
                         Remove
                     </AlertDialogAction>
                 </AlertDialogFooter>
@@ -365,23 +484,38 @@ function DeleteEmergencyContactAlert({
     );
 }
 
-function EmergencyContactsSection({ contacts }: { contacts: EmergencyContact[] }) {
+function EmergencyContactsSection({
+    contacts,
+}: {
+    contacts: EmergencyContact[];
+}) {
     return (
         <div className="flex flex-col gap-4">
-            <SectionTitle title='Emergency Contacts' />
+            <SectionTitle title="Emergency Contacts" />
 
             {contacts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No emergency contacts on record.</p>
+                <p className="text-sm text-muted-foreground">
+                    No emergency contacts on record.
+                </p>
             ) : (
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {contacts.map(contact => (
-                        <div key={contact.id} className="flex flex-col gap-1 rounded-lg border px-4 py-3">
+                    {contacts.map((contact) => (
+                        <div
+                            key={contact.id}
+                            className="flex flex-col gap-1 rounded-lg border px-4 py-3"
+                        >
                             <div className="flex items-center gap-2">
-                                <span className="font-medium text-foreground">{contact.name}</span>
-                                {contact.is_primary && <Badge variant="default">Primary</Badge>}
+                                <span className="font-medium text-foreground">
+                                    {contact.name}
+                                </span>
+                                {contact.is_primary && (
+                                    <Badge variant="default">Primary</Badge>
+                                )}
                             </div>
                             {contact.relationship && (
-                                <p className="text-sm text-muted-foreground">{contact.relationship}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {contact.relationship}
+                                </p>
                             )}
                             {contact.phone && (
                                 <p className="text-sm text-muted-foreground">
@@ -400,27 +534,31 @@ function EmergencyContactsSection({ contacts }: { contacts: EmergencyContact[] }
 
 export default function Dashboard({ medicalInfo }: DashboardProps) {
     const { user } = useAuth();
-    const { data, setData, patch, processing, errors, reset } = useForm({
-        email:        user.email,
-        first_name:   medicalInfo?.first_name   ?? '',
-        middle_name:  medicalInfo?.middle_name  ?? '',
-        last_name:    medicalInfo?.last_name    ?? '',
-        suffix:       medicalInfo?.suffix       ?? '',
+    const { data, setData, patch, processing, errors } = useForm({
+        email: user.email,
+        first_name: medicalInfo?.first_name ?? '',
+        middle_name: medicalInfo?.middle_name ?? '',
+        last_name: medicalInfo?.last_name ?? '',
+        suffix: medicalInfo?.suffix ?? '',
         date_of_birth: medicalInfo?.date_of_birth ?? '',
-        gender:       medicalInfo?.gender       ?? '',
-        blood_type:   medicalInfo?.blood_type   ?? '',
+        gender: medicalInfo?.gender ?? '',
+        blood_type: medicalInfo?.blood_type ?? '',
         phone_country_code: medicalInfo?.phone_country_code ?? '',
-        phone:        medicalInfo?.phone        ?? '',
-        religion:     medicalInfo?.religion     ?? '',
-        address:      medicalInfo?.address      ?? '',
+        phone: medicalInfo?.phone ?? '',
+        religion: medicalInfo?.religion ?? '',
+        address: medicalInfo?.address ?? '',
         no_blood_transfusion: medicalInfo?.no_blood_transfusion ?? false,
     });
     const [addAllergyOpen, setAddAllergyOpen] = useState(false);
     const [editingAllergy, setEditingAllergy] = useState<Allergy | null>(null);
-    const [deletingAllergy, setDeletingAllergy] = useState<Allergy | null>(null);
+    const [deletingAllergy, setDeletingAllergy] = useState<Allergy | null>(
+        null,
+    );
     const [addContactOpen, setAddContactOpen] = useState(false);
-    const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
-    const [deletingContact, setDeletingContact] = useState<EmergencyContact | null>(null);
+    const [editingContact, setEditingContact] =
+        useState<EmergencyContact | null>(null);
+    const [deletingContact, setDeletingContact] =
+        useState<EmergencyContact | null>(null);
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
@@ -432,7 +570,6 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
             <Head title="Health Record" />
 
             <div className="flex flex-col gap-6 sm:gap-10">
-
                 {/* Name + DOB hero */}
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex flex-col gap-2">
@@ -452,25 +589,41 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
 
                     <Sheet key={`${user.email}-${medicalInfo?.updated_at}`}>
                         <SheetTrigger asChild>
-                            <Button variant="outline" size="sm" className="shrink-0">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="shrink-0"
+                            >
                                 <Pencil className="mr-2 h-3.5 w-3.5" />
                                 Edit
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+                        <SheetContent
+                            side="right"
+                            className="w-full overflow-y-auto sm:max-w-lg"
+                        >
                             <SheetHeader>
                                 <SheetTitle>Edit Health Record</SheetTitle>
                             </SheetHeader>
 
-                            <form onSubmit={submit} className="flex flex-col gap-5 px-4 py-2">
+                            <form
+                                onSubmit={submit}
+                                className="flex flex-col gap-5 px-4 py-2"
+                            >
                                 {/* Account */}
                                 <Field label="Email">
                                     <Input
                                         type="email"
                                         value={data.email}
-                                        onChange={e => setData('email', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('email', e.target.value)
+                                        }
                                     />
-                                    {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+                                    {errors.email && (
+                                        <p className="text-xs text-destructive">
+                                            {errors.email}
+                                        </p>
+                                    )}
                                 </Field>
 
                                 {/* Name */}
@@ -478,30 +631,58 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                     <Field label="First Name">
                                         <Input
                                             value={data.first_name}
-                                            onChange={e => setData('first_name', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'first_name',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
-                                        {errors.first_name && <p className="text-xs text-destructive">{errors.first_name}</p>}
+                                        {errors.first_name && (
+                                            <p className="text-xs text-destructive">
+                                                {errors.first_name}
+                                            </p>
+                                        )}
                                     </Field>
                                     <Field label="Last Name">
                                         <Input
                                             value={data.last_name}
-                                            onChange={e => setData('last_name', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'last_name',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
-                                        {errors.last_name && <p className="text-xs text-destructive">{errors.last_name}</p>}
+                                        {errors.last_name && (
+                                            <p className="text-xs text-destructive">
+                                                {errors.last_name}
+                                            </p>
+                                        )}
                                     </Field>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <Field label="Middle Name">
                                         <Input
                                             value={data.middle_name}
-                                            onChange={e => setData('middle_name', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'middle_name',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
                                     </Field>
                                     <Field label="Suffix">
                                         <Input
                                             value={data.suffix}
                                             placeholder="Jr., Sr., III…"
-                                            onChange={e => setData('suffix', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'suffix',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
                                     </Field>
                                 </div>
@@ -511,32 +692,68 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                     <Input
                                         type="date"
                                         value={data.date_of_birth}
-                                        onChange={e => setData('date_of_birth', e.target.value)}
+                                        onChange={(e) =>
+                                            setData(
+                                                'date_of_birth',
+                                                e.target.value,
+                                            )
+                                        }
                                     />
-                                    {errors.date_of_birth && <p className="text-xs text-destructive">{errors.date_of_birth}</p>}
+                                    {errors.date_of_birth && (
+                                        <p className="text-xs text-destructive">
+                                            {errors.date_of_birth}
+                                        </p>
+                                    )}
                                 </Field>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <Field label="Gender">
-                                        <Select value={data.gender} onValueChange={v => setData('gender', v)}>
+                                        <Select
+                                            value={data.gender}
+                                            onValueChange={(v) =>
+                                                setData('gender', v)
+                                            }
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select…" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="male">Male</SelectItem>
-                                                <SelectItem value="female">Female</SelectItem>
+                                                <SelectItem value="male">
+                                                    Male
+                                                </SelectItem>
+                                                <SelectItem value="female">
+                                                    Female
+                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        {errors.gender && <p className="text-xs text-destructive">{errors.gender}</p>}
+                                        {errors.gender && (
+                                            <p className="text-xs text-destructive">
+                                                {errors.gender}
+                                            </p>
+                                        )}
                                     </Field>
                                     <Field label="Blood Type">
-                                        <Select value={data.blood_type} onValueChange={v => setData('blood_type', v)}>
+                                        <Select
+                                            value={data.blood_type}
+                                            onValueChange={(v) =>
+                                                setData('blood_type', v)
+                                            }
+                                        >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select…" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {(Object.values(BloodType) as BloodType[]).map(bt => (
-                                                    <SelectItem key={bt} value={bt}>{bt}</SelectItem>
+                                                {(
+                                                    Object.values(
+                                                        BloodType,
+                                                    ) as BloodType[]
+                                                ).map((bt) => (
+                                                    <SelectItem
+                                                        key={bt}
+                                                        value={bt}
+                                                    >
+                                                        {bt}
+                                                    </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
@@ -549,14 +766,24 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                         <Input
                                             value={data.phone_country_code}
                                             placeholder="PH"
-                                            onChange={e => setData('phone_country_code', e.target.value)}
+                                            onChange={(e) =>
+                                                setData(
+                                                    'phone_country_code',
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
                                     </Field>
                                     <div className="col-span-2">
                                         <Field label="Phone">
                                             <Input
                                                 value={data.phone}
-                                                onChange={e => setData('phone', e.target.value)}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'phone',
+                                                        e.target.value,
+                                                    )
+                                                }
                                             />
                                         </Field>
                                     </div>
@@ -565,14 +792,18 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                 <Field label="Address">
                                     <Input
                                         value={data.address}
-                                        onChange={e => setData('address', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('address', e.target.value)
+                                        }
                                     />
                                 </Field>
 
                                 <Field label="Religion">
                                     <Input
                                         value={data.religion}
-                                        onChange={e => setData('religion', e.target.value)}
+                                        onChange={(e) =>
+                                            setData('religion', e.target.value)
+                                        }
                                     />
                                 </Field>
 
@@ -580,9 +811,17 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                     <Checkbox
                                         id="no_blood_transfusion"
                                         checked={data.no_blood_transfusion}
-                                        onCheckedChange={v => setData('no_blood_transfusion', Boolean(v))}
+                                        onCheckedChange={(v) =>
+                                            setData(
+                                                'no_blood_transfusion',
+                                                Boolean(v),
+                                            )
+                                        }
                                     />
-                                    <Label htmlFor="no_blood_transfusion" className="text-sm">
+                                    <Label
+                                        htmlFor="no_blood_transfusion"
+                                        className="text-sm"
+                                    >
                                         No blood transfusion
                                     </Label>
                                 </div>
@@ -590,37 +829,81 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                 {/* Allergies */}
                                 <div className="border-t pt-4">
                                     <div className="mb-3 flex items-center justify-between">
-                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                                        <p className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                                             Allergies
                                         </p>
-                                        <Button type="button" variant="outline" size="sm" onClick={() => setAddAllergyOpen(true)}>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                setAddAllergyOpen(true)
+                                            }
+                                        >
                                             <Plus className="mr-2 h-3.5 w-3.5" />
                                             Add allergy
                                         </Button>
                                     </div>
                                     {medicalInfo.allergies.length === 0 ? (
-                                        <p className="text-xs text-muted-foreground">No known allergies on record.</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            No known allergies on record.
+                                        </p>
                                     ) : (
                                         <div className="grid grid-cols-2 gap-2">
-                                            {medicalInfo.allergies.map(allergy => (
-                                                <div key={allergy.id} className="flex flex-col gap-1 rounded-md border p-2">
-                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <span className="text-sm font-medium text-foreground">{allergy.allergen}</span>
-                                                        <AllergySeverityBadge severity={allergy.severity} />
+                                            {medicalInfo.allergies.map(
+                                                (allergy) => (
+                                                    <div
+                                                        key={allergy.id}
+                                                        className="flex flex-col gap-1 rounded-md border p-2"
+                                                    >
+                                                        <div className="flex flex-wrap items-center gap-1.5">
+                                                            <span className="text-sm font-medium text-foreground">
+                                                                {
+                                                                    allergy.allergen
+                                                                }
+                                                            </span>
+                                                            <AllergySeverityBadge
+                                                                severity={
+                                                                    allergy.severity
+                                                                }
+                                                            />
+                                                        </div>
+                                                        {allergy.reaction && (
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {
+                                                                    allergy.reaction
+                                                                }
+                                                            </p>
+                                                        )}
+                                                        <div className="mt-1 flex items-center gap-0.5">
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() =>
+                                                                    setEditingAllergy(
+                                                                        allergy,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Pencil className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() =>
+                                                                    setDeletingAllergy(
+                                                                        allergy,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                                            </Button>
+                                                        </div>
                                                     </div>
-                                                    {allergy.reaction && (
-                                                        <p className="text-xs text-muted-foreground">{allergy.reaction}</p>
-                                                    )}
-                                                    <div className="flex items-center gap-0.5 mt-1">
-                                                        <Button type="button" variant="ghost" size="icon" onClick={() => setEditingAllergy(allergy)}>
-                                                            <Pencil className="h-3.5 w-3.5" />
-                                                        </Button>
-                                                        <Button type="button" variant="ghost" size="icon" onClick={() => setDeletingAllergy(allergy)}>
-                                                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                ),
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -628,43 +911,90 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                 {/* Emergency contacts */}
                                 <div className="border-t pt-4">
                                     <div className="mb-3 flex items-center justify-between">
-                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                                        <p className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                                             Emergency Contacts
                                         </p>
-                                        <Button type="button" variant="outline" size="sm" onClick={() => setAddContactOpen(true)}>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                setAddContactOpen(true)
+                                            }
+                                        >
                                             <Plus className="mr-2 h-3.5 w-3.5" />
                                             Add contact
                                         </Button>
                                     </div>
-                                    {medicalInfo.emergency_contacts.length === 0 ? (
-                                        <p className="text-xs text-muted-foreground">No emergency contacts on record.</p>
+                                    {medicalInfo.emergency_contacts.length ===
+                                    0 ? (
+                                        <p className="text-xs text-muted-foreground">
+                                            No emergency contacts on record.
+                                        </p>
                                     ) : (
                                         <div className="grid grid-cols-2 gap-2">
-                                            {medicalInfo.emergency_contacts.map(contact => (
-                                                <div key={contact.id} className="flex flex-col gap-1 rounded-md border p-2">
-                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <span className="text-sm font-medium text-foreground">{contact.name}</span>
-                                                        {contact.is_primary && <Badge variant="default">Primary</Badge>}
+                                            {medicalInfo.emergency_contacts.map(
+                                                (contact) => (
+                                                    <div
+                                                        key={contact.id}
+                                                        className="flex flex-col gap-1 rounded-md border p-2"
+                                                    >
+                                                        <div className="flex flex-wrap items-center gap-1.5">
+                                                            <span className="text-sm font-medium text-foreground">
+                                                                {contact.name}
+                                                            </span>
+                                                            {contact.is_primary && (
+                                                                <Badge variant="default">
+                                                                    Primary
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                        {contact.relationship && (
+                                                            <p className="text-xs text-muted-foreground">
+                                                                {
+                                                                    contact.relationship
+                                                                }
+                                                            </p>
+                                                        )}
+                                                        <div className="mt-1 flex items-center gap-0.5">
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() =>
+                                                                    setEditingContact(
+                                                                        contact,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Pencil className="h-3.5 w-3.5" />
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                onClick={() =>
+                                                                    setDeletingContact(
+                                                                        contact,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                                            </Button>
+                                                        </div>
                                                     </div>
-                                                    {contact.relationship && (
-                                                        <p className="text-xs text-muted-foreground">{contact.relationship}</p>
-                                                    )}
-                                                    <div className="flex items-center gap-0.5 mt-1">
-                                                        <Button type="button" variant="ghost" size="icon" onClick={() => setEditingContact(contact)}>
-                                                            <Pencil className="h-3.5 w-3.5" />
-                                                        </Button>
-                                                        <Button type="button" variant="ghost" size="icon" onClick={() => setDeletingContact(contact)}>
-                                                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                ),
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
                                 <SheetFooter>
-                                    <Button type="submit" disabled={processing} className="w-full">
+                                    <Button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="w-full"
+                                    >
                                         {processing ? 'Saving…' : 'Save'}
                                     </Button>
                                 </SheetFooter>
@@ -675,23 +1005,31 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
 
                 {/* Divider */}
                 <div className="h-px bg-border" />
-                <SectionTitle title='Information' />
+                <SectionTitle title="Information" />
                 {/* Blood transfusion */}
-                <div className={cn(
-                    "flex items-center gap-3 rounded-lg border px-4 py-3",
-                    medicalInfo.no_blood_transfusion
-                        ? "border-destructive/20 bg-destructive/5"
-                        : "border-green-400/20 bg-green-400/5",
-                )}>
-                    {medicalInfo.no_blood_transfusion
-                        ? <ShieldAlert className="h-4 w-4 shrink-0 text-destructive" />
-                        : <Shield className="h-4 w-4 shrink-0 text-green-400" />
-                    }
-                    <span className={cn(
-                        "text-sm font-semibold text-green-400",
-                        medicalInfo.no_blood_transfusion && "text-destructive",
-                    )}>
-                        {medicalInfo.no_blood_transfusion ? 'No Blood Transfusion' : 'Blood Transfusion Consented'}
+                <div
+                    className={cn(
+                        'flex items-center gap-3 rounded-lg border px-4 py-3',
+                        medicalInfo.no_blood_transfusion
+                            ? 'border-destructive/20 bg-destructive/5'
+                            : 'border-green-400/20 bg-green-400/5',
+                    )}
+                >
+                    {medicalInfo.no_blood_transfusion ? (
+                        <ShieldAlert className="h-4 w-4 shrink-0 text-destructive" />
+                    ) : (
+                        <Shield className="h-4 w-4 shrink-0 text-green-400" />
+                    )}
+                    <span
+                        className={cn(
+                            'text-sm font-semibold text-green-400',
+                            medicalInfo.no_blood_transfusion &&
+                                'text-destructive',
+                        )}
+                    >
+                        {medicalInfo.no_blood_transfusion
+                            ? 'No Blood Transfusion'
+                            : 'Blood Transfusion Consented'}
                     </span>
                 </div>
 
@@ -699,9 +1037,12 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                 <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
                     <Stat
                         label="Gender"
-                        value={medicalInfo.gender
-                            ? medicalInfo.gender.charAt(0).toUpperCase() + medicalInfo.gender.slice(1)
-                            : null}
+                        value={
+                            medicalInfo.gender
+                                ? medicalInfo.gender.charAt(0).toUpperCase() +
+                                  medicalInfo.gender.slice(1)
+                                : null
+                        }
                     />
                     <Stat label="Blood Type" value={medicalInfo.blood_type} />
                     <Stat label="Religion" value={medicalInfo.religion} />
@@ -710,12 +1051,17 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                 {/* Contact details */}
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <Stat label="Email" value={user.email} />
-                    <Stat label="Phone" value={medicalInfo.phone} span={
-                        <span>{medicalInfo.phone_country_code ?
-                            `+${getCountryCallingCode(medicalInfo.phone_country_code as CountryCode)}`
-                            : ''}
-                        </span>
-                    } />
+                    <Stat
+                        label="Phone"
+                        value={medicalInfo.phone}
+                        span={
+                            <span>
+                                {medicalInfo.phone_country_code
+                                    ? `+${getCountryCallingCode(medicalInfo.phone_country_code as CountryCode)}`
+                                    : ''}
+                            </span>
+                        }
+                    />
                     <Stat label="Address" value={medicalInfo.address} />
                 </div>
 
@@ -723,7 +1069,9 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                 <div className="h-px bg-border" />
 
                 {/* Emergency contacts */}
-                <EmergencyContactsSection contacts={medicalInfo.emergency_contacts} />
+                <EmergencyContactsSection
+                    contacts={medicalInfo.emergency_contacts}
+                />
 
                 <EmergencyContactFormDialog
                     open={addContactOpen}
@@ -735,7 +1083,9 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                     <EmergencyContactFormDialog
                         contact={editingContact}
                         open={!!editingContact}
-                        onOpenChange={open => !open && setEditingContact(null)}
+                        onOpenChange={(open) =>
+                            !open && setEditingContact(null)
+                        }
                         isFirstContact={false}
                     />
                 )}
@@ -744,7 +1094,9 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                     <DeleteEmergencyContactAlert
                         contact={deletingContact}
                         open={!!deletingContact}
-                        onOpenChange={open => !open && setDeletingContact(null)}
+                        onOpenChange={(open) =>
+                            !open && setDeletingContact(null)
+                        }
                     />
                 )}
 
@@ -754,13 +1106,18 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                 {/* Allergies */}
                 <AllergiesSection allergies={medicalInfo.allergies} />
 
-                <AllergyFormDialog open={addAllergyOpen} onOpenChange={setAddAllergyOpen} />
+                <AllergyFormDialog
+                    open={addAllergyOpen}
+                    onOpenChange={setAddAllergyOpen}
+                />
 
                 {editingAllergy && (
                     <AllergyFormDialog
                         allergy={editingAllergy}
                         open={!!editingAllergy}
-                        onOpenChange={open => !open && setEditingAllergy(null)}
+                        onOpenChange={(open) =>
+                            !open && setEditingAllergy(null)
+                        }
                     />
                 )}
 
@@ -768,7 +1125,9 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                     <DeleteAllergyAlert
                         allergy={deletingAllergy}
                         open={!!deletingAllergy}
-                        onOpenChange={open => !open && setDeletingAllergy(null)}
+                        onOpenChange={(open) =>
+                            !open && setDeletingAllergy(null)
+                        }
                     />
                 )}
 
@@ -778,10 +1137,9 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                     Issued{' '}
                     <span className="font-medium text-foreground">
                         {formatDate(medicalInfo.created_at)}
-                    </span>
-                    {' '}· MediScan Patient Portal
+                    </span>{' '}
+                    · MediScan Patient Portal
                 </p>
-
             </div>
         </>
     );

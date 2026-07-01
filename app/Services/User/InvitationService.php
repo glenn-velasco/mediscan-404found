@@ -2,8 +2,8 @@
 
 namespace App\Services\User;
 
-use App\Enums\Role as RoleEnum;
 use App\Actions\Fortify\CreateNewUser;
+use App\Enums\Role as RoleEnum;
 use App\Exceptions\TooManyAttemptsException;
 use App\Exceptions\UserInvitationLinkInvalidException;
 use App\Models\Role;
@@ -13,7 +13,7 @@ use App\Notifications\UserInvitationNotification;
 use App\Repositories\Eloquent\UserInvitationRepository;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Notification;
@@ -27,6 +27,7 @@ class InvitationService
         private CreateNewUser $createNewUser
     ) {}
 
+    /** @return LengthAwarePaginator<int, array<string, mixed>> */
     public function paginate(int $perPage): LengthAwarePaginator
     {
         return $this->userInvitationRepository->paginate($perPage)
@@ -35,11 +36,11 @@ class InvitationService
 
     public function resend(UserInvitation $invitation): void
     {
-        $token     = Str::random(64);
+        $token = Str::random(64);
         $expiresAt = now()->addDays(3);
 
         $this->userInvitationRepository->update($invitation, [
-            'token'      => $token,
+            'token' => $token,
             'expires_at' => $expiresAt,
         ]);
 
@@ -64,14 +65,14 @@ class InvitationService
 
     public function invite(string $email, string $role, int $expiresInDays, Authenticatable $invitedBy): void
     {
-        $roleId    = Role::where('name', $role)->value('id');
-        $token     = Str::random(64);
+        $roleId = Role::where('name', $role)->value('id');
+        $token = Str::random(64);
         $expiresAt = now()->addDays($expiresInDays);
 
         $invitation = $this->userInvitationRepository->create([
-            'email'      => $email,
-            'role_id'    => $roleId,
-            'token'      => $token,
+            'email' => $email,
+            'role_id' => $roleId,
+            'token' => $token,
             'invited_by' => $invitedBy->getAuthIdentifier(),
             'expires_at' => $expiresAt,
         ]);
@@ -95,15 +96,16 @@ class InvitationService
         $invitation = $this->userInvitationRepository->findByToken($token);
 
         if (! $this->checkInvitationStatus($invitation)) {
-            throw new UserInvitationLinkInvalidException();
+            throw new UserInvitationLinkInvalidException;
         }
 
         return $invitation;
     }
 
+    /** @param  array<string, mixed>  $data */
     public function acceptInvitation(string $token, array $data): ?User
     {
-        $throttleKey = 'accept_invitation' . request()->ip();
+        $throttleKey = 'accept_invitation'.request()->ip();
 
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             throw new TooManyAttemptsException(RateLimiter::availableIn($throttleKey));
@@ -114,7 +116,7 @@ class InvitationService
         $invitation = $this->userInvitationRepository->findByToken($token);
 
         if (! $this->checkInvitationStatus($invitation)) {
-            throw new UserInvitationLinkInvalidException();
+            throw new UserInvitationLinkInvalidException;
         }
 
         $user = $this->createNewUser->create([

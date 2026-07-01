@@ -146,7 +146,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                         </Sheet>
                     </div>
 
-                    <AppLogo href={admin.dashboard()} prefetch/>
+                    <AppLogo href={admin.dashboard()} prefetch />
 
                     {/* Desktop Navigation */}
                     <div className="ml-6 hidden h-full items-center space-x-6 lg:flex">

@@ -7,10 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AssignRoleRequest;
 use App\Models\User;
 use App\Services\User\UserService;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class UserController extends Controller
 {
@@ -26,7 +26,7 @@ class UserController extends Controller
             ->through($this->userService->transform(...));
 
         return Inertia::render('admin/users/index', [
-            'users'   => $users,
+            'users' => $users,
             'filters' => $filters,
         ]);
     }
@@ -44,7 +44,7 @@ class UserController extends Controller
 
         return Inertia::flash('toast', [
             'type' => 'success',
-            'message' => "Role updated."
+            'message' => 'Role updated.',
         ])->back();
     }
 
@@ -54,7 +54,7 @@ class UserController extends Controller
 
         return Inertia::flash('toast', [
             'type' => 'success',
-            'message' => $user->isActive() ? 'User activated.' : 'User deactivated.'
+            'message' => $user->isActive() ? 'User activated.' : 'User deactivated.',
         ])->back();
     }
 
@@ -64,7 +64,7 @@ class UserController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => "User deleted."
+            'message' => 'User deleted.',
         ]);
 
         return redirect()->route('admin.users.index');

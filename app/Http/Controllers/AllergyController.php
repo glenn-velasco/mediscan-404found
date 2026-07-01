@@ -6,8 +6,8 @@ use App\Http\Requests\StoreAllergyRequest;
 use App\Http\Requests\UpdateAllergyRequest;
 use App\Models\Allergy;
 use App\Services\User\AllergyService;
-use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class AllergyController extends Controller
 {

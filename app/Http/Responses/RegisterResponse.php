@@ -2,7 +2,6 @@
 
 namespace App\Http\Responses;
 
-use App\Enums\Role;
 use Illuminate\Http\RedirectResponse;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 

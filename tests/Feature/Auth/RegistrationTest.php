@@ -11,13 +11,13 @@ beforeEach(function () {
 
     $this->validPayload = function (array $overrides = []): array {
         return array_merge([
-            'email'                 => 'test@example.com',
-            'password'              => 'password',
+            'email' => 'test@example.com',
+            'password' => 'password',
             'password_confirmation' => 'password',
-            'first_name'            => 'Juan',
-            'last_name'             => 'dela Cruz',
-            'date_of_birth'         => '1990-06-15',
-            'gender'                => 'male',
+            'first_name' => 'Juan',
+            'last_name' => 'dela Cruz',
+            'date_of_birth' => '1990-06-15',
+            'gender' => 'male',
         ], $overrides);
     };
 });
@@ -43,12 +43,12 @@ it('new users are assigned the user role', function () {
 
 it('registration creates medical information', function () {
     $this->post(route('register.store'), ($this->validPayload)([
-        'first_name'    => 'Maria',
-        'last_name'     => 'Santos',
+        'first_name' => 'Maria',
+        'last_name' => 'Santos',
         'date_of_birth' => '1995-03-20',
-        'gender'        => 'female',
-        'blood_type'    => 'A+',
-        'religion'      => 'Catholic',
+        'gender' => 'female',
+        'blood_type' => 'A+',
+        'religion' => 'Catholic',
     ]));
 
     $user = User::where('email', 'test@example.com')->first();
@@ -65,7 +65,7 @@ it('registration creates medical information', function () {
 it('registration sets user name from first and last name', function () {
     $this->post(route('register.store'), ($this->validPayload)([
         'first_name' => 'Pedro',
-        'last_name'  => 'Reyes',
+        'last_name' => 'Reyes',
     ]));
 
     $user = User::where('email', 'test@example.com')->first();
@@ -74,19 +74,19 @@ it('registration sets user name from first and last name', function () {
 
 it('registration with optional fields', function () {
     $this->post(route('register.store'), ($this->validPayload)([
-        'middle_name'                          => 'Maria',
-        'suffix'                               => 'Jr.',
-        'phone_country_code'                   => 'PH',
-        'phone'                                => '+639171234567',
-        'emergency_contact_name'               => 'Ana Reyes',
-        'emergency_contact_relationship'       => 'Spouse',
+        'middle_name' => 'Maria',
+        'suffix' => 'Jr.',
+        'phone_country_code' => 'PH',
+        'phone' => '+639171234567',
+        'emergency_contact_name' => 'Ana Reyes',
+        'emergency_contact_relationship' => 'Spouse',
         'emergency_contact_phone_country_code' => 'PH',
-        'emergency_contact_phone'              => '+639189876543',
-        'no_blood_transfusion'                 => true,
+        'emergency_contact_phone' => '+639189876543',
+        'no_blood_transfusion' => true,
     ]))->assertRedirect(route('dashboard'));
 
     $user = User::where('email', 'test@example.com')->first();
-    $mi   = $user->medicalInformation;
+    $mi = $user->medicalInformation;
 
     $this->assertEquals('Maria', $mi->middle_name);
     $this->assertEquals('Jr.', $mi->suffix);

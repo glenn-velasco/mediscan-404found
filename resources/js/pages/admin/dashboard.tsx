@@ -1,9 +1,8 @@
 import { Head } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import admin from '@/routes/admin';
 import StatCard from '@/components/stat-card';
+import admin from '@/routes/admin';
 
 interface DashboardStats {
     total: number;
@@ -25,13 +24,15 @@ export default function AdminDashboard({
         (payload) => setStats(payload.stats),
     );
 
-    const adminCount = stats.by_role && typeof stats.by_role === 'object' 
-        ? (stats.by_role['admin'] ?? 0) 
-        : 0;
+    const adminCount =
+        stats.by_role && typeof stats.by_role === 'object'
+            ? (stats.by_role['admin'] ?? 0)
+            : 0;
 
-    const userCount = stats.by_role && typeof stats.by_role === 'object' 
-        ? (stats.by_role['user'] ?? 0) 
-        : 0;
+    const userCount =
+        stats.by_role && typeof stats.by_role === 'object'
+            ? (stats.by_role['user'] ?? 0)
+            : 0;
 
     return (
         <>
@@ -40,10 +41,7 @@ export default function AdminDashboard({
                 <div className="grid auto-rows-min gap-4 md:grid-cols-3">
                     <StatCard title="Total Accounts" value={stats.total} />
                     <StatCard title="Total Users" value={userCount} />
-                    <StatCard 
-                        title="Total Admins" 
-                        value={adminCount} 
-                    />
+                    <StatCard title="Total Admins" value={adminCount} />
                     <StatCard title="Active" value={stats.active} />
                     <StatCard title="Deactivated" value={stats.deactivated} />
                 </div>

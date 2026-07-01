@@ -1,6 +1,5 @@
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { roleOptions } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +11,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import admin from '@/routes/admin';
+import { roleOptions } from '@/types';
 
 interface UserDetail {
     id: number;
@@ -53,12 +53,20 @@ export default function UserShow({ user }: Props) {
                         <div className="flex items-center justify-between px-6 py-4">
                             <div className="space-y-1">
                                 <p className="font-medium">{user.name}</p>
-                                <p className="text-sm text-muted-foreground">{user.email}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {user.email}
+                                </p>
                                 {user.created_at && (
-                                    <p className="text-sm text-muted-foreground">Joined {user.created_at}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        Joined {user.created_at}
+                                    </p>
                                 )}
                             </div>
-                            <Badge variant={user.is_active ? 'default' : 'secondary'}>
+                            <Badge
+                                variant={
+                                    user.is_active ? 'default' : 'secondary'
+                                }
+                            >
                                 {user.is_active ? 'Active' : 'Deactivated'}
                             </Badge>
                         </div>
@@ -72,22 +80,33 @@ export default function UserShow({ user }: Props) {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {roleOptions.map((option) => (
-                                            <SelectItem key={option.value} value={option.value}>
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
                                                 {option.label}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <Button onClick={updateRole} disabled={role === '' || role === user.role}>
+                                <Button
+                                    onClick={updateRole}
+                                    disabled={role === '' || role === user.role}
+                                >
                                     Save role
                                 </Button>
                             </div>
                         </div>
 
                         <div className="px-6 py-4">
-                            <p className="mb-2 text-sm font-medium">Account actions</p>
+                            <p className="mb-2 text-sm font-medium">
+                                Account actions
+                            </p>
                             <div className="flex gap-2">
-                                <Button variant="outline" onClick={toggleActivation}>
+                                <Button
+                                    variant="outline"
+                                    onClick={toggleActivation}
+                                >
                                     {user.is_active ? 'Deactivate' : 'Activate'}
                                 </Button>
                                 <Button variant="destructive" onClick={destroy}>
@@ -106,6 +125,9 @@ UserShow.layout = ({ user }: Props) => ({
     breadcrumbs: [
         { title: 'Dashboard', href: admin.dashboard() },
         { title: 'Users', href: admin.users.index() },
-        { title: user.full_name ?? user.email, href: admin.users.show(user.id) },
+        {
+            title: user.full_name ?? user.email,
+            href: admin.users.show(user.id),
+        },
     ],
 });

@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
+import { Eye } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Paginated, Role, roleOptions } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import admin from '@/routes/admin';
-import { Eye } from 'lucide-react';
+import { roleOptions } from '@/types';
+import type { Paginated, Role } from '@/types';
 
 interface UserListItem {
     id: number;
@@ -31,7 +32,7 @@ interface IndexProps {
 
 export default function Index({ users, filters }: IndexProps) {
     const [search, setSearch] = useState(filters.search ?? '');
-    const [role, setRole]     = useState(filters.role ?? '');
+    const [role, setRole] = useState(filters.role ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
 
     useEcho('admin-dashboard', '.UserRegistered', () => router.reload());
@@ -41,10 +42,15 @@ export default function Index({ users, filters }: IndexProps) {
         const timer = setTimeout(() => {
             router.get(
                 admin.users.index().url,
-                { search: search || undefined, role: role || undefined, status: status || undefined },
+                {
+                    search: search || undefined,
+                    role: role || undefined,
+                    status: status || undefined,
+                },
                 { preserveState: true, replace: true },
             );
         }, 350);
+
         return () => clearTimeout(timer);
     }, [search, role, status]);
 
@@ -67,7 +73,10 @@ export default function Index({ users, filters }: IndexProps) {
                             <SelectContent>
                                 <SelectItem value="">All roles</SelectItem>
                                 {roleOptions.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value}>
+                                    <SelectItem
+                                        key={opt.value}
+                                        value={opt.value}
+                                    >
                                         {opt.label}
                                     </SelectItem>
                                 ))}
@@ -80,7 +89,9 @@ export default function Index({ users, filters }: IndexProps) {
                             <SelectContent>
                                 <SelectItem value="">All statuses</SelectItem>
                                 <SelectItem value="active">Active</SelectItem>
-                                <SelectItem value="deactivated">Deactivated</SelectItem>
+                                <SelectItem value="deactivated">
+                                    Deactivated
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -93,7 +104,9 @@ export default function Index({ users, filters }: IndexProps) {
                                 <th className="px-4 py-3 font-medium">Name</th>
                                 <th className="px-4 py-3 font-medium">Email</th>
                                 <th className="px-4 py-3 font-medium">Role</th>
-                                <th className="px-4 py-3 font-medium">Status</th>
+                                <th className="px-4 py-3 font-medium">
+                                    Status
+                                </th>
                                 <th className="px-4 py-3" />
                             </tr>
                         </thead>
@@ -103,24 +116,44 @@ export default function Index({ users, filters }: IndexProps) {
                                     key={user.id}
                                     className="border-t border-sidebar-border/70 dark:border-sidebar-border"
                                 >
-                                    <td className="px-4 py-3">{user.name ?? '—'}</td>
-                                    <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
-                                    <td className="px-4 py-3 capitalize">{user.role ?? '—'}</td>
                                     <td className="px-4 py-3">
-                                        <Badge variant={user.is_active ? 'default' : 'secondary'}>
-                                            {user.is_active ? 'Active' : 'Deactivated'}
+                                        {user.name ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {user.email}
+                                    </td>
+                                    <td className="px-4 py-3 capitalize">
+                                        {user.role ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <Badge
+                                            variant={
+                                                user.is_active
+                                                    ? 'default'
+                                                    : 'secondary'
+                                            }
+                                        >
+                                            {user.is_active
+                                                ? 'Active'
+                                                : 'Deactivated'}
                                         </Badge>
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <Link href={admin.users.show(user.id)}>
-                                            <Eye className='text-muted-foreground hover:text-foreground' size={'1rem'} />
+                                            <Eye
+                                                className="text-muted-foreground hover:text-foreground"
+                                                size={'1rem'}
+                                            />
                                         </Link>
                                     </td>
                                 </tr>
                             ))}
                             {users.data.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
+                                    <td
+                                        colSpan={5}
+                                        className="px-4 py-6 text-center text-muted-foreground"
+                                    >
                                         No users found.
                                     </td>
                                 </tr>
@@ -140,7 +173,9 @@ export default function Index({ users, filters }: IndexProps) {
                             >
                                 <Link
                                     href={link.url}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                    dangerouslySetInnerHTML={{
+                                        __html: link.label,
+                                    }}
                                     preserveScroll
                                 />
                             </Button>

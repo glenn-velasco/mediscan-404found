@@ -3,8 +3,11 @@
 namespace App\Repositories\Eloquent;
 
 use App\Models\UserInvitation;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 
+/**
+ * @extends BaseRepository<UserInvitation>
+ */
 class UserInvitationRepository extends BaseRepository
 {
     public function __construct(UserInvitation $userInvitation)
@@ -12,9 +15,13 @@ class UserInvitationRepository extends BaseRepository
         parent::__construct($userInvitation);
     }
 
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, UserInvitation>
+     */
     public function paginate(int $perPage, array $filters = []): LengthAwarePaginator
     {
-        return $this->model->query()
+        return $this->model->newQuery()
             ->with(['role:id,name', 'invitedBy:id,name'])
             ->latest()
             ->paginate($perPage);
@@ -37,7 +44,7 @@ class UserInvitationRepository extends BaseRepository
 
     public function pruneExpired(): int
     {
-        return $this->model->query()
+        return $this->model->newQuery()
             ->whereNull('accepted_at')
             ->where('expires_at', '<', now())
             ->delete();
@@ -49,22 +56,22 @@ class UserInvitationRepository extends BaseRepository
         $status = match (true) {
             $invitation->accepted_at !== null => 'accepted',
             $invitation->expires_at->isPast() => 'expired',
-            default                           => 'pending',
+            default => 'pending',
         };
 
         return [
-            'id'          => $invitation->id,
-            'email'       => $invitation->email,
-            'role'        => $invitation->role?->name,
-            'status'      => $status,
-            'invited_by'  => $invitation->invitedBy?->name,
-            'expires_at'  => $invitation->expires_at->toDateString(),
+            'id' => $invitation->id,
+            'email' => $invitation->email,
+            'role' => $invitation->role?->name,
+            'status' => $status,
+            'invited_by' => $invitation->invitedBy?->name,
+            'expires_at' => $invitation->expires_at->toDateString(),
             'accepted_at' => $invitation->accepted_at?->toDateString(),
         ];
     }
 
-    public function updateEmail(string $oldEmail, string $newEmail)
+    public function updateEmail(string $oldEmail, string $newEmail): int
     {
-        return $this->model->query()->whereEmail($oldEmail)->update(['email' => $newEmail]);
+        return $this->model->newQuery()->whereEmail($oldEmail)->update(['email' => $newEmail]);
     }
 }

@@ -6,8 +6,8 @@ use App\Http\Requests\StoreEmergencyContactRequest;
 use App\Http\Requests\UpdateEmergencyContactRequest;
 use App\Models\EmergencyContact;
 use App\Services\User\EmergencyContactService;
-use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class EmergencyContactController extends Controller
 {

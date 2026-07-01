@@ -11,7 +11,11 @@ interface AcceptInvitationProps {
     passwordRules?: string;
 }
 
-export default function AcceptInvitation({ email, token, passwordRules }: AcceptInvitationProps) {
+export default function AcceptInvitation({
+    email,
+    token,
+    passwordRules,
+}: AcceptInvitationProps) {
     const { data, setData, post, processing, errors } = useForm({
         password: '',
         password_confirmation: '',

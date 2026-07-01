@@ -15,6 +15,7 @@ class AllergyService
         private MedicalInfoService $medicalInfoService,
     ) {}
 
+    /** @param  array<string, mixed>  $data */
     public function create(User $user, array $data): Allergy
     {
         $medicalInfo = $this->medicalInfoRepository->findByUser($user);
@@ -28,6 +29,7 @@ class AllergyService
         return $allergy;
     }
 
+    /** @param  array<string, mixed>  $data */
     public function update(User $user, Allergy $allergy, array $data): bool
     {
         $this->authorizeOwnership($user, $allergy);

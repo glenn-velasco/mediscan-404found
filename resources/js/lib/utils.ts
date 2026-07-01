@@ -12,7 +12,6 @@ export function toUrl(url: NonNullable<InertiaLinkProps['href']>): string {
 }
 
 export function formatDate(dateStr: string | null) {
-
     if (!dateStr) {
         return '—';
     }

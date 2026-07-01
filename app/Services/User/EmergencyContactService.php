@@ -16,6 +16,7 @@ class EmergencyContactService
         private MedicalInfoService $medicalInfoService,
     ) {}
 
+    /** @param  array<string, mixed>  $data */
     public function create(User $user, array $data): EmergencyContact
     {
         $medicalInfo = $this->medicalInfoRepository->findByUser($user);
@@ -39,6 +40,7 @@ class EmergencyContactService
         return $contact;
     }
 
+    /** @param  array<string, mixed>  $data */
     public function update(User $user, EmergencyContact $contact, array $data): bool
     {
         $this->authorizeOwnership($user, $contact);

@@ -5,6 +5,9 @@ namespace App\Repositories\Eloquent;
 use App\Models\MedicalInformation;
 use App\Models\User;
 
+/**
+ * @extends BaseRepository<MedicalInformation>
+ */
 class MedicalInformationRepository extends BaseRepository
 {
     public function __construct(MedicalInformation $medicalInformation)
@@ -22,6 +25,7 @@ class MedicalInformationRepository extends BaseRepository
         return $user->medicalInformation()->with(['allergies', 'emergencyContacts'])->first();
     }
 
+    /** @param  array<string, mixed>  $data */
     public function upsertForUser(User $user, array $data): MedicalInformation
     {
         return $user->medicalInformation()->updateOrCreate(

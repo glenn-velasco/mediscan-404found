@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\InviteUserRequest;
 use App\Models\UserInvitation;
 use App\Services\User\InvitationService;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class InvitationController extends Controller
 {
@@ -33,7 +33,7 @@ class InvitationController extends Controller
 
         return Inertia::flash('toast', [
             'type' => 'success',
-            'message' => "Invitation resent to {$invitation->email}."    
+            'message' => "Invitation resent to {$invitation->email}.",
         ])->back();
     }
 
@@ -42,7 +42,7 @@ class InvitationController extends Controller
         $this->userInvitationService->delete($invitation);
 
         return Inertia::flash('toast', [
-            'type'    => 'success',
+            'type' => 'success',
             'message' => 'Invitation deleted.',
         ])->back();
     }
@@ -52,7 +52,7 @@ class InvitationController extends Controller
         $count = $this->userInvitationService->pruneExpired();
 
         return Inertia::flash('toast', [
-            'type'    => 'success',
+            'type' => 'success',
             'message' => "{$count} expired invitation(s) pruned.",
         ])->back();
     }
@@ -64,7 +64,7 @@ class InvitationController extends Controller
         $this->userInvitationService->invite($email, $role, $days, Auth::user());
 
         Inertia::flash('toast', [
-            'type'    => 'success',
+            'type' => 'success',
             'message' => "Invitation sent to {$email}.",
         ]);
 

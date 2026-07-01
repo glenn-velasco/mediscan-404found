@@ -37,7 +37,7 @@ class InviteUserRequest extends FormRequest
                     }
                 },
             ],
-            'role'            => ['required', 'string', new Enum(Role::class)],
+            'role' => ['required', 'string', new Enum(Role::class)],
             'expires_in_days' => ['required', 'integer', Rule::in([1, 3, 7, 14, 30])],
         ];
     }

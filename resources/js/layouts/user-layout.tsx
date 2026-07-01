@@ -1,6 +1,7 @@
-import { Link, router, usePage } from '@inertiajs/react';
-import { ActivitySquare, ChevronsUpDown, LogOut, Settings } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 import type { ReactNode } from 'react';
+import AppLogo from '@/components/app-logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     DropdownMenu,
@@ -13,7 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useInitials } from '@/hooks/use-initials';
 import { dashboard, logout } from '@/routes';
-import AppLogo from '@/components/app-logo';
 import { edit as editAccount } from '@/routes/account';
 
 export default function UsersLayout({ children }: { children: ReactNode }) {
@@ -32,10 +32,13 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                     {/* User menu */}
                     {user && (
                         <DropdownMenu>
-                            <DropdownMenuTrigger className="flex items-center gap-2 rounded-full p-1 outline-none ring-ring transition-shadow hover:bg-accent focus-visible:ring-2">
+                            <DropdownMenuTrigger className="flex items-center gap-2 rounded-full p-1 ring-ring transition-shadow outline-none hover:bg-accent focus-visible:ring-2">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={user.avatar} alt={user.name ?? undefined} />
-                                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                                    <AvatarImage
+                                        src={user.avatar}
+                                        alt={user.name ?? undefined}
+                                    />
+                                    <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
                                         {getInitials(user.name ?? user.email)}
                                     </AvatarFallback>
                                 </Avatar>
@@ -48,21 +51,33 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                 <DropdownMenuLabel className="p-0 font-normal">
                                     <div className="flex items-center gap-2 px-2 py-2">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={user.avatar} alt={user.name ?? undefined} />
-                                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                                                {getInitials(user.name ?? user.email)}
+                                            <AvatarImage
+                                                src={user.avatar}
+                                                alt={user.name ?? undefined}
+                                            />
+                                            <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
+                                                {getInitials(
+                                                    user.name ?? user.email,
+                                                )}
                                             </AvatarFallback>
                                         </Avatar>
                                         <div className="grid flex-1 text-left text-sm leading-tight">
-                                            <span className="truncate font-medium">{user.name ?? '—'}</span>
-                                            <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                                            <span className="truncate font-medium">
+                                                {user.name ?? '—'}
+                                            </span>
+                                            <span className="truncate text-xs text-muted-foreground">
+                                                {user.email}
+                                            </span>
                                         </div>
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuGroup>
                                     <DropdownMenuItem asChild>
-                                        <Link href={editAccount()} className="cursor-pointer">
+                                        <Link
+                                            href={editAccount()}
+                                            className="cursor-pointer"
+                                        >
                                             <Settings className="mr-2 h-4 w-4" />
                                             Settings
                                         </Link>
@@ -70,7 +85,11 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                 </DropdownMenuGroup>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
-                                    <Link href={logout()} as="button" className="w-full cursor-pointer">
+                                    <Link
+                                        href={logout()}
+                                        as="button"
+                                        className="w-full cursor-pointer"
+                                    >
                                         <LogOut className="mr-2 h-4 w-4" />
                                         Log out
                                     </Link>

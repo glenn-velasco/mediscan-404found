@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Guarded('id')]
 class MedicalAttachment extends Model
 {
-
     protected function casts(): array
     {
         return [

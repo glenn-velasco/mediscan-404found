@@ -5,10 +5,10 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import AdaptiveAppLayout from '@/layouts/adaptive-app-layout';
 import AppLayout from '@/layouts/app-layout';
-import AuthLayout from '@/layouts/auth-layout';
 import AuthWideLayout from '@/layouts/auth/auth-wide-layout';
-import UsersLayout from '@/layouts/user-layout';
+import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import UsersLayout from '@/layouts/user-layout';
 
 configureEcho({
     broadcaster: 'reverb',

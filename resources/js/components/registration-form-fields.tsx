@@ -6,7 +6,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { BloodType } from '@/types';
 
@@ -33,7 +39,10 @@ export interface RegistrationFormData {
 
 interface Props {
     data: RegistrationFormData;
-    setData: <K extends keyof RegistrationFormData>(key: K, value: RegistrationFormData[K]) => void;
+    setData: <K extends keyof RegistrationFormData>(
+        key: K,
+        value: RegistrationFormData[K],
+    ) => void;
     errors: Partial<Record<string, string>>;
     email: string;
     onEmailChange?: (value: string) => void;
@@ -43,25 +52,36 @@ interface Props {
 function SectionHeading({ children }: { children: ReactNode }) {
     return (
         <div className="col-span-2">
-            <p className="text-sm font-medium text-muted-foreground">{children}</p>
+            <p className="text-sm font-medium text-muted-foreground">
+                {children}
+            </p>
             <Separator className="mt-2" />
         </div>
     );
 }
 
-export function RegistrationFormFields({ data, setData, errors, email, onEmailChange, passwordRules }: Props) {
+export function RegistrationFormFields({
+    data,
+    setData,
+    errors,
+    email,
+    onEmailChange,
+    passwordRules,
+}: Props) {
     const editable = onEmailChange !== undefined;
 
     return (
         <Card>
             <CardContent className="grid grid-cols-2 items-start gap-x-4 gap-y-4 pt-6">
-
                 {/* Account */}
                 <SectionHeading>Account</SectionHeading>
 
                 <div className="col-span-2 grid gap-1.5">
                     <Label htmlFor="email">
-                        Email address {editable && <span className="text-destructive">*</span>}
+                        Email address{' '}
+                        {editable && (
+                            <span className="text-destructive">*</span>
+                        )}
                     </Label>
                     {editable ? (
                         <>
@@ -89,26 +109,35 @@ export function RegistrationFormFields({ data, setData, errors, email, onEmailCh
                 </div>
 
                 <div className="grid gap-1.5">
-                    <Label htmlFor="password">Password <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="password">
+                        Password <span className="text-destructive">*</span>
+                    </Label>
                     <PasswordInput
                         id="password"
                         autoFocus={!editable}
                         autoComplete="new-password"
                         value={data.password}
                         onChange={(e) => setData('password', e.target.value)}
-                        placeholder={editable ? 'Password' : 'Choose a password'}
+                        placeholder={
+                            editable ? 'Password' : 'Choose a password'
+                        }
                         passwordrules={passwordRules}
                     />
                     <InputError message={errors.password} />
                 </div>
 
                 <div className="grid gap-1.5">
-                    <Label htmlFor="password_confirmation">Confirm password <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="password_confirmation">
+                        Confirm password{' '}
+                        <span className="text-destructive">*</span>
+                    </Label>
                     <PasswordInput
                         id="password_confirmation"
                         autoComplete="new-password"
                         value={data.password_confirmation}
-                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                        onChange={(e) =>
+                            setData('password_confirmation', e.target.value)
+                        }
                         placeholder="Confirm password"
                         passwordrules={passwordRules}
                     />
@@ -119,7 +148,9 @@ export function RegistrationFormFields({ data, setData, errors, email, onEmailCh
                 <SectionHeading>Personal Information</SectionHeading>
 
                 <div className="grid gap-1.5">
-                    <Label htmlFor="first_name">First name <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="first_name">
+                        First name <span className="text-destructive">*</span>
+                    </Label>
                     <Input
                         id="first_name"
                         value={data.first_name}
@@ -141,7 +172,9 @@ export function RegistrationFormFields({ data, setData, errors, email, onEmailCh
                 </div>
 
                 <div className="grid gap-1.5">
-                    <Label htmlFor="last_name">Last name <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="last_name">
+                        Last name <span className="text-destructive">*</span>
+                    </Label>
                     <Input
                         id="last_name"
                         value={data.last_name}
@@ -163,20 +196,32 @@ export function RegistrationFormFields({ data, setData, errors, email, onEmailCh
                 </div>
 
                 <div className="grid gap-1.5">
-                    <Label htmlFor="date_of_birth">Date of birth <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="date_of_birth">
+                        Date of birth{' '}
+                        <span className="text-destructive">*</span>
+                    </Label>
                     <Input
                         id="date_of_birth"
                         type="date"
                         value={data.date_of_birth}
-                        onChange={(e) => setData('date_of_birth', e.target.value)}
+                        onChange={(e) =>
+                            setData('date_of_birth', e.target.value)
+                        }
                     />
                     <InputError message={errors.date_of_birth} />
                 </div>
 
                 <div className="grid gap-1.5">
-                    <Label htmlFor="gender">Gender <span className="text-destructive">*</span></Label>
-                    <Select value={data.gender} onValueChange={(v) => setData('gender', v)}>
-                        <SelectTrigger id="gender"><SelectValue placeholder="Select…" /></SelectTrigger>
+                    <Label htmlFor="gender">
+                        Gender <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                        value={data.gender}
+                        onValueChange={(v) => setData('gender', v)}
+                    >
+                        <SelectTrigger id="gender">
+                            <SelectValue placeholder="Select…" />
+                        </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="male">Male</SelectItem>
                             <SelectItem value="female">Female</SelectItem>
@@ -194,7 +239,9 @@ export function RegistrationFormFields({ data, setData, errors, email, onEmailCh
                         idPrefix="phone"
                         countryValue={data.phone_country_code}
                         phoneValue={data.phone}
-                        onCountryChange={(v) => setData('phone_country_code', v)}
+                        onCountryChange={(v) =>
+                            setData('phone_country_code', v)
+                        }
                         onPhoneChange={(v) => setData('phone', v)}
                         countryError={errors.phone_country_code}
                         phoneError={errors.phone}
@@ -203,12 +250,21 @@ export function RegistrationFormFields({ data, setData, errors, email, onEmailCh
 
                 <div className="grid gap-1.5">
                     <Label htmlFor="blood_type">Blood type</Label>
-                    <Select value={data.blood_type} onValueChange={(v) => setData('blood_type', v)}>
-                        <SelectTrigger id="blood_type"><SelectValue placeholder="Unknown" /></SelectTrigger>
+                    <Select
+                        value={data.blood_type}
+                        onValueChange={(v) => setData('blood_type', v)}
+                    >
+                        <SelectTrigger id="blood_type">
+                            <SelectValue placeholder="Unknown" />
+                        </SelectTrigger>
                         <SelectContent>
-                            {(Object.values(BloodType) as BloodType[]).map((bt) => (
-                                <SelectItem key={bt} value={bt}>{bt}</SelectItem>
-                            ))}
+                            {(Object.values(BloodType) as BloodType[]).map(
+                                (bt) => (
+                                    <SelectItem key={bt} value={bt}>
+                                        {bt}
+                                    </SelectItem>
+                                ),
+                            )}
                         </SelectContent>
                     </Select>
                     <InputError message={errors.blood_type} />
@@ -238,9 +294,14 @@ export function RegistrationFormFields({ data, setData, errors, email, onEmailCh
                     <Checkbox
                         id="no_blood_transfusion"
                         checked={data.no_blood_transfusion}
-                        onCheckedChange={(v) => setData('no_blood_transfusion', Boolean(v))}
+                        onCheckedChange={(v) =>
+                            setData('no_blood_transfusion', Boolean(v))
+                        }
                     />
-                    <Label htmlFor="no_blood_transfusion" className="cursor-pointer font-normal">
+                    <Label
+                        htmlFor="no_blood_transfusion"
+                        className="cursor-pointer font-normal"
+                    >
                         No blood transfusion (religious / personal objection)
                     </Label>
                 </div>
@@ -253,7 +314,9 @@ export function RegistrationFormFields({ data, setData, errors, email, onEmailCh
                     <Input
                         id="ec_name"
                         value={data.emergency_contact_name}
-                        onChange={(e) => setData('emergency_contact_name', e.target.value)}
+                        onChange={(e) =>
+                            setData('emergency_contact_name', e.target.value)
+                        }
                         autoComplete="off"
                     />
                     <InputError message={errors.emergency_contact_name} />
@@ -264,10 +327,17 @@ export function RegistrationFormFields({ data, setData, errors, email, onEmailCh
                     <Input
                         id="ec_relationship"
                         value={data.emergency_contact_relationship}
-                        onChange={(e) => setData('emergency_contact_relationship', e.target.value)}
+                        onChange={(e) =>
+                            setData(
+                                'emergency_contact_relationship',
+                                e.target.value,
+                            )
+                        }
                         placeholder="e.g. Spouse, Parent"
                     />
-                    <InputError message={errors.emergency_contact_relationship} />
+                    <InputError
+                        message={errors.emergency_contact_relationship}
+                    />
                 </div>
 
                 <div className="col-span-2 grid gap-1.5">
@@ -276,13 +346,18 @@ export function RegistrationFormFields({ data, setData, errors, email, onEmailCh
                         idPrefix="ec_phone"
                         countryValue={data.emergency_contact_phone_country_code}
                         phoneValue={data.emergency_contact_phone}
-                        onCountryChange={(v) => setData('emergency_contact_phone_country_code', v)}
-                        onPhoneChange={(v) => setData('emergency_contact_phone', v)}
-                        countryError={errors.emergency_contact_phone_country_code}
+                        onCountryChange={(v) =>
+                            setData('emergency_contact_phone_country_code', v)
+                        }
+                        onPhoneChange={(v) =>
+                            setData('emergency_contact_phone', v)
+                        }
+                        countryError={
+                            errors.emergency_contact_phone_country_code
+                        }
                         phoneError={errors.emergency_contact_phone}
                     />
                 </div>
-
             </CardContent>
         </Card>
     );

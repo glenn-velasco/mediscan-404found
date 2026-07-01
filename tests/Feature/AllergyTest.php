@@ -15,10 +15,10 @@ beforeEach(function () {
         $user->assignRole(Role::User->value);
 
         $user->medicalInformation()->create([
-            'first_name'           => 'Ana',
-            'last_name'            => 'Reyes',
-            'date_of_birth'        => '1992-04-10',
-            'gender'               => Gender::Female,
+            'first_name' => 'Ana',
+            'last_name' => 'Reyes',
+            'date_of_birth' => '1992-04-10',
+            'gender' => Gender::Female,
             'no_blood_transfusion' => false,
         ]);
 
@@ -56,9 +56,9 @@ it('user can create allergy for own record', function () {
 
     $this->assertDatabaseHas('allergies', [
         'medical_information_id' => $user->medicalInformation->id,
-        'allergen'               => 'Penicillin',
-        'reaction'               => 'Rash',
-        'severity'               => 'moderate',
+        'allergen' => 'Penicillin',
+        'reaction' => 'Rash',
+        'severity' => 'moderate',
     ]);
 });
 
@@ -88,7 +88,7 @@ it('create allergy validation errors', function () {
 // --- Update ---
 
 it('user can update own allergy', function () {
-    $user    = ($this->userWithMedicalInfo)();
+    $user = ($this->userWithMedicalInfo)();
     $allergy = ($this->allergyFor)($user);
 
     $this->actingAs($user)
@@ -100,7 +100,7 @@ it('user can update own allergy', function () {
         ->assertRedirect();
 
     $this->assertDatabaseHas('allergies', [
-        'id'       => $allergy->id,
+        'id' => $allergy->id,
         'allergen' => 'Tree nuts',
         'reaction' => 'Swelling',
         'severity' => 'life-threatening',
@@ -108,8 +108,8 @@ it('user can update own allergy', function () {
 });
 
 it('user cannot update another users allergy', function () {
-    $owner   = ($this->userWithMedicalInfo)();
-    $other   = ($this->userWithMedicalInfo)();
+    $owner = ($this->userWithMedicalInfo)();
+    $other = ($this->userWithMedicalInfo)();
     $allergy = ($this->allergyFor)($owner);
 
     $this->actingAs($other)
@@ -123,7 +123,7 @@ it('user cannot update another users allergy', function () {
 });
 
 it('update allergy validation errors', function () {
-    $user    = ($this->userWithMedicalInfo)();
+    $user = ($this->userWithMedicalInfo)();
     $allergy = ($this->allergyFor)($user);
 
     $this->actingAs($user)
@@ -137,7 +137,7 @@ it('update allergy validation errors', function () {
 // --- Delete ---
 
 it('user can delete own allergy', function () {
-    $user    = ($this->userWithMedicalInfo)();
+    $user = ($this->userWithMedicalInfo)();
     $allergy = ($this->allergyFor)($user);
 
     $this->actingAs($user)
@@ -148,8 +148,8 @@ it('user can delete own allergy', function () {
 });
 
 it('user cannot delete another users allergy', function () {
-    $owner   = ($this->userWithMedicalInfo)();
-    $other   = ($this->userWithMedicalInfo)();
+    $owner = ($this->userWithMedicalInfo)();
+    $other = ($this->userWithMedicalInfo)();
     $allergy = ($this->allergyFor)($owner);
 
     $this->actingAs($other)
