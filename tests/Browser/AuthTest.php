@@ -6,7 +6,7 @@ use Database\Seeders\RoleAndPermissionSeeder;
 
 it('shows the login page', function () {
     visit(route('login'))
-        ->assertSee('Sign In')
+        ->assertSee('Log in to your account')
         ->assertNoJavascriptErrors();
 });
 
@@ -18,8 +18,8 @@ it('can log in as a patient', function () {
     visit(route('login'))
         ->type('email', $user->email)
         ->type('password', 'password')
-        ->press('Sign In')
-        ->assertSee('Dashboard')
+        ->press('Log in')
+        ->assertSee('No health record yet')
         ->assertNoJavascriptErrors();
 });
 
@@ -27,7 +27,7 @@ it('shows validation error for wrong password', function () {
     visit(route('login'))
         ->type('email', 'nobody@example.com')
         ->type('password', 'wrong')
-        ->press('Sign In')
+        ->press('Log in')
         ->assertSee('credentials')
         ->assertNoJavascriptErrors();
 });
