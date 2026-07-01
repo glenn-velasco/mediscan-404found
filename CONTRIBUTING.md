@@ -73,6 +73,22 @@ feat(tests): migrate PHPUnit test suite to Pest v4
 
 ## Workflow
 
+### First-Time Setup
+
+```bash
+composer run setup
+```
+
+Installs PHP and Node dependencies, copies `.env.example`, generates the app key, runs migrations, builds assets, and configures the shared git hooks. Run this once after cloning.
+
+If you skipped `setup` or want to enable hooks manually:
+
+```bash
+composer run hooks:install
+```
+
+This sets `core.hooksPath` to `.githooks/`, activating the pre-push hook that runs `composer run ci:check` before every push.
+
 ### Starting New Work
 
 ```bash
