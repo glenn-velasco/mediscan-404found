@@ -30,19 +30,30 @@ jobs:
         with:
           php-version: '8.4'
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487ba4e8f9b0ec55a3d4c30e88ee53bd43a2ab # v4
+        with:
+          version: latest
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
       - name: Install Dependencies
         run: |
           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-          npm install
+          pnpm install
 
       - name: Run Pint
         run: composer lint
 
       - name: Format Frontend
-        run: npm run format
+        run: pnpm run format
 
       - name: Lint Frontend
-        run: npm run lint
+        run: pnpm run lint
 
       # - name: Commit Changes
       #   uses: stefanzweifel/git-auto-commit-action@v7
