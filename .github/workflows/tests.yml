@@ -37,11 +37,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-      mailpit:
-        image: axllent/mailpit:latest
-        ports:
-          - 1025:1025
-          - 8025:8025
     env:
       DB_CONNECTION: pgsql
       DB_HOST: 127.0.0.1
@@ -49,12 +44,6 @@ jobs:
       DB_DATABASE: testing
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
-      MAIL_MAILER: smtp
-      MAIL_SCHEME: 'null'
-      MAIL_HOST: 127.0.0.1
-      MAIL_PORT: 1025
-      MAIL_USERNAME: 'null'
-      MAIL_PASSWORD: 'null'
 
     steps:
       - name: Checkout code
@@ -119,11 +108,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
-      mailpit:
-        image: axllent/mailpit:latest
-        ports:
-          - 1025:1025
-          - 8025:8025
     env:
       DB_CONNECTION: pgsql
       DB_HOST: 127.0.0.1
@@ -131,12 +115,6 @@ jobs:
       DB_DATABASE: testing
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
-      MAIL_MAILER: smtp
-      MAIL_SCHEME: 'null'
-      MAIL_HOST: 127.0.0.1
-      MAIL_PORT: 1025
-      MAIL_USERNAME: 'null'
-      MAIL_PASSWORD: 'null'
 
     steps:
       - name: Checkout code
