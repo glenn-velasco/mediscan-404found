@@ -6,17 +6,17 @@ use Database\Seeders\RoleAndPermissionSeeder;
 
 it('redirects guests from the dashboard', function () {
     visit(route('dashboard'))
-        ->assertUrlContains('login')
+        ->assertPathContains('login')
         ->assertNoJavascriptErrors();
 });
 
-it('shows the patient dashboard after login', function () {
+it('shows the user the dashboard after login', function () {
     $this->seed(RoleAndPermissionSeeder::class);
     $user = User::factory()->create();
     $user->assignRole(Role::User->value);
     $this->actingAs($user);
 
     visit(route('dashboard'))
-        ->assertSee('Dashboard')
+        ->assertSee('No health record yet')
         ->assertNoJavascriptErrors();
 });

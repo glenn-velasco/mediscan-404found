@@ -4,7 +4,7 @@ use Database\Seeders\RoleAndPermissionSeeder;
 
 it('shows the registration page', function () {
     visit(route('register'))
-        ->assertSee('Register')
+        ->assertSee('Create your account')
         ->assertNoJavascriptErrors();
 });
 
@@ -17,6 +17,6 @@ it('can register a new account', function () {
         ->type('email', 'juan@example.com')
         ->type('password', 'password')
         ->type('password_confirmation', 'password')
-        ->press('Register')
+        ->press('Create account')
         ->assertNoJavascriptErrors();
 });
