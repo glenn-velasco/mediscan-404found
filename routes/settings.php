@@ -17,7 +17,7 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('settings/security', [SecurityController::class, 'edit'])
-        // ->middleware(RequirePassword::class)
+        ->middleware(RequirePassword::class)
         ->name('security.edit');
 
     Route::put('settings/password', [SecurityController::class, 'update'])

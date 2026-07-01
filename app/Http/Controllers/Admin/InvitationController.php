@@ -63,9 +63,11 @@ class InvitationController extends Controller
 
         $this->userInvitationService->invite($email, $role, $days, Auth::user());
 
-        return Inertia::flash('toast', [
-            'type' => 'success',
-            'message' => "Invitation sent to {$email}."    
-        ])->back();
+        Inertia::flash('toast', [
+            'type'    => 'success',
+            'message' => "Invitation sent to {$email}.",
+        ]);
+
+        return redirect()->route('admin.users.index');
     }
 }
