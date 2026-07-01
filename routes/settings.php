@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', '/settings/account');
-    
+
     Route::get('settings/account', [AccountController::class, 'edit'])->name('account.edit');
 
     Route::put('settings/email', [AccountController::class, 'update'])

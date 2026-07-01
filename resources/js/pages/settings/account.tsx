@@ -71,7 +71,9 @@ export default function Account() {
                             type="email"
                             name="email"
                             value={form.data.email}
-                            onChange={(e) => form.setData('email', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('email', e.target.value)
+                            }
                             className="mt-1 block w-full"
                             autoComplete="email"
                             placeholder="you@example.com"
@@ -88,7 +90,14 @@ export default function Account() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <Button disabled={form.processing || form.data.email === user.email}>Save</Button>
+                        <Button
+                            disabled={
+                                form.processing ||
+                                form.data.email === user.email
+                            }
+                        >
+                            Save
+                        </Button>
                     </div>
                 </form>
             </div>
@@ -96,16 +105,23 @@ export default function Account() {
             <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Change email address?</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            Change email address?
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                            You&apos;ll need to verify {form.data.email} before it
-                            becomes active. Your account will show as unverified
-                            until you do.
+                            You&apos;ll need to verify {form.data.email} before
+                            it becomes active. Your account will show as
+                            unverified until you do.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={cancelSubmit}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction disabled={form.processing} onClick={confirmSubmit}>
+                        <AlertDialogCancel onClick={cancelSubmit}>
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            disabled={form.processing}
+                            onClick={confirmSubmit}
+                        >
                             Continue
                         </AlertDialogAction>
                     </AlertDialogFooter>

@@ -21,8 +21,7 @@ export default function VerifyEmail({
 
             {status === 'verification-link-sent' && (
                 <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to your email
-                    address.
+                    A new verification link has been sent to your email address.
                 </div>
             )}
 

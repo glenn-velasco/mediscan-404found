@@ -21,10 +21,10 @@ beforeEach(function () {
         $user->assignRole(Role::User->value);
 
         $user->medicalInformation()->create([
-            'first_name'           => 'Ana',
-            'last_name'            => 'Reyes',
-            'date_of_birth'        => '1992-04-10',
-            'gender'               => Gender::Female,
+            'first_name' => 'Ana',
+            'last_name' => 'Reyes',
+            'date_of_birth' => '1992-04-10',
+            'gender' => Gender::Female,
             'no_blood_transfusion' => false,
         ]);
 
@@ -106,11 +106,11 @@ it('email change via dashboard shows back link on verification page', function (
     $user = ($this->userWithMedicalInfo)();
 
     $this->actingAs($user)->patch(route('dashboard.update'), [
-        'email'         => 'changed@example.com',
-        'first_name'    => 'Ana',
-        'last_name'     => 'Reyes',
+        'email' => 'changed@example.com',
+        'first_name' => 'Ana',
+        'last_name' => 'Reyes',
         'date_of_birth' => '1992-04-10',
-        'gender'        => Gender::Female->value,
+        'gender' => Gender::Female->value,
     ])->assertSessionHasNoErrors();
 
     $this->assertSame('changed@example.com', $user->fresh()->email);

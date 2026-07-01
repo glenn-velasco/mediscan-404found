@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 interface StatCardProps {
     title: string;
-    value: number
+    value: number;
 }
 
 export default function StatCard({ title, value }: StatCardProps) {

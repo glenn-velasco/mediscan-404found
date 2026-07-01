@@ -6,7 +6,6 @@ use App\Services\Admin\DashboardService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Support\Facades\Broadcast;
-use Illuminate\Support\Facades\Log;
 
 class BroadcastUserRegistered implements ShouldQueueAfterCommit
 {

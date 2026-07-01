@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\UpdateMedicalInfoRequest;
 use App\Services\User\MedicalInfoService;
-use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class DashboardController extends Controller
 {

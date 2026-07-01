@@ -2,8 +2,12 @@
 
 namespace App\Models\Builders;
 
+use App\Models\MedicalInformation;
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * @extends Builder<MedicalInformation>
+ */
 class MedicalInformationBuilder extends Builder
 {
     public function search(string $term): static

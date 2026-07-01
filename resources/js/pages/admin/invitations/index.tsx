@@ -1,8 +1,8 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
-import { type FormEvent, useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-import { Paginated, Permission, Role, roleOptions } from '@/types';
+import { SendHorizonal, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
 import {
     AlertDialog,
@@ -33,8 +33,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useAuth } from '@/hooks/use-auth';
 import admin from '@/routes/admin';
-import { SendHorizonal, Trash2 } from 'lucide-react';
+import { Permission, Role, roleOptions } from '@/types';
+import type { Paginated } from '@/types';
 
 interface InvitationListItem {
     id: number;
@@ -50,16 +52,19 @@ interface IndexProps {
     invitations: Paginated<InvitationListItem>;
 }
 
-const statusVariant: Record<InvitationListItem['status'], 'default' | 'secondary' | 'destructive'> = {
-    pending:  'default',
+const statusVariant: Record<
+    InvitationListItem['status'],
+    'default' | 'secondary' | 'destructive'
+> = {
+    pending: 'default',
     accepted: 'secondary',
-    expired:  'destructive',
+    expired: 'destructive',
 };
 
 const expiryOptions = [
-    { value: 1,  label: '1 day'   },
-    { value: 3,  label: '3 days'  },
-    { value: 7,  label: '7 days'  },
+    { value: 1, label: '1 day' },
+    { value: 3, label: '3 days' },
+    { value: 7, label: '7 days' },
     { value: 14, label: '14 days' },
     { value: 30, label: '30 days' },
 ];
@@ -73,7 +78,11 @@ export default function Index({ invitations }: IndexProps) {
     useEcho('admin-dashboard', '.EmailChanged', () => router.reload());
 
     const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
-    const inviteForm = useForm({ email: '', role: Role.User as Role, expires_in_days: 3 });
+    const inviteForm = useForm({
+        email: '',
+        role: Role.User as Role,
+        expires_in_days: 3,
+    });
 
     function submitInvite(e: FormEvent) {
         e.preventDefault();
@@ -101,7 +110,9 @@ export default function Index({ invitations }: IndexProps) {
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <div className="flex items-center justify-end">
                     {hasPermission(Permission.InviteUserAsAdmin) && (
-                        <Button onClick={() => setInviteOpen(true)}>Invite user</Button>
+                        <Button onClick={() => setInviteOpen(true)}>
+                            Invite user
+                        </Button>
                     )}
                 </div>
 
@@ -111,9 +122,15 @@ export default function Index({ invitations }: IndexProps) {
                             <tr>
                                 <th className="px-4 py-3 font-medium">Email</th>
                                 <th className="px-4 py-3 font-medium">Role</th>
-                                <th className="px-4 py-3 font-medium">Status</th>
-                                <th className="px-4 py-3 font-medium">Invited By</th>
-                                <th className="px-4 py-3 font-medium">Expires</th>
+                                <th className="px-4 py-3 font-medium">
+                                    Status
+                                </th>
+                                <th className="px-4 py-3 font-medium">
+                                    Invited By
+                                </th>
+                                <th className="px-4 py-3 font-medium">
+                                    Expires
+                                </th>
                                 <th className="px-4 py-3" />
                             </tr>
                         </thead>
@@ -124,27 +141,40 @@ export default function Index({ invitations }: IndexProps) {
                                     className="border-t border-sidebar-border/70 dark:border-sidebar-border"
                                 >
                                     <td className="px-4 py-3">{inv.email}</td>
-                                    <td className="px-4 py-3 capitalize">{inv.role ?? '—'}</td>
+                                    <td className="px-4 py-3 capitalize">
+                                        {inv.role ?? '—'}
+                                    </td>
                                     <td className="px-4 py-3">
-                                        <Badge variant={statusVariant[inv.status]} className="capitalize">
+                                        <Badge
+                                            variant={statusVariant[inv.status]}
+                                            className="capitalize"
+                                        >
                                             {inv.status}
                                         </Badge>
                                     </td>
-                                    <td className="px-4 py-3 text-muted-foreground">{inv.invited_by ?? '—'}</td>
-                                    <td className="px-4 py-3 text-muted-foreground">{inv.expires_at}</td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {inv.invited_by ?? '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {inv.expires_at}
+                                    </td>
                                     <td className="px-4 py-3 text-right">
                                         <div className="flex justify-end gap-3">
                                             {inv.status !== 'accepted' && (
                                                 <SendHorizonal
                                                     className="cursor-pointer text-muted-foreground/60 hover:text-foreground"
                                                     size="1rem"
-                                                    onClick={() => resend(inv.id)}
+                                                    onClick={() =>
+                                                        resend(inv.id)
+                                                    }
                                                 />
                                             )}
                                             <Trash2
                                                 className="cursor-pointer text-destructive/60 hover:text-destructive"
                                                 size="1rem"
-                                                onClick={() => setConfirmDelete(inv.id)}
+                                                onClick={() =>
+                                                    setConfirmDelete(inv.id)
+                                                }
                                             />
                                         </div>
                                     </td>
@@ -152,7 +182,10 @@ export default function Index({ invitations }: IndexProps) {
                             ))}
                             {invitations.data.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
+                                    <td
+                                        colSpan={6}
+                                        className="px-4 py-6 text-center text-muted-foreground"
+                                    >
                                         No invitations found.
                                     </td>
                                 </tr>
@@ -172,7 +205,9 @@ export default function Index({ invitations }: IndexProps) {
                             >
                                 <a
                                     href={link.url}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                    dangerouslySetInnerHTML={{
+                                        __html: link.label,
+                                    }}
                                 />
                             </Button>
                         ) : (
@@ -192,7 +227,11 @@ export default function Index({ invitations }: IndexProps) {
                 <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
                     <DialogContent
                         onPointerDownOutside={(e) => {
-                            if ((e.target as Element).closest?.('[data-radix-popper-content-wrapper]')) {
+                            if (
+                                (e.target as Element).closest?.(
+                                    '[data-radix-popper-content-wrapper]',
+                                )
+                            ) {
                                 e.preventDefault();
                             }
                         }}
@@ -200,17 +239,25 @@ export default function Index({ invitations }: IndexProps) {
                         <DialogHeader>
                             <DialogTitle>Invite a user</DialogTitle>
                             <DialogDescription>
-                                They will receive an email to set their password and access their account.
+                                They will receive an email to set their password
+                                and access their account.
                             </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={submitInvite} className="space-y-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="invite-email">Email address</Label>
+                                <Label htmlFor="invite-email">
+                                    Email address
+                                </Label>
                                 <Input
                                     id="invite-email"
                                     type="email"
                                     value={inviteForm.data.email}
-                                    onChange={(e) => inviteForm.setData('email', e.target.value)}
+                                    onChange={(e) =>
+                                        inviteForm.setData(
+                                            'email',
+                                            e.target.value,
+                                        )
+                                    }
                                     placeholder="user@example.com"
                                     autoFocus
                                     required
@@ -221,14 +268,19 @@ export default function Index({ invitations }: IndexProps) {
                                 <Label htmlFor="invite-role">Role</Label>
                                 <Select
                                     value={inviteForm.data.role}
-                                    onValueChange={(v) => inviteForm.setData('role', v as Role)}
+                                    onValueChange={(v) =>
+                                        inviteForm.setData('role', v as Role)
+                                    }
                                 >
                                     <SelectTrigger id="invite-role">
                                         <SelectValue placeholder="Select role" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {roleOptions.map((opt) => (
-                                            <SelectItem key={opt.value} value={opt.value}>
+                                            <SelectItem
+                                                key={opt.value}
+                                                value={opt.value}
+                                            >
                                                 {opt.label}
                                             </SelectItem>
                                         ))}
@@ -237,26 +289,43 @@ export default function Index({ invitations }: IndexProps) {
                                 <InputError message={inviteForm.errors.role} />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="invite-expires">Link expires in</Label>
+                                <Label htmlFor="invite-expires">
+                                    Link expires in
+                                </Label>
                                 <Select
-                                    value={String(inviteForm.data.expires_in_days)}
-                                    onValueChange={(v) => inviteForm.setData('expires_in_days', Number(v))}
+                                    value={String(
+                                        inviteForm.data.expires_in_days,
+                                    )}
+                                    onValueChange={(v) =>
+                                        inviteForm.setData(
+                                            'expires_in_days',
+                                            Number(v),
+                                        )
+                                    }
                                 >
                                     <SelectTrigger id="invite-expires">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {expiryOptions.map((opt) => (
-                                            <SelectItem key={opt.value} value={String(opt.value)}>
+                                            <SelectItem
+                                                key={opt.value}
+                                                value={String(opt.value)}
+                                            >
                                                 {opt.label}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
-                                <InputError message={inviteForm.errors.expires_in_days} />
+                                <InputError
+                                    message={inviteForm.errors.expires_in_days}
+                                />
                             </div>
                             <DialogFooter>
-                                <Button type="submit" disabled={inviteForm.processing}>
+                                <Button
+                                    type="submit"
+                                    disabled={inviteForm.processing}
+                                >
                                     Send invitation
                                 </Button>
                             </DialogFooter>
@@ -265,7 +334,10 @@ export default function Index({ invitations }: IndexProps) {
                 </Dialog>
             )}
 
-            <AlertDialog open={confirmDelete !== null} onOpenChange={() => setConfirmDelete(null)}>
+            <AlertDialog
+                open={confirmDelete !== null}
+                onOpenChange={() => setConfirmDelete(null)}
+            >
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete invitation?</AlertDialogTitle>
@@ -275,7 +347,11 @@ export default function Index({ invitations }: IndexProps) {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => confirmDelete && deleteInvitation(confirmDelete)}>
+                        <AlertDialogAction
+                            onClick={() =>
+                                confirmDelete && deleteInvitation(confirmDelete)
+                            }
+                        >
                             Delete
                         </AlertDialogAction>
                     </AlertDialogFooter>

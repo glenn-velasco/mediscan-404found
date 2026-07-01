@@ -20,18 +20,18 @@ beforeEach(function () {
     };
 
     $this->invitePayload = fn (array $overrides = []): array => array_merge([
-        'email'           => 'invite@example.com',
-        'role'            => Role::User->value,
+        'email' => 'invite@example.com',
+        'role' => Role::User->value,
         'expires_in_days' => 3,
     ], $overrides);
 
     $this->acceptPayload = fn (array $overrides = []): array => array_merge([
-        'password'              => 'password',
+        'password' => 'password',
         'password_confirmation' => 'password',
-        'first_name'            => 'Juan',
-        'last_name'             => 'dela Cruz',
-        'date_of_birth'         => '1990-06-15',
-        'gender'                => 'male',
+        'first_name' => 'Juan',
+        'last_name' => 'dela Cruz',
+        'date_of_birth' => '1990-06-15',
+        'gender' => 'male',
     ], $overrides);
 });
 
@@ -116,8 +116,8 @@ it('re invitation is allowed after expiry', function () {
     Notification::fake();
 
     UserInvitation::create([
-        'email'      => 'expired@example.com',
-        'token'      => Str::random(64),
+        'email' => 'expired@example.com',
+        'token' => Str::random(64),
         'invited_by' => ($this->admin)()->id,
         'expires_at' => now()->subDay(),
     ]);
@@ -134,8 +134,8 @@ it('guest can view accept invitation page', function () {
     $token = Str::random(64);
 
     UserInvitation::create([
-        'email'      => 'invited@example.com',
-        'token'      => $token,
+        'email' => 'invited@example.com',
+        'token' => $token,
         'invited_by' => ($this->admin)()->id,
         'expires_at' => now()->addDays(3),
     ]);
@@ -153,8 +153,8 @@ it('guest can accept invitation and create account', function () {
     $token = Str::random(64);
 
     UserInvitation::create([
-        'email'      => 'invited@example.com',
-        'token'      => $token,
+        'email' => 'invited@example.com',
+        'token' => $token,
         'invited_by' => ($this->admin)()->id,
         'expires_at' => now()->addDays(3),
     ]);
@@ -170,8 +170,8 @@ it('accepted user gets user role', function () {
     $token = Str::random(64);
 
     UserInvitation::create([
-        'email'      => 'newuser@example.com',
-        'token'      => $token,
+        'email' => 'newuser@example.com',
+        'token' => $token,
         'invited_by' => ($this->admin)()->id,
         'expires_at' => now()->addDays(3),
     ]);
@@ -187,8 +187,8 @@ it('invitation is marked accepted after use', function () {
     $token = Str::random(64);
 
     $invitation = UserInvitation::create([
-        'email'      => 'invited@example.com',
-        'token'      => $token,
+        'email' => 'invited@example.com',
+        'token' => $token,
         'invited_by' => ($this->admin)()->id,
         'expires_at' => now()->addDays(3),
     ]);
@@ -207,8 +207,8 @@ it('expired invitation redirects to login', function () {
     $token = Str::random(64);
 
     UserInvitation::create([
-        'email'      => 'expired@example.com',
-        'token'      => $token,
+        'email' => 'expired@example.com',
+        'token' => $token,
         'invited_by' => ($this->admin)()->id,
         'expires_at' => now()->subDay(),
     ]);
@@ -221,10 +221,10 @@ it('already accepted invitation redirects to login', function () {
     $token = Str::random(64);
 
     UserInvitation::create([
-        'email'       => 'used@example.com',
-        'token'       => $token,
-        'invited_by'  => ($this->admin)()->id,
-        'expires_at'  => now()->addDays(3),
+        'email' => 'used@example.com',
+        'token' => $token,
+        'invited_by' => ($this->admin)()->id,
+        'expires_at' => now()->addDays(3),
         'accepted_at' => now(),
     ]);
 
@@ -236,14 +236,14 @@ it('cannot accept invitation with mismatched passwords', function () {
     $token = Str::random(64);
 
     UserInvitation::create([
-        'email'      => 'invited@example.com',
-        'token'      => $token,
+        'email' => 'invited@example.com',
+        'token' => $token,
         'invited_by' => ($this->admin)()->id,
         'expires_at' => now()->addDays(3),
     ]);
 
     $this->post(route('invitation.store', $token), ($this->acceptPayload)([
-        'password'              => 'password',
+        'password' => 'password',
         'password_confirmation' => 'different',
     ]))->assertSessionHasErrors('password');
 

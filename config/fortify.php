@@ -71,7 +71,7 @@ return [
     | authentication or password reset when the operations are successful
     | and the user is authenticated. You are free to change this value.
     |
-    | Currently empty since I implemented custom login response, register 
+    | Currently empty since I implemented custom login response, register
     | response contracts that conditionally redirect users depending on there role.
     */
 

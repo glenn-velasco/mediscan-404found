@@ -1,13 +1,21 @@
-import { getCountries, getCountryCallingCode, type CountryCode } from 'libphonenumber-js';
+import { getCountries, getCountryCallingCode } from 'libphonenumber-js';
+import type { CountryCode } from 'libphonenumber-js';
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 export const countries = getCountries()
     .map((code) => ({
         code,
         callingCode: `+${getCountryCallingCode(code as CountryCode)}`,
-        label: new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code,
+        label:
+            new Intl.DisplayNames(['en'], { type: 'region' }).of(code) ?? code,
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
 

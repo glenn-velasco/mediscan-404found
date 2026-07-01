@@ -1,7 +1,6 @@
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import { LayoutGrid, Mail, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -13,16 +12,14 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
-import admin from '@/routes/admin';
 import { dashboard } from '@/routes';
+import admin from '@/routes/admin';
 import type { NavItem } from '@/types';
-import { useInitials } from '@/hooks/use-initials';
 
 export function AppSidebar() {
     const { auth } = usePage().props;
-    const { state, open } = useSidebar();
-    const getInitials = useInitials();
-    
+    const { open } = useSidebar();
+
     const isAdmin = auth.roles?.includes('admin');
 
     const dashboardHref = isAdmin ? admin.dashboard() : dashboard();
@@ -59,8 +56,12 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <div className="px-2 pb-2">
-                            <AppLogo href={dashboardHref} prefetch sidebar={open} />
-                        </div> 
+                            <AppLogo
+                                href={dashboardHref}
+                                prefetch
+                                sidebar={open}
+                            />
+                        </div>
                     </SidebarMenuItem>
                 </SidebarMenu>
             </SidebarHeader>

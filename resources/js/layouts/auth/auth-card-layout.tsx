@@ -1,6 +1,5 @@
-import { Link } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
-import AppLogoIcon from '@/components/app-logo-icon';
+import AppLogo from '@/components/app-logo';
 import {
     Card,
     CardContent,
@@ -9,7 +8,6 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { home } from '@/routes';
-import AppLogo from '@/components/app-logo';
 
 export default function AuthCardLayout({
     children,
@@ -23,7 +21,7 @@ export default function AuthCardLayout({
     return (
         <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
             <div className="flex w-full max-w-md flex-col gap-6">
-                <AppLogo href={home()}/>
+                <AppLogo href={home()} />
 
                 <div className="flex flex-col gap-6">
                     <Card className="rounded-xl">

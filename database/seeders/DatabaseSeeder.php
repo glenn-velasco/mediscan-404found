@@ -29,27 +29,27 @@ class DatabaseSeeder extends Seeder
         }
 
         $admin->medicalInformation()->updateOrCreate(['user_id' => $admin->id], [
-            'first_name'    => 'Test',
-            'last_name'     => 'Admin',
+            'first_name' => 'Test',
+            'last_name' => 'Admin',
             'date_of_birth' => '1990-01-15',
-            'gender'        => Gender::Male,
-            'email'         => 'test@example.com',
+            'gender' => Gender::Male,
+            'email' => 'test@example.com',
             'phone_country_code' => 'PH',
-            'phone'              => '9928727279',
-            'blood_type'    => 'O+',
-            'religion'      => 'Catholic',
-            'address'       => '123 Admin St, Manila, Philippines',
+            'phone' => '9928727279',
+            'blood_type' => 'O+',
+            'religion' => 'Catholic',
+            'address' => '123 Admin St, Manila, Philippines',
             'no_blood_transfusion' => false,
         ]);
 
         $admin->medicalInformation->emergencyContacts()->updateOrCreate(
             ['is_primary' => true],
             [
-                'name'               => 'Jane Admin',
-                'relationship'       => 'Spouse',
+                'name' => 'Jane Admin',
+                'relationship' => 'Spouse',
                 'phone_country_code' => 'PH',
-                'phone'              => '9928727279',
-                'is_primary'         => true,
+                'phone' => '9928727279',
+                'is_primary' => true,
             ],
         );
     }

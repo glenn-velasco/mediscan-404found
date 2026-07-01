@@ -16,7 +16,7 @@ class AcceptInvitationController extends Controller
     public function show(string $token): Response|RedirectResponse
     {
         $invitation = $this->userInvitationService->verifyInvitation($token);
-        
+
         return Inertia::render('auth/accept-invitation', [
             'email' => $invitation->email,
             'token' => $token,

@@ -6,7 +6,7 @@ use App\Enums\Role;
 use App\Models\User;
 use App\Repositories\Eloquent\UserRepository;
 use App\Services\Admin\DashboardService;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserService
 {
@@ -15,6 +15,10 @@ class UserService
         private DashboardService $adminDashboard,
     ) {}
 
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return LengthAwarePaginator<int, User>
+     */
     public function paginate(int $perPage, array $filters = []): LengthAwarePaginator
     {
         return $this->userRepository->paginate($perPage, $filters);

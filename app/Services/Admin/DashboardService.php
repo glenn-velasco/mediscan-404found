@@ -18,7 +18,7 @@ class DashboardService
     public function stats(): array
     {
         return Cache::remember(self::STATS_CACHE_KEY, now()->addMonth(), function () {
-            $total  = $this->userRepository->countAll();
+            $total = $this->userRepository->countAll();
             $active = $this->userRepository->countActive();
 
             $byRole = [];
@@ -27,10 +27,10 @@ class DashboardService
             }
 
             return [
-                'total'       => $total,
-                'active'      => $active,
+                'total' => $total,
+                'active' => $active,
                 'deactivated' => $total - $active,
-                'by_role'     => $byRole,
+                'by_role' => $byRole,
             ];
         });
     }

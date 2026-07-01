@@ -19,15 +19,15 @@ class StoreEmergencyContactRequest extends FormRequest
 
         $phoneRules = ['nullable', 'string'];
         if ($phoneCountry) {
-            $phoneRules[] = (new Phone())->country($phoneCountry);
+            $phoneRules[] = (new Phone)->country($phoneCountry);
         }
 
         return [
-            'name'               => ['required', 'string', 'max:255'],
-            'relationship'       => ['nullable', 'string', 'max:100'],
+            'name' => ['required', 'string', 'max:255'],
+            'relationship' => ['nullable', 'string', 'max:100'],
             'phone_country_code' => ['nullable', 'string', 'max:10'],
-            'phone'              => $phoneRules,
-            'is_primary'         => ['sometimes', 'boolean'],
+            'phone' => $phoneRules,
+            'is_primary' => ['sometimes', 'boolean'],
         ];
     }
 }

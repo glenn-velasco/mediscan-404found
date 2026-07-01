@@ -14,7 +14,7 @@ class UserInvitationNotification extends Notification implements ShouldQueueAfte
     use Queueable;
 
     public function __construct(
-        private string $inviteUrl, 
+        private string $inviteUrl,
         private CarbonInterface $expire_at,
         private string $role
     ) {}
@@ -33,7 +33,7 @@ class UserInvitationNotification extends Notification implements ShouldQueueAfte
             ->subject("You've been invited to {$appName}")
             ->greeting('Hello!')
             ->line("You have been invited to join {$appName}, a secure medical records management platform")
-            ->action("Accept Invitation as " . Role::from($this->role)->label(), $this->inviteUrl)
+            ->action('Accept Invitation as '.Role::from($this->role)->label(), $this->inviteUrl)
             ->line("This invitation link expires in {$this->expire_at->diffForHumans()}.")
             ->line('If you did not expect this invitation, you may ignore this email.');
     }

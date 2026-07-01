@@ -15,10 +15,10 @@ beforeEach(function () {
         $user->assignRole(Role::User->value);
 
         $user->medicalInformation()->create([
-            'first_name'           => 'Ana',
-            'last_name'            => 'Reyes',
-            'date_of_birth'        => '1992-04-10',
-            'gender'               => Gender::Female,
+            'first_name' => 'Ana',
+            'last_name' => 'Reyes',
+            'date_of_birth' => '1992-04-10',
+            'gender' => Gender::Female,
             'no_blood_transfusion' => false,
         ]);
 
@@ -27,9 +27,9 @@ beforeEach(function () {
 
     $this->contactFor = function (User $user, array $overrides = []): EmergencyContact {
         return $user->medicalInformation->emergencyContacts()->create(array_merge([
-            'name'         => 'Jane Contact',
+            'name' => 'Jane Contact',
             'relationship' => 'Spouse',
-            'is_primary'   => false,
+            'is_primary' => false,
         ], $overrides));
     };
 });
@@ -47,17 +47,17 @@ it('user can create emergency contact for own record', function () {
 
     $this->actingAs($user)
         ->post(route('emergency-contacts.store'), [
-            'name'               => 'Jane Contact',
-            'relationship'       => 'Spouse',
+            'name' => 'Jane Contact',
+            'relationship' => 'Spouse',
             'phone_country_code' => 'PH',
-            'phone'              => '9928727279',
+            'phone' => '9928727279',
         ])
         ->assertRedirect();
 
     $this->assertDatabaseHas('emergency_contacts', [
         'medical_information_id' => $user->medicalInformation->id,
-        'name'                   => 'Jane Contact',
-        'relationship'           => 'Spouse',
+        'name' => 'Jane Contact',
+        'relationship' => 'Spouse',
     ]);
 });
 
@@ -83,24 +83,24 @@ it('first emergency contact is automatically primary', function () {
 
     $this->actingAs($user)
         ->post(route('emergency-contacts.store'), [
-            'name'       => 'Jane Contact',
+            'name' => 'Jane Contact',
             'is_primary' => false,
         ]);
 
     $this->assertDatabaseHas('emergency_contacts', [
         'medical_information_id' => $user->medicalInformation->id,
-        'name'                   => 'Jane Contact',
-        'is_primary'             => true,
+        'name' => 'Jane Contact',
+        'is_primary' => true,
     ]);
 });
 
 it('creating a second contact as primary unmarks the first', function () {
-    $user  = ($this->userWithMedicalInfo)();
+    $user = ($this->userWithMedicalInfo)();
     $first = ($this->contactFor)($user, ['is_primary' => true]);
 
     $this->actingAs($user)
         ->post(route('emergency-contacts.store'), [
-            'name'       => 'Bob Contact',
+            'name' => 'Bob Contact',
             'is_primary' => true,
         ]);
 
@@ -109,7 +109,7 @@ it('creating a second contact as primary unmarks the first', function () {
 });
 
 it('creating a second contact without primary flag does not disturb existing primary', function () {
-    $user  = ($this->userWithMedicalInfo)();
+    $user = ($this->userWithMedicalInfo)();
     $first = ($this->contactFor)($user, ['is_primary' => true]);
 
     $this->actingAs($user)
@@ -122,32 +122,32 @@ it('creating a second contact without primary flag does not disturb existing pri
 // --- Update ---
 
 it('user can update own emergency contact', function () {
-    $user    = ($this->userWithMedicalInfo)();
+    $user = ($this->userWithMedicalInfo)();
     $contact = ($this->contactFor)($user, ['is_primary' => true]);
 
     $this->actingAs($user)
         ->patch(route('emergency-contacts.update', $contact), [
-            'name'         => 'Updated Name',
+            'name' => 'Updated Name',
             'relationship' => 'Parent',
-            'is_primary'   => true,
+            'is_primary' => true,
         ])
         ->assertRedirect();
 
     $this->assertDatabaseHas('emergency_contacts', [
-        'id'           => $contact->id,
-        'name'         => 'Updated Name',
+        'id' => $contact->id,
+        'name' => 'Updated Name',
         'relationship' => 'Parent',
     ]);
 });
 
 it('user cannot update another users emergency contact', function () {
-    $owner   = ($this->userWithMedicalInfo)();
-    $other   = ($this->userWithMedicalInfo)();
+    $owner = ($this->userWithMedicalInfo)();
+    $other = ($this->userWithMedicalInfo)();
     $contact = ($this->contactFor)($owner, ['is_primary' => true]);
 
     $this->actingAs($other)
         ->patch(route('emergency-contacts.update', $contact), [
-            'name'       => 'Hacked',
+            'name' => 'Hacked',
             'is_primary' => false,
         ])
         ->assertNotFound();
@@ -156,7 +156,7 @@ it('user cannot update another users emergency contact', function () {
 });
 
 it('update emergency contact validation errors', function () {
-    $user    = ($this->userWithMedicalInfo)();
+    $user = ($this->userWithMedicalInfo)();
     $contact = ($this->contactFor)($user, ['is_primary' => true]);
 
     $this->actingAs($user)
@@ -166,12 +166,12 @@ it('update emergency contact validation errors', function () {
 
 it('marking a different contact primary unmarks the previous one', function () {
     $user = ($this->userWithMedicalInfo)();
-    $a    = ($this->contactFor)($user, ['name' => 'A', 'is_primary' => true]);
-    $b    = ($this->contactFor)($user, ['name' => 'B', 'is_primary' => false]);
+    $a = ($this->contactFor)($user, ['name' => 'A', 'is_primary' => true]);
+    $b = ($this->contactFor)($user, ['name' => 'B', 'is_primary' => false]);
 
     $this->actingAs($user)
         ->patch(route('emergency-contacts.update', $b), [
-            'name'       => 'B',
+            'name' => 'B',
             'is_primary' => true,
         ]);
 
@@ -180,12 +180,12 @@ it('marking a different contact primary unmarks the previous one', function () {
 });
 
 it('patching is primary false on sole primary contact is allowed and leaves zero primary', function () {
-    $user    = ($this->userWithMedicalInfo)();
+    $user = ($this->userWithMedicalInfo)();
     $contact = ($this->contactFor)($user, ['is_primary' => true]);
 
     $this->actingAs($user)
         ->patch(route('emergency-contacts.update', $contact), [
-            'name'       => 'Jane Contact',
+            'name' => 'Jane Contact',
             'is_primary' => false,
         ])
         ->assertRedirect();
@@ -196,7 +196,7 @@ it('patching is primary false on sole primary contact is allowed and leaves zero
 // --- Delete ---
 
 it('user can delete own emergency contact', function () {
-    $user    = ($this->userWithMedicalInfo)();
+    $user = ($this->userWithMedicalInfo)();
     $contact = ($this->contactFor)($user, ['is_primary' => true]);
 
     $this->actingAs($user)
@@ -207,8 +207,8 @@ it('user can delete own emergency contact', function () {
 });
 
 it('user cannot delete another users emergency contact', function () {
-    $owner   = ($this->userWithMedicalInfo)();
-    $other   = ($this->userWithMedicalInfo)();
+    $owner = ($this->userWithMedicalInfo)();
+    $other = ($this->userWithMedicalInfo)();
     $contact = ($this->contactFor)($owner, ['is_primary' => true]);
 
     $this->actingAs($other)
@@ -219,9 +219,9 @@ it('user cannot delete another users emergency contact', function () {
 });
 
 it('deleting the primary contact leaves zero primary contacts', function () {
-    $user    = ($this->userWithMedicalInfo)();
+    $user = ($this->userWithMedicalInfo)();
     $primary = ($this->contactFor)($user, ['name' => 'Primary', 'is_primary' => true]);
-    $other   = ($this->contactFor)($user, ['name' => 'Other', 'is_primary' => false]);
+    $other = ($this->contactFor)($user, ['name' => 'Other', 'is_primary' => false]);
 
     $this->actingAs($user)
         ->delete(route('emergency-contacts.destroy', $primary));
@@ -230,7 +230,7 @@ it('deleting the primary contact leaves zero primary contacts', function () {
     $this->assertDatabaseHas('emergency_contacts', ['id' => $other->id, 'is_primary' => false]);
     $this->assertDatabaseMissing('emergency_contacts', [
         'medical_information_id' => $user->medicalInformation->id,
-        'is_primary'             => true,
+        'is_primary' => true,
     ]);
 });
 

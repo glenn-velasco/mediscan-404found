@@ -1,8 +1,6 @@
-import { Link } from '@inertiajs/react';
-import AppLogoIcon from '@/components/app-logo-icon';
+import AppLogo from '@/components/app-logo';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
-import AppLogo from '@/components/app-logo';
 
 export default function AuthSimpleLayout({
     children,
@@ -14,7 +12,7 @@ export default function AuthSimpleLayout({
             <div className="w-full max-w-sm">
                 <div className="flex flex-col gap-8">
                     <div className="flex flex-col items-center gap-4">
-                        <AppLogo href={home()}/>
+                        <AppLogo href={home()} />
 
                         <div className="space-y-2 text-center">
                             <h1 className="text-xl font-medium">{title}</h1>

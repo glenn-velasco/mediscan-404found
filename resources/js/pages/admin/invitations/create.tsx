@@ -1,12 +1,18 @@
 import { Head, useForm } from '@inertiajs/react';
-import { type FormEvent } from 'react';
-import { Role, roleOptions } from '@/types';
+import type { FormEvent } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import admin from '@/routes/admin';
+import { Role, roleOptions } from '@/types';
 
 export default function Create() {
     const { data, setData, post, processing, errors } = useForm({
@@ -17,7 +23,7 @@ export default function Create() {
 
     function submit(e: FormEvent) {
         e.preventDefault();
-        post(admin.invitations.store());
+        post(admin.invitations.store().url);
     }
 
     return (
@@ -38,7 +44,10 @@ export default function Create() {
 
                 <div>
                     <Label htmlFor="role">Role</Label>
-                    <Select value={data.role} onValueChange={(v) => setData('role', v)}>
+                    <Select
+                        value={data.role}
+                        onValueChange={(v) => setData('role', v)}
+                    >
                         <SelectTrigger id="role">
                             <SelectValue placeholder="Select a role" />
                         </SelectTrigger>
@@ -57,7 +66,9 @@ export default function Create() {
                     <Label htmlFor="expires_in_days">Expires in (days)</Label>
                     <Select
                         value={String(data.expires_in_days)}
-                        onValueChange={(v) => setData('expires_in_days', Number(v))}
+                        onValueChange={(v) =>
+                            setData('expires_in_days', Number(v))
+                        }
                     >
                         <SelectTrigger id="expires_in_days">
                             <SelectValue />

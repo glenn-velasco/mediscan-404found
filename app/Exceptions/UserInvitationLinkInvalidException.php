@@ -6,5 +6,5 @@ use Exception;
 
 class UserInvitationLinkInvalidException extends Exception
 {
-    protected $message = "The invitation link is invalid or has expired.";
+    protected $message = 'The invitation link is invalid or has expired.';
 }
