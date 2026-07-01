@@ -1,49 +1,32 @@
 <?php
 
-namespace Tests\Feature\Auth;
-
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
-use Tests\TestCase;
 
-class TwoFactorChallengeTest extends TestCase
-{
-    use RefreshDatabase;
+beforeEach(function () {
+    $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
+});
 
-    protected function setUp(): void
-    {
-        parent::setUp();
+it('two factor challenge redirects to login when not authenticated', function () {
+    $this->get(route('two-factor.login'))
+        ->assertRedirect(route('login'));
+});
 
-        $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
-    }
+it('two factor challenge can be rendered', function () {
+    Features::twoFactorAuthentication([
+        'confirm'         => true,
+        'confirmPassword' => true,
+    ]);
 
-    public function test_two_factor_challenge_redirects_to_login_when_not_authenticated(): void
-    {
-        $response = $this->get(route('two-factor.login'));
+    $user = User::factory()->withTwoFactor()->create();
 
-        $response->assertRedirect(route('login'));
-    }
+    $this->post(route('login'), [
+        'email'    => $user->email,
+        'password' => 'password',
+    ]);
 
-    public function test_two_factor_challenge_can_be_rendered(): void
-    {
-        Features::twoFactorAuthentication([
-            'confirm' => true,
-            'confirmPassword' => true,
-        ]);
-
-        $user = User::factory()->withTwoFactor()->create();
-
-        $this->post(route('login'), [
-            'email' => $user->email,
-            'password' => 'password',
-        ]);
-
-        $this->get(route('two-factor.login'))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('auth/two-factor-challenge'),
-            );
-    }
-}
+    $this->get(route('two-factor.login'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('auth/two-factor-challenge'));
+});
