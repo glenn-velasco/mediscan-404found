@@ -117,7 +117,71 @@ git push origin --delete feature/<your-feature>
 
 ---
 
-## Running Tests Locally
+## Local Development Commands
+
+### Starting the Dev Environment
+
+```bash
+composer run dev
+```
+
+Starts all services concurrently: PHP server, queue worker, Pail log viewer, Reverb WebSocket server, and Vite. Defined in `composer.json → scripts.dev`.
+
+---
+
+### Code Quality
+
+#### PHP — Laravel Pint
+
+```bash
+# Auto-fix code style
+composer run lint          # → pint --parallel
+
+# Check only (no writes) — what CI runs
+composer run lint:check    # → pint --parallel --test
+```
+
+#### Frontend — ESLint + Prettier
+
+```bash
+# Auto-fix lint issues
+pnpm run lint              # → eslint . --fix
+
+# Check only
+pnpm run lint:check        # → eslint .
+
+# Auto-format
+pnpm run format            # → prettier --write resources/
+
+# Check only
+pnpm run format:check      # → prettier --check resources/
+```
+
+#### TypeScript
+
+```bash
+pnpm run types:check       # → tsc --noEmit
+```
+
+#### PHPStan
+
+```bash
+composer run types:check   # → phpstan analyse
+```
+
+---
+
+### Running All Checks at Once
+
+```bash
+composer run ci:check
+```
+
+Runs in order: frontend lint check → frontend format check → frontend type check → PHP lint check → PHPStan → feature tests. Use this before opening a PR to catch everything CI will catch. Defined in `composer.json → scripts.ci:check`.
+
+---
+
+### Running Tests Locally
 
 ```bash
 # Feature and unit tests
