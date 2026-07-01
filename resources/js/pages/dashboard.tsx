@@ -56,7 +56,7 @@ import {
 import type { Allergy, EmergencyContact, MedicalInfo } from '@/types';
 
 interface DashboardProps {
-    medicalInfo: MedicalInfo;
+    medicalInfo: MedicalInfo | null;
 }
 
 function SectionTitle({ title }: { title: string }) {
@@ -534,6 +534,8 @@ function EmergencyContactsSection({
 
 export default function Dashboard({ medicalInfo }: DashboardProps) {
     const { user } = useAuth();
+    const allergies = medicalInfo?.allergies ?? [];
+    const emergencyContacts = medicalInfo?.emergency_contacts ?? [];
     const { data, setData, patch, processing, errors } = useForm({
         email: user.email,
         first_name: medicalInfo?.first_name ?? '',
@@ -573,17 +575,33 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                 {/* Name + DOB hero */}
                 <div className="flex items-start justify-between gap-4">
                     <div className="flex flex-col gap-2">
-                        <SectionTitle title={medicalInfo.full_name} />
-                        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-                            {medicalInfo.full_name}
-                        </h1>
-                        {medicalInfo.date_of_birth && (
-                            <p className="text-sm text-muted-foreground">
-                                Born{' '}
-                                <span className="font-medium text-foreground">
-                                    {formatDate(medicalInfo.date_of_birth)}
-                                </span>
-                            </p>
+                        {medicalInfo ? (
+                            <>
+                                <SectionTitle title={medicalInfo.full_name} />
+                                <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+                                    {medicalInfo.full_name}
+                                </h1>
+                                {medicalInfo.date_of_birth && (
+                                    <p className="text-sm text-muted-foreground">
+                                        Born{' '}
+                                        <span className="font-medium text-foreground">
+                                            {formatDate(
+                                                medicalInfo.date_of_birth,
+                                            )}
+                                        </span>
+                                    </p>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <SectionTitle title="Health Record" />
+                                <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+                                    No health record yet
+                                </h1>
+                                <p className="text-sm text-muted-foreground">
+                                    Fill in your health record to get started.
+                                </p>
+                            </>
                         )}
                     </div>
 
@@ -844,66 +862,60 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                             Add allergy
                                         </Button>
                                     </div>
-                                    {medicalInfo.allergies.length === 0 ? (
+                                    {allergies.length === 0 ? (
                                         <p className="text-xs text-muted-foreground">
                                             No known allergies on record.
                                         </p>
                                     ) : (
                                         <div className="grid grid-cols-2 gap-2">
-                                            {medicalInfo.allergies.map(
-                                                (allergy) => (
-                                                    <div
-                                                        key={allergy.id}
-                                                        className="flex flex-col gap-1 rounded-md border p-2"
-                                                    >
-                                                        <div className="flex flex-wrap items-center gap-1.5">
-                                                            <span className="text-sm font-medium text-foreground">
-                                                                {
-                                                                    allergy.allergen
-                                                                }
-                                                            </span>
-                                                            <AllergySeverityBadge
-                                                                severity={
-                                                                    allergy.severity
-                                                                }
-                                                            />
-                                                        </div>
-                                                        {allergy.reaction && (
-                                                            <p className="text-xs text-muted-foreground">
-                                                                {
-                                                                    allergy.reaction
-                                                                }
-                                                            </p>
-                                                        )}
-                                                        <div className="mt-1 flex items-center gap-0.5">
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() =>
-                                                                    setEditingAllergy(
-                                                                        allergy,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Pencil className="h-3.5 w-3.5" />
-                                                            </Button>
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() =>
-                                                                    setDeletingAllergy(
-                                                                        allergy,
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                                            </Button>
-                                                        </div>
+                                            {allergies.map((allergy) => (
+                                                <div
+                                                    key={allergy.id}
+                                                    className="flex flex-col gap-1 rounded-md border p-2"
+                                                >
+                                                    <div className="flex flex-wrap items-center gap-1.5">
+                                                        <span className="text-sm font-medium text-foreground">
+                                                            {allergy.allergen}
+                                                        </span>
+                                                        <AllergySeverityBadge
+                                                            severity={
+                                                                allergy.severity
+                                                            }
+                                                        />
                                                     </div>
-                                                ),
-                                            )}
+                                                    {allergy.reaction && (
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {allergy.reaction}
+                                                        </p>
+                                                    )}
+                                                    <div className="mt-1 flex items-center gap-0.5">
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() =>
+                                                                setEditingAllergy(
+                                                                    allergy,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Pencil className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() =>
+                                                                setDeletingAllergy(
+                                                                    allergy,
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
@@ -926,14 +938,13 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                             Add contact
                                         </Button>
                                     </div>
-                                    {medicalInfo.emergency_contacts.length ===
-                                    0 ? (
+                                    {emergencyContacts.length === 0 ? (
                                         <p className="text-xs text-muted-foreground">
                                             No emergency contacts on record.
                                         </p>
                                     ) : (
                                         <div className="grid grid-cols-2 gap-2">
-                                            {medicalInfo.emergency_contacts.map(
+                                            {emergencyContacts.map(
                                                 (contact) => (
                                                     <div
                                                         key={contact.id}
@@ -1003,143 +1014,155 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                     </Sheet>
                 </div>
 
-                {/* Divider */}
-                <div className="h-px bg-border" />
-                <SectionTitle title="Information" />
-                {/* Blood transfusion */}
-                <div
-                    className={cn(
-                        'flex items-center gap-3 rounded-lg border px-4 py-3',
-                        medicalInfo.no_blood_transfusion
-                            ? 'border-destructive/20 bg-destructive/5'
-                            : 'border-green-400/20 bg-green-400/5',
-                    )}
-                >
-                    {medicalInfo.no_blood_transfusion ? (
-                        <ShieldAlert className="h-4 w-4 shrink-0 text-destructive" />
-                    ) : (
-                        <Shield className="h-4 w-4 shrink-0 text-green-400" />
-                    )}
-                    <span
-                        className={cn(
-                            'text-sm font-semibold text-green-400',
-                            medicalInfo.no_blood_transfusion &&
-                                'text-destructive',
-                        )}
-                    >
-                        {medicalInfo.no_blood_transfusion
-                            ? 'No Blood Transfusion'
-                            : 'Blood Transfusion Consented'}
-                    </span>
-                </div>
-
-                {/* Primary stats */}
-                <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
-                    <Stat
-                        label="Gender"
-                        value={
-                            medicalInfo.gender
-                                ? medicalInfo.gender.charAt(0).toUpperCase() +
-                                  medicalInfo.gender.slice(1)
-                                : null
-                        }
-                    />
-                    <Stat label="Blood Type" value={medicalInfo.blood_type} />
-                    <Stat label="Religion" value={medicalInfo.religion} />
-                </div>
-
-                {/* Contact details */}
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    <Stat label="Email" value={user.email} />
-                    <Stat
-                        label="Phone"
-                        value={medicalInfo.phone}
-                        span={
-                            <span>
-                                {medicalInfo.phone_country_code
-                                    ? `+${getCountryCallingCode(medicalInfo.phone_country_code as CountryCode)}`
-                                    : ''}
+                {medicalInfo && (
+                    <>
+                        {/* Divider */}
+                        <div className="h-px bg-border" />
+                        <SectionTitle title="Information" />
+                        {/* Blood transfusion */}
+                        <div
+                            className={cn(
+                                'flex items-center gap-3 rounded-lg border px-4 py-3',
+                                medicalInfo.no_blood_transfusion
+                                    ? 'border-destructive/20 bg-destructive/5'
+                                    : 'border-green-400/20 bg-green-400/5',
+                            )}
+                        >
+                            {medicalInfo.no_blood_transfusion ? (
+                                <ShieldAlert className="h-4 w-4 shrink-0 text-destructive" />
+                            ) : (
+                                <Shield className="h-4 w-4 shrink-0 text-green-400" />
+                            )}
+                            <span
+                                className={cn(
+                                    'text-sm font-semibold text-green-400',
+                                    medicalInfo.no_blood_transfusion &&
+                                        'text-destructive',
+                                )}
+                            >
+                                {medicalInfo.no_blood_transfusion
+                                    ? 'No Blood Transfusion'
+                                    : 'Blood Transfusion Consented'}
                             </span>
-                        }
-                    />
-                    <Stat label="Address" value={medicalInfo.address} />
-                </div>
+                        </div>
 
-                {/* Divider */}
-                <div className="h-px bg-border" />
+                        {/* Primary stats */}
+                        <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
+                            <Stat
+                                label="Gender"
+                                value={
+                                    medicalInfo.gender
+                                        ? medicalInfo.gender
+                                              .charAt(0)
+                                              .toUpperCase() +
+                                          medicalInfo.gender.slice(1)
+                                        : null
+                                }
+                            />
+                            <Stat
+                                label="Blood Type"
+                                value={medicalInfo.blood_type}
+                            />
+                            <Stat
+                                label="Religion"
+                                value={medicalInfo.religion}
+                            />
+                        </div>
 
-                {/* Emergency contacts */}
-                <EmergencyContactsSection
-                    contacts={medicalInfo.emergency_contacts}
-                />
+                        {/* Contact details */}
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <Stat label="Email" value={user.email} />
+                            <Stat
+                                label="Phone"
+                                value={medicalInfo.phone}
+                                span={
+                                    <span>
+                                        {medicalInfo.phone_country_code
+                                            ? `+${getCountryCallingCode(medicalInfo.phone_country_code as CountryCode)}`
+                                            : ''}
+                                    </span>
+                                }
+                            />
+                            <Stat label="Address" value={medicalInfo.address} />
+                        </div>
 
-                <EmergencyContactFormDialog
-                    open={addContactOpen}
-                    onOpenChange={setAddContactOpen}
-                    isFirstContact={medicalInfo.emergency_contacts.length === 0}
-                />
+                        {/* Divider */}
+                        <div className="h-px bg-border" />
 
-                {editingContact && (
-                    <EmergencyContactFormDialog
-                        contact={editingContact}
-                        open={!!editingContact}
-                        onOpenChange={(open) =>
-                            !open && setEditingContact(null)
-                        }
-                        isFirstContact={false}
-                    />
+                        {/* Emergency contacts */}
+                        <EmergencyContactsSection
+                            contacts={emergencyContacts}
+                        />
+
+                        <EmergencyContactFormDialog
+                            open={addContactOpen}
+                            onOpenChange={setAddContactOpen}
+                            isFirstContact={emergencyContacts.length === 0}
+                        />
+
+                        {editingContact && (
+                            <EmergencyContactFormDialog
+                                contact={editingContact}
+                                open={!!editingContact}
+                                onOpenChange={(open) =>
+                                    !open && setEditingContact(null)
+                                }
+                                isFirstContact={false}
+                            />
+                        )}
+
+                        {deletingContact && (
+                            <DeleteEmergencyContactAlert
+                                contact={deletingContact}
+                                open={!!deletingContact}
+                                onOpenChange={(open) =>
+                                    !open && setDeletingContact(null)
+                                }
+                            />
+                        )}
+
+                        {/* Divider */}
+                        <div className="h-px bg-border" />
+
+                        {/* Allergies */}
+                        <AllergiesSection allergies={allergies} />
+
+                        <AllergyFormDialog
+                            open={addAllergyOpen}
+                            onOpenChange={setAddAllergyOpen}
+                        />
+
+                        {editingAllergy && (
+                            <AllergyFormDialog
+                                allergy={editingAllergy}
+                                open={!!editingAllergy}
+                                onOpenChange={(open) =>
+                                    !open && setEditingAllergy(null)
+                                }
+                            />
+                        )}
+
+                        {deletingAllergy && (
+                            <DeleteAllergyAlert
+                                allergy={deletingAllergy}
+                                open={!!deletingAllergy}
+                                onOpenChange={(open) =>
+                                    !open && setDeletingAllergy(null)
+                                }
+                            />
+                        )}
+
+                        {/* Footer */}
+                        <div className="h-px bg-border" />
+                        <p className="text-xs text-muted-foreground">
+                            Issued{' '}
+                            <span className="font-medium text-foreground">
+                                {formatDate(medicalInfo.created_at)}
+                            </span>{' '}
+                            · MediScan Patient Portal
+                        </p>
+                    </>
                 )}
-
-                {deletingContact && (
-                    <DeleteEmergencyContactAlert
-                        contact={deletingContact}
-                        open={!!deletingContact}
-                        onOpenChange={(open) =>
-                            !open && setDeletingContact(null)
-                        }
-                    />
-                )}
-
-                {/* Divider */}
-                <div className="h-px bg-border" />
-
-                {/* Allergies */}
-                <AllergiesSection allergies={medicalInfo.allergies} />
-
-                <AllergyFormDialog
-                    open={addAllergyOpen}
-                    onOpenChange={setAddAllergyOpen}
-                />
-
-                {editingAllergy && (
-                    <AllergyFormDialog
-                        allergy={editingAllergy}
-                        open={!!editingAllergy}
-                        onOpenChange={(open) =>
-                            !open && setEditingAllergy(null)
-                        }
-                    />
-                )}
-
-                {deletingAllergy && (
-                    <DeleteAllergyAlert
-                        allergy={deletingAllergy}
-                        open={!!deletingAllergy}
-                        onOpenChange={(open) =>
-                            !open && setDeletingAllergy(null)
-                        }
-                    />
-                )}
-
-                {/* Footer */}
-                <div className="h-px bg-border" />
-                <p className="text-xs text-muted-foreground">
-                    Issued{' '}
-                    <span className="font-medium text-foreground">
-                        {formatDate(medicalInfo.created_at)}
-                    </span>{' '}
-                    · MediScan Patient Portal
-                </p>
             </div>
         </>
     );
