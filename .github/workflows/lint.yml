@@ -31,7 +31,7 @@ jobs:
           php-version: '8.4'
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@a7487ba4e8f9b0ec55a3d4c30e88ee53bd43a2ab # v4
+        uses: pnpm/action-setup@v4
         with:
           version: latest
 
