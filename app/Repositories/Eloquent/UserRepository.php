@@ -44,6 +44,11 @@ class UserRepository extends BaseRepository
         ])->save();
     }
 
+    public function findByEmail(string $email): ?User
+    {
+        return $this->model->newQuery()->where('email', $email)->first();
+    }
+
     public function countAll(): int
     {
         return $this->model->count();
