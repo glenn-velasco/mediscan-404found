@@ -6,5 +6,5 @@ use App\Models\User;
 
 class EmailChanged
 {
-    public function __construct(public readonly User $user) {}
+    public function __construct(public readonly User $user, public readonly string $origin = 'settings') {}
 }
