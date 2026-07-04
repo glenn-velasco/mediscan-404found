@@ -8,6 +8,9 @@ use App\Http\Resources\Api\V1\MedicalInformationResource;
 use App\Services\User\MedicalInfoService;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * @group Medical Information
+ */
 class MedicalInformationController extends Controller
 {
     public function __construct(private MedicalInfoService $medicalInfoService) {}

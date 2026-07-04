@@ -9,6 +9,9 @@ use App\Http\Resources\Api\V1\UserResource;
 use App\Services\User\AccountService;
 use Illuminate\Http\JsonResponse;
 
+/**
+ * @group Account
+ */
 class AccountController extends Controller
 {
     public function __construct(private AccountService $accountService) {}

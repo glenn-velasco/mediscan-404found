@@ -13,8 +13,14 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @group Password Reset
+ */
 class PasswordResetController extends Controller
 {
+    /**
+     * @unauthenticated
+     */
     public function forgot(ForgotPasswordRequest $request): JsonResponse
     {
         $status = Password::sendResetLink($request->only('email'));
@@ -28,6 +34,9 @@ class PasswordResetController extends Controller
         return $this->success(message: __($status));
     }
 
+    /**
+     * @unauthenticated
+     */
     public function reset(ResetPasswordRequest $request, ResetUserPassword $resetter): JsonResponse
     {
         $status = Password::reset(

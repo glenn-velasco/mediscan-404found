@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Controller as ApiController;
 use App\Http\Middleware\EnsureApiUserActive;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RestrictScribeDocsAccess;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +21,7 @@ use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use Spatie\Permission\Middleware\RoleOrPermissionMiddleware;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -45,6 +47,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'abilities' => CheckAbilities::class,
             'ability' => CheckForAnyAbility::class,
             'api.active' => EnsureApiUserActive::class,
+            'scribe.docs-access' => RestrictScribeDocsAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -79,6 +82,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 $e instanceof ValidationException => ApiController::error($e->getMessage(), 422, $e->errors()),
                 $e instanceof AuthenticationException => ApiController::error('Unauthenticated.', 401),
                 $e instanceof MethodNotAllowedHttpException => ApiController::error('Method not allowed.', 405),
+                $e instanceof NotFoundHttpException => ApiController::error('Not found.', 404),
                 default => null,
             };
         });

@@ -7,6 +7,9 @@ use App\Notifications\Api\VerifyApiEmail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @group Email Verification
+ */
 class EmailVerificationController extends Controller
 {
     public function send(Request $request): JsonResponse
