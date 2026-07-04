@@ -48,7 +48,7 @@ class InvitationService
             ->notify(new UserInvitationNotification(
                 route('invitation.accept', ['token' => $token]),
                 $expiresAt,
-                RoleEnum::from($invitation->role)->label()
+                RoleEnum::from($invitation->role->name)->label()
             ));
 
     }
