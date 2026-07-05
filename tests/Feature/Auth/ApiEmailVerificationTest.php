@@ -41,6 +41,14 @@ it('rejects a tampered or expired signature', function () {
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
 });
 
+it('returns not found when the user id in the signed link does not exist', function () {
+    $user = User::factory()->unverified()->create();
+    $url = signedApiVerificationUrl($user);
+    $user->delete();
+
+    $this->get($url)->assertNotFound();
+});
+
 it('rejects a hash that does not match the user email', function () {
     $user = User::factory()->unverified()->create();
 

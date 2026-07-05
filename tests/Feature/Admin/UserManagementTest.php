@@ -3,7 +3,9 @@
 use App\Enums\Permission;
 use App\Enums\Role;
 use App\Models\User;
+use App\Services\Admin\DashboardService;
 use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
@@ -95,6 +97,16 @@ it('admin can assign role', function () {
     $this->assertTrue($target->fresh()->hasRole(Role::Admin->value));
 });
 
+it('assigning a role flushes the admin dashboard stats cache', function () {
+    $target = ($this->regularUser)();
+    Cache::put(DashboardService::STATS_CACHE_KEY, ['stale' => true], now()->addMonth());
+
+    $this->actingAs(($this->admin)())
+        ->patch(route('admin.users.role', $target), ['role' => Role::Admin->value]);
+
+    expect(Cache::has(DashboardService::STATS_CACHE_KEY))->toBeFalse();
+});
+
 it('admin can deactivate user', function () {
     $target = ($this->regularUser)();
 
@@ -102,6 +114,16 @@ it('admin can deactivate user', function () {
         ->patch(route('admin.users.activation', $target));
 
     $this->assertFalse($target->fresh()->isActive());
+});
+
+it('deactivating a user flushes the admin dashboard stats cache', function () {
+    $target = ($this->regularUser)();
+    Cache::put(DashboardService::STATS_CACHE_KEY, ['stale' => true], now()->addMonth());
+
+    $this->actingAs(($this->admin)())
+        ->patch(route('admin.users.activation', $target));
+
+    expect(Cache::has(DashboardService::STATS_CACHE_KEY))->toBeFalse();
 });
 
 it('admin can reactivate user', function () {
@@ -132,6 +154,16 @@ it('admin can delete user', function () {
         ->assertRedirect(route('admin.users.index'));
 
     $this->assertDatabaseMissing('users', ['id' => $target->id]);
+});
+
+it('deleting a user flushes the admin dashboard stats cache', function () {
+    $target = ($this->regularUser)();
+    Cache::put(DashboardService::STATS_CACHE_KEY, ['stale' => true], now()->addMonth());
+
+    $this->actingAs(($this->admin)())
+        ->delete(route('admin.users.destroy', $target));
+
+    expect(Cache::has(DashboardService::STATS_CACHE_KEY))->toBeFalse();
 });
 
 it('non admin cannot delete user', function () {
