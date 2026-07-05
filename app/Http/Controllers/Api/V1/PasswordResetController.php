@@ -20,6 +20,9 @@ class PasswordResetController extends Controller
 {
     /**
      * @unauthenticated
+     *
+     * @response 200 {"status":200,"message":"We have emailed your password reset link.","data":null}
+     * @response 422 {"status":422,"message":"We can't find a user with that email address.","errors":{"email":["We can't find a user with that email address."]}}
      */
     public function forgot(ForgotPasswordRequest $request): JsonResponse
     {
@@ -36,6 +39,11 @@ class PasswordResetController extends Controller
 
     /**
      * @unauthenticated
+     *
+     * @bodyParam password_confirmation string required Must match password. Example: Password123!
+     *
+     * @response 200 {"status":200,"message":"Your password has been reset.","data":null}
+     * @response 422 {"status":422,"message":"This password reset token is invalid.","errors":{"email":["This password reset token is invalid."]}}
      */
     public function reset(ResetPasswordRequest $request, ResetUserPassword $resetter): JsonResponse
     {

@@ -12,6 +12,10 @@ use Illuminate\Http\Request;
  */
 class EmailVerificationController extends Controller
 {
+    /**
+     * @response status=200 scenario="Verification link sent" {"status":200,"message":"Verification link sent.","data":null}
+     * @response status=200 scenario="Already verified" {"status":200,"message":"Email already verified.","data":null}
+     */
     public function send(Request $request): JsonResponse
     {
         $user = $request->user();
