@@ -3,7 +3,6 @@
 namespace App\Services\User;
 
 use App\Actions\Fortify\CreateNewUser;
-use App\Enums\Role as RoleEnum;
 use App\Exceptions\TooManyAttemptsException;
 use App\Exceptions\UserInvitationLinkInvalidException;
 use App\Models\Role;
@@ -48,7 +47,7 @@ class InvitationService
             ->notify(new UserInvitationNotification(
                 route('invitation.accept', ['token' => $token]),
                 $expiresAt,
-                RoleEnum::from($invitation->role->name)->label()
+                $invitation->role->name
             ));
 
     }
