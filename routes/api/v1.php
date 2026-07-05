@@ -28,6 +28,7 @@ Route::prefix('v1')->group(function () {
         Route::put('/medical-information', [MedicalInformationController::class, 'update']);
 
         Route::post('/allergies', [AllergyController::class, 'store']);
+        Route::patch('/allergies/{allergy}', [AllergyController::class, 'update']);
         Route::delete('/allergies/{allergy}', [AllergyController::class, 'destroy']);
     });
 });

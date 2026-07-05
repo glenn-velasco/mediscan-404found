@@ -117,3 +117,96 @@ it('users cannot remove allergies belonging to another user', function () {
 
     $this->assertDatabaseHas('allergies', ['id' => $allergy->id]);
 });
+
+it('returns not found when deleting a nonexistent allergy via api', function () {
+    $user = ($this->withMedicalInfo)(User::factory()->create());
+    $allergy = $user->medicalInformation->allergies()->create([
+        'allergen' => 'Peanuts',
+        'severity' => 'severe',
+    ]);
+    $deletedId = $allergy->id;
+    $allergy->delete();
+
+    Sanctum::actingAs($user, ['*']);
+
+    $this->deleteJson("/api/v1/allergies/{$deletedId}")
+        ->assertNotFound()
+        ->assertJson(['status' => 404, 'message' => 'Not found.']);
+});
+
+it('users can update their own allergies via api', function () {
+    $user = ($this->withMedicalInfo)(User::factory()->create());
+    $allergy = $user->medicalInformation->allergies()->create([
+        'allergen' => 'Peanuts',
+        'reaction' => 'Hives',
+        'severity' => 'severe',
+    ]);
+    Sanctum::actingAs($user, ['*']);
+
+    $this->patchJson("/api/v1/allergies/{$allergy->id}", [
+        'allergen' => 'Tree nuts',
+        'reaction' => 'Swelling',
+        'severity' => 'life-threatening',
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.allergen', 'Tree nuts');
+
+    $this->assertDatabaseHas('allergies', [
+        'id' => $allergy->id,
+        'allergen' => 'Tree nuts',
+        'severity' => 'life-threatening',
+    ]);
+});
+
+it('update allergy validation errors via api', function () {
+    $user = ($this->withMedicalInfo)(User::factory()->create());
+    $allergy = $user->medicalInformation->allergies()->create([
+        'allergen' => 'Peanuts',
+        'severity' => 'severe',
+    ]);
+    Sanctum::actingAs($user, ['*']);
+
+    $this->patchJson("/api/v1/allergies/{$allergy->id}", [
+        'allergen' => 'Peanuts',
+        'severity' => 'extreme',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['severity']);
+});
+
+it('users cannot update allergies belonging to another user via api', function () {
+    $owner = ($this->withMedicalInfo)(User::factory()->create());
+    $allergy = $owner->medicalInformation->allergies()->create([
+        'allergen' => 'Peanuts',
+        'severity' => 'severe',
+    ]);
+
+    $intruder = ($this->withMedicalInfo)(User::factory()->create());
+    Sanctum::actingAs($intruder, ['*']);
+
+    $this->patchJson("/api/v1/allergies/{$allergy->id}", [
+        'allergen' => 'Hacked',
+        'severity' => 'mild',
+    ])->assertNotFound();
+
+    $this->assertDatabaseHas('allergies', ['id' => $allergy->id, 'allergen' => 'Peanuts']);
+});
+
+it('returns not found when updating a nonexistent allergy via api', function () {
+    $user = ($this->withMedicalInfo)(User::factory()->create());
+    $allergy = $user->medicalInformation->allergies()->create([
+        'allergen' => 'Peanuts',
+        'severity' => 'severe',
+    ]);
+    $deletedId = $allergy->id;
+    $allergy->delete();
+
+    Sanctum::actingAs($user, ['*']);
+
+    $this->patchJson("/api/v1/allergies/{$deletedId}", [
+        'allergen' => 'Peanuts',
+        'severity' => 'mild',
+    ])
+        ->assertNotFound()
+        ->assertJson(['status' => 404, 'message' => 'Not found.']);
+});
