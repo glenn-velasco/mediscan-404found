@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AllergyController;
 use App\Http\Controllers\Auth\AcceptInvitationController;
 use App\Http\Controllers\Auth\VerifyApiEmailController;
+use App\Http\Controllers\BroadcastingDocsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmergencyContactController;
 use App\Http\Middleware\CheckUserActive;
@@ -16,6 +17,10 @@ use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 
 Route::inertia('/', 'welcome')->name('home');
+
+Route::get('/docs/broadcasting', BroadcastingDocsController::class)
+    ->middleware('scribe.docs-access')
+    ->name('docs.broadcasting');
 
 Route::middleware('guest')->group(function () {
 

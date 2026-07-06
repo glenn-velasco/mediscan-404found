@@ -3,10 +3,13 @@
 namespace App\Services\User;
 
 use App\Enums\Role;
+use App\Events\UserDeactivated;
+use App\Events\UserDeleted;
 use App\Models\User;
 use App\Repositories\Eloquent\UserRepository;
 use App\Services\Admin\DashboardService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class UserService
 {
@@ -43,12 +46,25 @@ class UserService
         $user->forceFill(['deactivated_at' => $active ? null : now()])->save();
         $this->adminDashboard->flushCache();
 
+        if (! $active) {
+            $user->tokens()->delete();
+            event(new UserDeactivated($user));
+        }
+
         return $user;
     }
 
     public function delete(User $user): void
     {
-        $user->delete();
+        $userId = $user->id;
+
+        DB::transaction(function () use ($user) {
+            $user->tokens()->delete();
+            $user->delete();
+        });
+
         $this->adminDashboard->flushCache();
+
+        event(new UserDeleted($userId));
     }
 }
