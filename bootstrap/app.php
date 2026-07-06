@@ -79,7 +79,11 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return match (true) {
-                $e instanceof ValidationException => ApiController::error($e->getMessage(), 422, $e->errors()),
+                $e instanceof ValidationException => ApiController::error(
+                    collect($e->errors())->flatten()->first() ?? $e->getMessage(),
+                    422,
+                    $e->errors(),
+                ),
                 $e instanceof AuthenticationException => ApiController::error('Unauthenticated.', 401),
                 $e instanceof MethodNotAllowedHttpException => ApiController::error('Method not allowed.', 405),
                 $e instanceof NotFoundHttpException => ApiController::error('Not found.', 404),

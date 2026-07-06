@@ -18,7 +18,6 @@ export type AuthLayoutProps = {
     name?: string;
     title?: string;
     description?: string;
-    icon?: ReactNode;
 };
 
 export type PaginationLink = {

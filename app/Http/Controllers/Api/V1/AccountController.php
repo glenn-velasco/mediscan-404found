@@ -29,10 +29,10 @@ class AccountController extends Controller
             return $this->success(new UserResource($user), 'No changes made.');
         }
 
-        $this->accountService->updateEmail($user, $request->validated('email'), 'api');
+        $updatedUser = $this->accountService->updateEmail($user, $request->validated('email'), 'api');
 
         return $this->success(
-            new UserResource($user->fresh()),
+            new UserResource($updatedUser),
             'Email updated. Please verify your new address.',
         );
     }
@@ -45,9 +45,13 @@ class AccountController extends Controller
      */
     public function updatePassword(PasswordUpdateRequest $request): JsonResponse
     {
-        $request->user()->update([
+        $user = $request->user();
+
+        $user->update([
             'password' => $request->password,
         ]);
+
+        $user->tokens()->where('id', '!=', $user->currentAccessToken()->id)->delete();
 
         return $this->success(message: 'Password updated.');
     }

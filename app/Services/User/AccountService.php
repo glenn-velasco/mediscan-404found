@@ -47,7 +47,7 @@ class AccountService
         return $user->createToken($data['device_name'], $user->tokenAbilities());
     }
 
-    public function updateEmail(User $user, string $newEmail, string $origin = 'settings'): void
+    public function updateEmail(User $user, string $newEmail, string $origin = 'settings'): User
     {
         $previousEmail = $user->email;
 
@@ -61,6 +61,10 @@ class AccountService
             session()->put('email_change_origin', $origin);
         }
 
-        event(new EmailChanged($user->fresh(), $origin));
+        $freshUser = $user->fresh();
+
+        event(new EmailChanged($freshUser, $origin));
+
+        return $freshUser;
     }
 }

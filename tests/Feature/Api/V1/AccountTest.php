@@ -3,6 +3,7 @@
 use App\Models\User;
 use App\Notifications\Api\VerifyApiEmail;
 use Illuminate\Broadcasting\AnonymousEvent;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
@@ -46,16 +47,21 @@ it('users can change their email via api', function () {
     expect($user->email_verified_at)->toBeNull();
 });
 
-it('broadcasts EmailChanged on the admin dashboard channel when a user changes their email via api', function () {
+it('broadcasts EmailChanged on the admin dashboard and the user\'s own channel when a user changes their email via api', function () {
     $user = User::factory()->create();
     Sanctum::actingAs($user, ['*']);
 
-    $event = Mockery::mock(AnonymousEvent::class, ['admin-dashboard'])->makePartial();
+    $channels = [
+        new PrivateChannel('admin-dashboard'),
+        new PrivateChannel('App.Models.User.'.$user->id),
+    ];
+
+    $event = Mockery::mock(AnonymousEvent::class, [$channels])->makePartial();
     $event->shouldReceive('send')->once();
 
-    Broadcast::shouldReceive('private')
+    Broadcast::shouldReceive('on')
         ->once()
-        ->with('admin-dashboard')
+        ->with($channels)
         ->andReturn($event);
 
     $this->putJson('/api/v1/email', ['email' => 'new-email@example.com'])->assertOk();

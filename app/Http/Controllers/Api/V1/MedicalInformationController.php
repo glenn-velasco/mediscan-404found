@@ -24,13 +24,11 @@ class MedicalInformationController extends Controller
     {
         $user = $request->user();
 
-        $emailChanged = $this->medicalInfoService->update($user, $request->validated());
-
-        $medicalInfo = $user->medicalInformation()->with('allergies')->firstOrFail();
+        $result = $this->medicalInfoService->update($user, $request->validated(), 'api');
 
         return $this->success(
-            new MedicalInformationResource($medicalInfo),
-            $emailChanged
+            new MedicalInformationResource($result['medicalInfo']),
+            $result['emailChanged']
                 ? 'Medical information saved. Please verify your new email address.'
                 : 'Medical information saved.',
         );

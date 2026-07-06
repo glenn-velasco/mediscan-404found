@@ -4,6 +4,7 @@ namespace App\Services\User;
 
 use App\Models\Allergy;
 use App\Models\EmergencyContact;
+use App\Models\MedicalInformation;
 use App\Models\User;
 use App\Repositories\Eloquent\MedicalInformationRepository;
 use Illuminate\Support\Arr;
@@ -58,23 +59,29 @@ class MedicalInfoService
         ]);
     }
 
-    /** @param  array<string, mixed>  $data */
-    public function update(User $user, array $data): bool
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{medicalInfo: MedicalInformation, emailChanged: bool}
+     */
+    public function update(User $user, array $data, string $origin = 'dashboard'): array
     {
         $emailChanged = false;
 
         if (isset($data['email']) && $data['email'] !== $user->email) {
-            $this->accountService->updateEmail($user, $data['email'], 'dashboard');
+            $this->accountService->updateEmail($user, $data['email'], $origin);
             $emailChanged = true;
         }
 
         $medical = Arr::except($data, ['email']);
 
-        $this->repository->upsertForUser($user, $medical);
+        $medicalInfo = $this->repository->upsertForUser($user, $medical);
         $user->update(['name' => trim("{$medical['first_name']} {$medical['last_name']}")]);
         $this->flushCache($user->id);
 
-        return $emailChanged;
+        return [
+            'medicalInfo' => $medicalInfo->fresh('allergies'),
+            'emailChanged' => $emailChanged,
+        ];
     }
 
     public function flushCache(int $userId): void
