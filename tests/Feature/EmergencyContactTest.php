@@ -155,6 +155,17 @@ it('user cannot update another users emergency contact', function () {
     $this->assertDatabaseHas('emergency_contacts', ['id' => $contact->id, 'name' => 'Jane Contact']);
 });
 
+it('returns not found when updating a nonexistent emergency contact', function () {
+    $user = ($this->userWithMedicalInfo)();
+    $contact = ($this->contactFor)($user, ['is_primary' => true]);
+    $deletedId = $contact->id;
+    $contact->delete();
+
+    $this->actingAs($user)
+        ->patch(route('emergency-contacts.update', $deletedId), ['name' => 'Jane Contact'])
+        ->assertNotFound();
+});
+
 it('update emergency contact validation errors', function () {
     $user = ($this->userWithMedicalInfo)();
     $contact = ($this->contactFor)($user, ['is_primary' => true]);
@@ -232,6 +243,17 @@ it('deleting the primary contact leaves zero primary contacts', function () {
         'medical_information_id' => $user->medicalInformation->id,
         'is_primary' => true,
     ]);
+});
+
+it('returns not found when deleting a nonexistent emergency contact', function () {
+    $user = ($this->userWithMedicalInfo)();
+    $contact = ($this->contactFor)($user, ['is_primary' => true]);
+    $deletedId = $contact->id;
+    $contact->delete();
+
+    $this->actingAs($user)
+        ->delete(route('emergency-contacts.destroy', $deletedId))
+        ->assertNotFound();
 });
 
 // --- Dashboard payload ---

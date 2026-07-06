@@ -3,6 +3,8 @@
 use App\Enums\Role;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Broadcasting\AnonymousEvent;
+use Illuminate\Support\Facades\Broadcast;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -31,6 +33,22 @@ it('new users can register', function () {
         ->assertRedirect(route('dashboard'));
 
     $this->assertAuthenticated();
+});
+
+it('broadcasts UserRegistered on the admin dashboard channel', function () {
+    $event = Mockery::mock(AnonymousEvent::class, ['admin-dashboard'])->makePartial();
+    $event->shouldReceive('send')->once();
+
+    Broadcast::shouldReceive('private')
+        ->once()
+        ->with('admin-dashboard')
+        ->andReturn($event);
+
+    $this->post(route('register.store'), ($this->validPayload)())
+        ->assertRedirect(route('dashboard'));
+
+    expect($event->broadcastAs())->toBe('UserRegistered');
+    expect($event->broadcastWith())->toHaveKey('stats');
 });
 
 it('new users are assigned the user role', function () {

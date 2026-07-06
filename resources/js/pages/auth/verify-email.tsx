@@ -1,5 +1,6 @@
 // Components
 import { Form, Head } from '@inertiajs/react';
+import { CircleCheck } from 'lucide-react';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -10,11 +11,28 @@ export default function VerifyEmail({
     status,
     emailChangeBackUrl,
     emailChangeBackLabel,
+    verified,
 }: {
     status?: string;
     emailChangeBackUrl?: string | null;
     emailChangeBackLabel?: string | null;
+    verified?: boolean;
 }) {
+    if (verified) {
+        return (
+            <>
+                <Head title="Email verified" />
+
+                <div className="flex flex-col items-center gap-4 text-center">
+                    <CircleCheck className="h-10 w-10 text-green-600" />
+                    <p className="text-sm text-muted-foreground">
+                        You can now close this page and return to the app.
+                    </p>
+                </div>
+            </>
+        );
+    }
+
     return (
         <>
             <Head title="Email verification" />
@@ -55,8 +73,9 @@ export default function VerifyEmail({
     );
 }
 
-VerifyEmail.layout = {
-    title: 'Email verification',
-    description:
-        'Please verify your email address by clicking on the link we just emailed to you.',
-};
+VerifyEmail.layout = (props: { verified?: boolean }) => ({
+    title: props.verified ? 'Email verified' : 'Email verification',
+    description: props.verified
+        ? 'Your email address has been verified successfully.'
+        : 'Please verify your email address by clicking on the link we just emailed to you.',
+});

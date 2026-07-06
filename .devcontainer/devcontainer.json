@@ -15,7 +15,12 @@
 				"bradlc.vscode-tailwindcss",
 				"Anthropic.claude-code",
 				"georgykurian.laravel-ide-helper",
-				"zobo.php-intellisense"
+				"DEVSENSE.phptools-vscode",
+				"DEVSENSE.profiler-php-vscode",
+				"zobo.php-intellisense",
+				"DEVSENSE.intelli-php-vscode",
+				"onecentlin.laravel5-snippets",
+				"amiralizadeh9480.laravel-extra-intellisense"
 			],
 			"settings": {}
 		}

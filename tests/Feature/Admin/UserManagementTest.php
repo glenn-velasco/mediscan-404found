@@ -2,9 +2,15 @@
 
 use App\Enums\Permission;
 use App\Enums\Role;
+use App\Events\UserDeactivated;
+use App\Events\UserDeleted;
 use App\Models\User;
+use App\Services\Admin\DashboardService;
 use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Sanctum\PersonalAccessToken;
 
 beforeEach(function () {
     $this->seed(RoleAndPermissionSeeder::class);
@@ -95,6 +101,16 @@ it('admin can assign role', function () {
     $this->assertTrue($target->fresh()->hasRole(Role::Admin->value));
 });
 
+it('assigning a role flushes the admin dashboard stats cache', function () {
+    $target = ($this->regularUser)();
+    Cache::put(DashboardService::STATS_CACHE_KEY, ['stale' => true], now()->addMonth());
+
+    $this->actingAs(($this->admin)())
+        ->patch(route('admin.users.role', $target), ['role' => Role::Admin->value]);
+
+    expect(Cache::has(DashboardService::STATS_CACHE_KEY))->toBeFalse();
+});
+
 it('admin can deactivate user', function () {
     $target = ($this->regularUser)();
 
@@ -102,6 +118,41 @@ it('admin can deactivate user', function () {
         ->patch(route('admin.users.activation', $target));
 
     $this->assertFalse($target->fresh()->isActive());
+});
+
+it('deactivating a user flushes the admin dashboard stats cache', function () {
+    $target = ($this->regularUser)();
+    Cache::put(DashboardService::STATS_CACHE_KEY, ['stale' => true], now()->addMonth());
+
+    $this->actingAs(($this->admin)())
+        ->patch(route('admin.users.activation', $target));
+
+    expect(Cache::has(DashboardService::STATS_CACHE_KEY))->toBeFalse();
+});
+
+it('deactivating a user revokes their api tokens', function () {
+    $target = ($this->regularUser)();
+    $target->createToken('phone');
+    $target->createToken('tablet');
+
+    $this->actingAs(($this->admin)())
+        ->patch(route('admin.users.activation', $target));
+
+    expect($target->tokens()->count())->toBe(0);
+});
+
+it('deactivating a user broadcasts UserDeactivated on their private channel', function () {
+    Event::fake([UserDeactivated::class]);
+
+    $target = ($this->regularUser)();
+
+    $this->actingAs(($this->admin)())
+        ->patch(route('admin.users.activation', $target));
+
+    Event::assertDispatched(
+        UserDeactivated::class,
+        fn (UserDeactivated $event) => $event->user->is($target),
+    );
 });
 
 it('admin can reactivate user', function () {
@@ -132,6 +183,43 @@ it('admin can delete user', function () {
         ->assertRedirect(route('admin.users.index'));
 
     $this->assertDatabaseMissing('users', ['id' => $target->id]);
+});
+
+it('deleting a user flushes the admin dashboard stats cache', function () {
+    $target = ($this->regularUser)();
+    Cache::put(DashboardService::STATS_CACHE_KEY, ['stale' => true], now()->addMonth());
+
+    $this->actingAs(($this->admin)())
+        ->delete(route('admin.users.destroy', $target));
+
+    expect(Cache::has(DashboardService::STATS_CACHE_KEY))->toBeFalse();
+});
+
+it('deleting a user revokes their api tokens', function () {
+    $target = ($this->regularUser)();
+    $target->createToken('phone');
+    $target->createToken('tablet');
+    $targetId = $target->id;
+
+    $this->actingAs(($this->admin)())
+        ->delete(route('admin.users.destroy', $target));
+
+    expect(PersonalAccessToken::where('tokenable_id', $targetId)->count())->toBe(0);
+});
+
+it('deleting a user broadcasts UserDeleted on their private channel', function () {
+    Event::fake([UserDeleted::class]);
+
+    $target = ($this->regularUser)();
+    $targetId = $target->id;
+
+    $this->actingAs(($this->admin)())
+        ->delete(route('admin.users.destroy', $target));
+
+    Event::assertDispatched(
+        UserDeleted::class,
+        fn (UserDeleted $event) => $event->userId === $targetId,
+    );
 });
 
 it('non admin cannot delete user', function () {

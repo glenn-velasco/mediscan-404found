@@ -122,6 +122,20 @@ it('user cannot update another users allergy', function () {
     $this->assertDatabaseHas('allergies', ['id' => $allergy->id, 'allergen' => 'Peanuts']);
 });
 
+it('returns not found when updating a nonexistent allergy', function () {
+    $user = ($this->userWithMedicalInfo)();
+    $allergy = ($this->allergyFor)($user);
+    $deletedId = $allergy->id;
+    $allergy->delete();
+
+    $this->actingAs($user)
+        ->patch(route('allergies.update', $deletedId), [
+            'allergen' => 'Peanuts',
+            'severity' => 'mild',
+        ])
+        ->assertNotFound();
+});
+
 it('update allergy validation errors', function () {
     $user = ($this->userWithMedicalInfo)();
     $allergy = ($this->allergyFor)($user);
@@ -157,6 +171,17 @@ it('user cannot delete another users allergy', function () {
         ->assertNotFound();
 
     $this->assertModelExists($allergy);
+});
+
+it('returns not found when deleting a nonexistent allergy', function () {
+    $user = ($this->userWithMedicalInfo)();
+    $allergy = ($this->allergyFor)($user);
+    $deletedId = $allergy->id;
+    $allergy->delete();
+
+    $this->actingAs($user)
+        ->delete(route('allergies.destroy', $deletedId))
+        ->assertNotFound();
 });
 
 // --- Dashboard payload ---

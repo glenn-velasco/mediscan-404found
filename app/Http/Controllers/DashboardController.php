@@ -21,11 +21,11 @@ class DashboardController extends Controller
 
     public function update(UpdateMedicalInfoRequest $request): RedirectResponse
     {
-        $emailChanged = $this->medicalInfoService->update(auth()->user(), $request->validated());
+        $result = $this->medicalInfoService->update(auth()->user(), $request->validated());
 
         return Inertia::flash('toast', [
             'type' => 'success',
-            'message' => $emailChanged
+            'message' => $result['emailChanged']
                 ? 'Health record updated. Please verify your new email.'
                 : 'Health record updated.',
         ])->back();

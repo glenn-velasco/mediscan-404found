@@ -11,11 +11,13 @@
     "require": {
         "php": "^8.3",
         "inertiajs/inertia-laravel": "^3.0",
+        "knuckleswtf/scribe": "^5.11",
         "laravel/chisel": "^0.1.0",
         "laravel/fortify": "^1.37.2",
         "laravel/framework": "^13.7",
         "laravel/octane": "^2.17",
         "laravel/reverb": "^1.0",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
         "league/flysystem-aws-s3-v3": "^3.35",

@@ -1,4 +1,5 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { useEcho } from '@laravel/echo-react';
 import { ChevronsUpDown, LogOut, Settings } from 'lucide-react';
 import type { ReactNode } from 'react';
 import AppLogo from '@/components/app-logo';
@@ -20,6 +21,16 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
     const { auth } = usePage().props;
     const getInitials = useInitials();
     const user = auth.user;
+
+    useEcho(
+        `App.Models.User.${user?.id}`,
+        ['.UserDeactivated', '.UserDeleted'],
+        () => router.post(logout.url()),
+    );
+
+    useEcho(`App.Models.User.${user?.id}`, '.EmailChanged', () =>
+        router.reload({ only: ['auth'] }),
+    );
 
     return (
         <div className="min-h-screen bg-muted/30">

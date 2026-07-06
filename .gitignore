@@ -6,6 +6,9 @@
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
+/.scribe
+/resources/views/scribe
+/public/vendor/scribe
 /storage/*.key
 /storage/pail
 /resources/js/actions

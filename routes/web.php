@@ -7,6 +7,8 @@ use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AllergyController;
 use App\Http\Controllers\Auth\AcceptInvitationController;
+use App\Http\Controllers\Auth\VerifyApiEmailController;
+use App\Http\Controllers\BroadcastingDocsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmergencyContactController;
 use App\Http\Middleware\CheckUserActive;
@@ -16,6 +18,10 @@ use Spatie\Permission\Middleware\RoleMiddleware;
 
 Route::inertia('/', 'welcome')->name('home');
 
+Route::get('/docs/broadcasting', BroadcastingDocsController::class)
+    ->middleware('scribe.docs-access')
+    ->name('docs.broadcasting');
+
 Route::middleware('guest')->group(function () {
 
     Route::get('/invite/{token}', [AcceptInvitationController::class, 'show'])
@@ -24,6 +30,12 @@ Route::middleware('guest')->group(function () {
     Route::post('/invite/{token}', [AcceptInvitationController::class, 'store'])
         ->name('invitation.store');
 });
+
+// Public verification landing page for links sent via the token-based API —
+// there is no web session at this point, so the signature is the only guard.
+Route::get('/verify-email/{id}/{hash}', VerifyApiEmailController::class)
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('email.verify');
 
 // Dashboard and its sub-resources are accessible while unverified — a user
 // who just changed their email must be able to return here before re-verifying.

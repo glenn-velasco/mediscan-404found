@@ -5,6 +5,8 @@ use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitationNotification;
 use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Broadcasting\AnonymousEvent;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -78,6 +80,23 @@ it('invitation email is sent', function () {
     );
 });
 
+it('broadcasts InvitationSent on the admin dashboard channel', function () {
+    Notification::fake();
+
+    $event = Mockery::mock(AnonymousEvent::class, ['admin-dashboard'])->makePartial();
+    $event->shouldReceive('send')->once();
+
+    Broadcast::shouldReceive('private')
+        ->once()
+        ->with('admin-dashboard')
+        ->andReturn($event);
+
+    $this->actingAs(($this->admin)())
+        ->post(route('admin.invitations.store'), ($this->invitePayload)());
+
+    expect($event->broadcastAs())->toBe('InvitationSent');
+});
+
 it('invitation expires in three days', function () {
     Notification::fake();
 
@@ -128,6 +147,23 @@ it('re invitation is allowed after expiry', function () {
         ->assertSessionHasNoErrors();
 });
 
+it('admin can resend invitation', function () {
+    Notification::fake();
+
+    $admin = ($this->admin)();
+
+    $this->actingAs($admin)
+        ->post(route('admin.invitations.store'), ($this->invitePayload)());
+
+    $invitation = UserInvitation::where('email', 'invite@example.com')->first();
+
+    $this->actingAs($admin)
+        ->post(route('admin.invitations.resend', $invitation))
+        ->assertRedirect();
+
+    Notification::assertSentOnDemandTimes(UserInvitationNotification::class, 2);
+});
+
 // --- Accept invitation ---
 
 it('guest can view accept invitation page', function () {
@@ -164,6 +200,31 @@ it('guest can accept invitation and create account', function () {
 
     $this->assertDatabaseHas('users', ['email' => 'invited@example.com']);
     $this->assertAuthenticated();
+});
+
+it('broadcasts UserRegistered on the admin dashboard channel when an invitation is accepted', function () {
+    $token = Str::random(64);
+
+    UserInvitation::create([
+        'email' => 'invited@example.com',
+        'token' => $token,
+        'invited_by' => ($this->admin)()->id,
+        'expires_at' => now()->addDays(3),
+    ]);
+
+    $event = Mockery::mock(AnonymousEvent::class, ['admin-dashboard'])->makePartial();
+    $event->shouldReceive('send')->once();
+
+    Broadcast::shouldReceive('private')
+        ->once()
+        ->with('admin-dashboard')
+        ->andReturn($event);
+
+    $this->post(route('invitation.store', $token), ($this->acceptPayload)())
+        ->assertRedirect(route('dashboard'));
+
+    expect($event->broadcastAs())->toBe('UserRegistered');
+    expect($event->broadcastWith())->toHaveKey('stats');
 });
 
 it('accepted user gets user role', function () {
