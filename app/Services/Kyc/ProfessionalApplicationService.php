@@ -7,6 +7,7 @@ use App\Enums\Permission;
 use App\Enums\ProfessionalApplicationStatus;
 use App\Events\ProfessionalApplicationStatusChanged;
 use App\Exceptions\ProfessionalApplicationAlreadyPendingException;
+use App\Exceptions\ProfessionalApplicationAlreadyReviewedException;
 use App\Jobs\ProcessProfessionalApplication;
 use App\Models\ProfessionalApplication;
 use App\Models\Role;
@@ -134,6 +135,10 @@ class ProfessionalApplicationService
 
     public function approve(ProfessionalApplication $application, User $admin): void
     {
+        if ($application->isTerminal()) {
+            throw new ProfessionalApplicationAlreadyReviewedException;
+        }
+
         DB::transaction(function () use ($application, $admin) {
             $roleName = Str::slug($application->specialty ?? $application->profession ?? 'verified-professional');
 
@@ -163,6 +168,10 @@ class ProfessionalApplicationService
 
     public function reject(ProfessionalApplication $application, User $admin, string $reason): void
     {
+        if ($application->isTerminal()) {
+            throw new ProfessionalApplicationAlreadyReviewedException;
+        }
+
         DB::transaction(function () use ($application, $admin, $reason) {
             $application->forceFill([
                 'status' => ProfessionalApplicationStatus::Denied,

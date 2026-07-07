@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\ProfessionalApplicationAlreadyPendingException;
+use App\Exceptions\ProfessionalApplicationAlreadyReviewedException;
 use App\Exceptions\TooManyAttemptsException;
 use App\Exceptions\UserInvitationLinkInvalidException;
 use App\Http\Controllers\Api\Controller as ApiController;
@@ -73,6 +74,15 @@ return Application::configure(basePath: dirname(__DIR__))
             ->back()
             ->withErrors(['id_type' => $exception->getMessage()])
         );
+
+        $exceptions->renderable(function (ProfessionalApplicationAlreadyReviewedException $exception) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => $exception->getMessage(),
+            ]);
+
+            return redirect()->route('admin.professional-applications.index');
+        });
 
         // GLOBAL EXCEPTION HANDLER FOR API
         $exceptions->shouldRenderJsonWhen(
