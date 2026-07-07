@@ -39,11 +39,36 @@ it('accepts "Registration No." as a synonym for the license number label', funct
     expect($fields['license_number'])->toBe('123456');
 });
 
-it('falls back to the matched specialty as the profession when there is no explicit Profession label', function () {
+it('leaves profession null rather than duplicating specialty when there is no explicit Profession label', function () {
     $text = "Republic of the Philippines\nProfessional Regulation Commission\nName: Juan Dela Cruz\nNURSING\nRegistration No. 123456";
 
     $fields = $this->verifier->extractFields($text);
 
-    expect($fields['profession'])->toBe('Nursing')
+    expect($fields['profession'])->toBeNull()
         ->and($fields['specialty'])->toBe('Nursing');
+});
+
+it('does not let a blank Profession label swallow the next line as its value', function () {
+    $text = "Republic of the Philippines\nProfessional Regulation Commission\nProfession:\nName: Juan Dela Cruz\nLicense No. 123456";
+
+    $fields = $this->verifier->extractFields($text);
+
+    expect($fields['profession'])->toBeNull()
+        ->and($fields['full_name'])->toBe('Juan Dela Cruz');
+});
+
+it('does not truncate a license number longer than 7 digits', function () {
+    $text = "Profession: Nursing\nLicense No. 12345678\nValid Until 12/31/2027";
+
+    $fields = $this->verifier->extractFields($text);
+
+    expect($fields['license_number'])->toBe('12345678');
+});
+
+it('does not match "Name" inside "Surname" for the full name field', function () {
+    $text = "Surname: Dela Cruz\nGiven Name: Juan Miguel\nProfession: Nursing\nLicense No. 123456";
+
+    $fields = $this->verifier->extractFields($text);
+
+    expect($fields['full_name'])->not->toBe('Dela Cruz');
 });

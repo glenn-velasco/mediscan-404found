@@ -47,8 +47,17 @@ class PrcIdVerifier implements IdVerifierContract
         // \b after "Profession" keeps this from matching inside
         // "Professional Regulation Commission" (a header line present on
         // every PRC ID), which would otherwise swallow the real field.
-        if (preg_match('/\bProfession\b\s*[:\-]?\s*(.+)/i', $text, $matches)) {
-            return trim($matches[1]);
+        // Horizontal whitespace only (not \s, which also matches \n) between
+        // the label and the value - otherwise a blank "Profession:" line
+        // lets the match skip straight over the newline and capture the
+        // *next* label's entire line as the profession. The quantifiers
+        // between the label and `(.+)` are possessive (`?+`/`*+`) so PCRE
+        // can't backtrack into giving up the colon it already consumed and
+        // have `(.+)` capture just ":" when the value itself is blank.
+        if (preg_match('/\bProfession\b[ \t]*+[:\-]?+[ \t]*+(.+)/i', $text, $matches)) {
+            $value = trim($matches[1]);
+
+            return $value !== '' ? $value : null;
         }
 
         return null;
@@ -68,8 +77,12 @@ class PrcIdVerifier implements IdVerifierContract
     private function extractLicenseNumber(string $text): ?string
     {
         // "Registration No." is the label some PRC layouts use in place of
-        // "License No." for the same field.
-        if (preg_match('/(?:License|Registration)\s*No\.?\s*[:\-]?\s*([0-9]{4,7})/i', $text, $matches)) {
+        // "License No." for the same field. The `(?!\d)` guard stops a
+        // bounded {4,7} quantifier from silently truncating a longer run of
+        // digits (e.g. an 8-digit number) to its first 7 digits - either the
+        // full run is captured, or the match fails outright rather than
+        // storing a corrupted number.
+        if (preg_match('/(?:License|Registration)\s*No\.?\s*[:\-]?\s*([0-9]{4,})(?!\d)/i', $text, $matches)) {
             return $matches[1];
         }
 
@@ -87,8 +100,14 @@ class PrcIdVerifier implements IdVerifierContract
 
     private function extractFullName(string $text): ?string
     {
-        if (preg_match('/Name\s*[:\-]?\s*(.+)/i', $text, $matches)) {
-            return trim($matches[1]);
+        // \b before "Name" keeps this from matching inside "Surname" (whose
+        // last four letters are "name"), which would otherwise capture the
+        // surname alone instead of the intended full-name field. See
+        // extractProfession() for why the quantifiers are possessive.
+        if (preg_match('/\bName\b[ \t]*+[:\-]?+[ \t]*+(.+)/i', $text, $matches)) {
+            $value = trim($matches[1]);
+
+            return $value !== '' ? $value : null;
         }
 
         return null;
