@@ -11,21 +11,15 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import admin from '@/routes/admin';
-import type { Paginated } from '@/types';
-
-type ApplicationStatus =
-    | 'processing'
-    | 'pending_review'
-    | 'approved'
-    | 'denied'
-    | 'auto_rejected';
+import type { Paginated, ProfessionalApplicationStatus } from '@/types';
+import { professionalApplicationStatusBadgeVariant } from '@/types';
 
 interface ApplicationListItem {
     id: number;
     applicant: { id: number; name: string | null; email: string };
     profession: string | null;
     specialty: string | null;
-    status: ApplicationStatus;
+    status: ProfessionalApplicationStatus;
     created_at: string | null;
 }
 
@@ -33,17 +27,6 @@ interface IndexProps {
     applications: Paginated<ApplicationListItem>;
     filters: { status?: string };
 }
-
-const statusVariant: Record<
-    ApplicationStatus,
-    'default' | 'secondary' | 'destructive'
-> = {
-    processing: 'secondary',
-    pending_review: 'secondary',
-    approved: 'default',
-    denied: 'destructive',
-    auto_rejected: 'destructive',
-};
 
 export default function Index({ applications, filters }: IndexProps) {
     useEcho('admin-dashboard', '.ProfessionalApplicationStatusChanged', () =>
@@ -128,7 +111,7 @@ export default function Index({ applications, filters }: IndexProps) {
                                     <td className="px-4 py-3">
                                         <Badge
                                             variant={
-                                                statusVariant[
+                                                professionalApplicationStatusBadgeVariant[
                                                     application.status
                                                 ]
                                             }

@@ -16,13 +16,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import admin from '@/routes/admin';
-
-type ApplicationStatus =
-    | 'processing'
-    | 'pending_review'
-    | 'approved'
-    | 'denied'
-    | 'auto_rejected';
+import type { ProfessionalApplicationStatus } from '@/types';
+import { professionalApplicationStatusBadgeVariant } from '@/types';
 
 interface ApplicationDetail {
     id: number;
@@ -32,7 +27,7 @@ interface ApplicationDetail {
     profession: string | null;
     specialty: string | null;
     license_number: string | null;
-    status: ApplicationStatus;
+    status: ProfessionalApplicationStatus;
     face_match_score: number | null;
     face_match_passed: boolean | null;
     liveness_score: number | null;
@@ -49,17 +44,6 @@ interface ShowProps {
     application: ApplicationDetail;
     files: { id_photo: string; selfie: string; coe: string };
 }
-
-const statusVariant: Record<
-    ApplicationStatus,
-    'default' | 'secondary' | 'destructive'
-> = {
-    processing: 'secondary',
-    pending_review: 'secondary',
-    approved: 'default',
-    denied: 'destructive',
-    auto_rejected: 'destructive',
-};
 
 function Field({
     label,
@@ -129,7 +113,13 @@ export default function Show({ application, files }: ShowProps) {
                                     </p>
                                 )}
                             </div>
-                            <Badge variant={statusVariant[application.status]}>
+                            <Badge
+                                variant={
+                                    professionalApplicationStatusBadgeVariant[
+                                        application.status
+                                    ]
+                                }
+                            >
                                 {application.status.replace(/_/g, ' ')}
                             </Badge>
                         </div>

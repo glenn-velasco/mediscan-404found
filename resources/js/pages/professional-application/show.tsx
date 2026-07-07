@@ -6,13 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import professionalApplication from '@/routes/professional-application';
-
-type ApplicationStatus =
-    | 'processing'
-    | 'pending_review'
-    | 'approved'
-    | 'denied'
-    | 'auto_rejected';
+import type { ProfessionalApplicationStatus } from '@/types';
+import {
+    professionalApplicationStatusBadgeVariant,
+    ProfessionalApplicationStatusLabel,
+} from '@/types';
 
 interface Application {
     id: number;
@@ -20,7 +18,7 @@ interface Application {
     issuing_country: string;
     profession: string | null;
     specialty: string | null;
-    status: ApplicationStatus;
+    status: ProfessionalApplicationStatus;
     rejection_reason: string | null;
     verification_notes: string | null;
     role_granted: string | null;
@@ -30,25 +28,6 @@ interface Application {
 interface ShowProps {
     application: Application | null;
 }
-
-const statusVariant: Record<
-    ApplicationStatus,
-    'default' | 'secondary' | 'destructive'
-> = {
-    processing: 'secondary',
-    pending_review: 'secondary',
-    approved: 'default',
-    denied: 'destructive',
-    auto_rejected: 'destructive',
-};
-
-const statusLabel: Record<ApplicationStatus, string> = {
-    processing: 'Processing',
-    pending_review: 'Pending Review',
-    approved: 'Approved',
-    denied: 'Denied',
-    auto_rejected: 'Auto-Rejected',
-};
 
 export default function Show({ application }: ShowProps) {
     const { user } = useAuth();
@@ -94,9 +73,17 @@ export default function Show({ application }: ShowProps) {
                                     </p>
                                 </div>
                                 <Badge
-                                    variant={statusVariant[application.status]}
+                                    variant={
+                                        professionalApplicationStatusBadgeVariant[
+                                            application.status
+                                        ]
+                                    }
                                 >
-                                    {statusLabel[application.status]}
+                                    {
+                                        ProfessionalApplicationStatusLabel[
+                                            application.status
+                                        ]
+                                    }
                                 </Badge>
                             </div>
 
