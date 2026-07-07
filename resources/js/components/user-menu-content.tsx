@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { IdCard, LayoutGrid, LogOut, Settings } from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -7,9 +7,13 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { UserInfo } from '@/components/user-info';
+import { useAuth } from '@/hooks/use-auth';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
-import { logout } from '@/routes';
+import { dashboard, logout } from '@/routes';
 import { edit as editAccount } from '@/routes/account';
+import admin from '@/routes/admin';
+import professionalApplication from '@/routes/professional-application';
+import { Role } from '@/types';
 import type { User } from '@/types';
 
 type Props = {
@@ -18,7 +22,7 @@ type Props = {
 
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
-
+    const { hasRole } = useAuth();
     const handleLogout = () => {
         cleanup();
         router.flushAll();
@@ -33,6 +37,38 @@ export function UserMenuContent({ user }: Props) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+                {hasRole(Role.Admin) && (
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href={admin.dashboard()}
+                            onClick={cleanup}
+                        >
+                            <LayoutGrid className="mr-2" />
+                            Admin Dashboard
+                        </Link>
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href={dashboard()}
+                        onClick={cleanup}
+                    >
+                        <LayoutGrid className="mr-2" />
+                        Dashboard
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link
+                        className="block w-full cursor-pointer"
+                        href={professionalApplication.show()}
+                        onClick={cleanup}
+                    >
+                        <IdCard className="mr-2" />
+                        Professional Application
+                    </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"

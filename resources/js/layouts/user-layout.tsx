@@ -1,6 +1,12 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
-import { ChevronsUpDown, LogOut, Settings } from 'lucide-react';
+import {
+    ChevronsUpDown,
+    IdCard,
+    LayoutGrid,
+    LogOut,
+    Settings,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import AppLogo from '@/components/app-logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,13 +19,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/use-auth';
 import { useInitials } from '@/hooks/use-initials';
 import { dashboard, logout } from '@/routes';
 import { edit as editAccount } from '@/routes/account';
+import admin from '@/routes/admin';
 import professionalApplication from '@/routes/professional-application';
+import { Role } from '@/types';
 
 export default function UsersLayout({ children }: { children: ReactNode }) {
     const { auth } = usePage().props;
+    const { hasRole } = useAuth();
     const getInitials = useInitials();
     const user = auth.user;
 
@@ -43,16 +53,6 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
 
                     {user && (
                         <div className="flex items-center gap-4">
-                            {/* Quick links */}
-                            <nav className="flex items-center gap-4">
-                                <Link
-                                    href={professionalApplication.show()}
-                                    className="text-sm font-medium text-muted-foreground hover:text-foreground"
-                                >
-                                    Professional Application
-                                </Link>
-                            </nav>
-
                             {/* User menu */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger className="flex items-center gap-2 rounded-full p-1 ring-ring transition-shadow outline-none hover:bg-accent focus-visible:ring-2">
@@ -101,6 +101,35 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuGroup>
+                                        {hasRole(Role.Admin) && (
+                                            <DropdownMenuItem asChild>
+                                                <Link
+                                                    href={admin.dashboard()}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <LayoutGrid className="mr-2 h-4 w-4" />
+                                                    Admin Dashboard
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuItem asChild>
+                                            <Link
+                                                href={dashboard()}
+                                                className="cursor-pointer"
+                                            >
+                                                <LayoutGrid className="mr-2 h-4 w-4" />
+                                                Dashboard
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link
+                                                href={professionalApplication.show()}
+                                                className="cursor-pointer"
+                                            >
+                                                <IdCard className="mr-2 h-4 w-4" />
+                                                Professional Application
+                                            </Link>
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link
                                                 href={editAccount()}
