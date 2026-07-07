@@ -105,6 +105,21 @@ def _authorized(req) -> bool:
     return req.headers.get("Authorization") == f"Bearer {SHARED_SECRET}"
 
 
+@app.before_request
+def _require_auth():
+    # /health is exempt - the Docker HEALTHCHECK command hits it without an
+    # Authorization header (see Dockerfile). Every other route - including
+    # any added later - is covered by this one central check rather than
+    # each route remembering to call _authorized() itself.
+    if request.path == "/health":
+        return None
+
+    if not _authorized(request):
+        return jsonify(error="unauthorized"), 401
+
+    return None
+
+
 def _decode(file_storage):
     data = np.frombuffer(file_storage.read(), dtype=np.uint8)
     return cv2.imdecode(data, cv2.IMREAD_COLOR)
@@ -200,9 +215,6 @@ def health():
 
 @app.post("/ocr")
 def ocr():
-    if not _authorized(request):
-        return jsonify(error="unauthorized"), 401
-
     if "image" not in request.files:
         return jsonify(error="missing_image"), 400
 
@@ -217,9 +229,6 @@ def ocr():
 
 @app.post("/compare")
 def compare():
-    if not _authorized(request):
-        return jsonify(error="unauthorized"), 401
-
     if "source" not in request.files or "target" not in request.files:
         return jsonify(error="missing_files"), 400
 
@@ -251,9 +260,6 @@ def compare():
 
 @app.post("/liveness")
 def liveness():
-    if not _authorized(request):
-        return jsonify(error="unauthorized"), 401
-
     frames = request.files.getlist("frames")
     if len(frames) < MIN_FRAMES_FOR_LIVENESS:
         return jsonify(error="not_enough_frames"), 400
