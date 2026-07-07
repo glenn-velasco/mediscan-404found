@@ -33,16 +33,9 @@ class PrcIdVerifier implements IdVerifierContract
      */
     public function extractFields(string $fullText): array
     {
-        $specialty = $this->extractSpecialty($fullText);
-
         return [
-            // Some PRC layouts print the profession/board only as an
-            // unlabeled banner (e.g. "PROFESSIONAL TEACHER") rather than a
-            // "Profession:" line - fall back to the matched specialty
-            // keyword so those IDs aren't rejected purely for lacking the
-            // literal label.
-            'profession' => $this->extractProfession($fullText) ?? $specialty,
-            'specialty' => $specialty,
+            'profession' => $this->extractProfession($fullText),
+            'specialty' => $this->extractSpecialty($fullText),
             'license_number' => $this->extractLicenseNumber($fullText),
             'license_expiry' => $this->extractLicenseExpiry($fullText),
             'full_name' => $this->extractFullName($fullText),
