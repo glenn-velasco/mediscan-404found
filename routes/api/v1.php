@@ -32,8 +32,12 @@ Route::prefix('v1')->group(function () {
         Route::patch('/allergies/{allergy}', [AllergyController::class, 'update']);
         Route::delete('/allergies/{allergy}', [AllergyController::class, 'destroy']);
 
-        Route::post('/professional-applications', [ProfessionalApplicationController::class, 'store']);
-        Route::get('/professional-applications', [ProfessionalApplicationController::class, 'index']);
-        Route::get('/professional-applications/{professionalApplication}', [ProfessionalApplicationController::class, 'show']);
+        // Uploading a government ID + biometric selfie is sensitive enough to
+        // also require a verified email, unlike the routes above.
+        Route::middleware('verified')->group(function () {
+            Route::post('/professional-applications', [ProfessionalApplicationController::class, 'store']);
+            Route::get('/professional-applications', [ProfessionalApplicationController::class, 'index']);
+            Route::get('/professional-applications/{professionalApplication}', [ProfessionalApplicationController::class, 'show']);
+        });
     });
 });
