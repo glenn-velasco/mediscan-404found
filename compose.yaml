@@ -28,6 +28,7 @@ services:
             - rustfs
             - reverb
             - worker
+            - face-match
     pgsql:
         image: 'postgres:18-alpine'
         ports:
@@ -148,6 +149,28 @@ services:
             - pgsql
             - redis
             - reverb
+            - face-match
+    face-match:
+        build:
+            context: ./docker/face-match
+            dockerfile: Dockerfile
+        image: mediscan/face-match
+        environment:
+            FACE_MATCH_SHARED_SECRET: '${FACE_MATCH_SHARED_SECRET:-local-dev-secret}'
+        ports:
+            - '${FORWARD_FACE_MATCH_PORT:-8500}:8500'
+        networks:
+            - sail
+        healthcheck:
+            test:
+                - CMD
+                - python
+                - -c
+                - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8500/health')"
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 40s
 networks:
     sail:
         driver: bridge
