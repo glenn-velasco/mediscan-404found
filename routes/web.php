@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\VerifyApiEmailController;
 use App\Http\Controllers\BroadcastingDocsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmergencyContactController;
+use App\Http\Controllers\ProfessionalApplicationController;
 use App\Http\Middleware\CheckUserActive;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Middleware\PermissionMiddleware;
@@ -51,6 +52,16 @@ Route::middleware(['auth', CheckUserActive::class])->group(function () {
     Route::patch('/emergency-contacts/{emergencyContact}', [EmergencyContactController::class, 'update'])->name('emergency-contacts.update');
     Route::delete('/emergency-contacts/{emergencyContact}', [EmergencyContactController::class, 'destroy'])->name('emergency-contacts.destroy');
 });
+
+// Uploading a government ID + biometric selfie is sensitive enough to also
+// require a verified email, unlike the dashboard group above.
+Route::middleware(['auth', 'verified', CheckUserActive::class])
+    ->prefix('professional-application')->name('professional-application.')
+    ->group(function () {
+        Route::get('/', [ProfessionalApplicationController::class, 'show'])->name('show');
+        Route::get('/apply', [ProfessionalApplicationController::class, 'create'])->name('create');
+        Route::post('/', [ProfessionalApplicationController::class, 'store'])->name('store');
+    });
 
 Route::prefix('admin')->name('admin.')
     ->middleware(['auth', 'verified', CheckUserActive::class, RoleMiddleware::using(Role::Admin->value)])
