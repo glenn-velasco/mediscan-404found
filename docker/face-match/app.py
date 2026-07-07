@@ -97,6 +97,12 @@ EXPECTED_CHANNEL_INDEX = {"blue": 0, "green": 1, "red": 2}
 MIN_FLASH_FRAMES = 2
 # Fraction of flash frames that must show their expected dominant channel.
 COLOR_REFLECTION_PASS_RATIO = 0.6
+# Minimum gap (0-255 scale) the expected channel's mean must lead the other
+# two channels by. A plain equality/"is it the max" check is trivially true
+# for a dark or neutral-gray patch (all channels near-equal), which would let
+# a blank/shadowed surface "match" every flash color - requiring a real
+# margin means the patch must actually be tinted by the flash color.
+COLOR_DOMINANCE_MARGIN = 15.0
 
 
 def _authorized(req) -> bool:
@@ -123,6 +129,14 @@ def _require_auth():
 def _decode(file_storage):
     data = np.frombuffer(file_storage.read(), dtype=np.uint8)
     return cv2.imdecode(data, cv2.IMREAD_COLOR)
+
+
+def _decode_and_detect_face(file_storage):
+    """Decodes an uploaded frame and returns (image, largest_face) - the
+    face is None if the image failed to decode or no face was found."""
+    image = _decode(file_storage)
+    face = _detect_largest_face(image) if image is not None else None
+    return image, face
 
 
 def _binarize_for_ocr(image):
@@ -189,8 +203,13 @@ def _dominant_channel_matches(image, face, color: str) -> bool:
 
     means = cv2.mean(patch)[:3]  # (B, G, R)
     expected_index = EXPECTED_CHANNEL_INDEX.get(color)
+    if expected_index is None:
+        return False
 
-    return expected_index is not None and means[expected_index] == max(means)
+    expected_mean = means[expected_index]
+    other_means = [m for i, m in enumerate(means) if i != expected_index]
+
+    return expected_mean - max(other_means) >= COLOR_DOMINANCE_MARGIN
 
 
 def _color_reflection_passed(flash_frame_files, flash_colors) -> bool:
@@ -199,8 +218,7 @@ def _color_reflection_passed(flash_frame_files, flash_colors) -> bool:
 
     matches = 0
     for frame_file, color in zip(flash_frame_files, flash_colors):
-        image = _decode(frame_file)
-        face = _detect_largest_face(image) if image is not None else None
+        image, face = _decode_and_detect_face(frame_file)
 
         if face is not None and _dominant_channel_matches(image, face, color):
             matches += 1
@@ -232,11 +250,8 @@ def compare():
     if "source" not in request.files or "target" not in request.files:
         return jsonify(error="missing_files"), 400
 
-    source_image = _decode(request.files["source"])
-    target_image = _decode(request.files["target"])
-
-    source_face = _detect_largest_face(source_image) if source_image is not None else None
-    target_face = _detect_largest_face(target_image) if target_image is not None else None
+    source_image, source_face = _decode_and_detect_face(request.files["source"])
+    target_image, target_face = _decode_and_detect_face(request.files["target"])
 
     faces_detected = {
         "source": 1 if source_face is not None else 0,
@@ -268,8 +283,7 @@ def liveness():
     faces_found = 0
 
     for frame_file in frames:
-        image = _decode(frame_file)
-        face = _detect_largest_face(image) if image is not None else None
+        image, face = _decode_and_detect_face(frame_file)
 
         if face is None:
             continue
