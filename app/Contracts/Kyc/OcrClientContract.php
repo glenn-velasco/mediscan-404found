@@ -7,10 +7,9 @@ use App\Exceptions\KycSidecarUnavailableException;
 interface OcrClientContract
 {
     /**
-     * Run OCR against an image stored on the given disk and return the
-     * extracted text.
+     * Run OCR against raw image bytes and return the extracted text.
      *
      * @throws KycSidecarUnavailableException when the sidecar cannot be reached after retries
      */
-    public function detectText(string $disk, string $path): string;
+    public function detectText(string $imageContents): string;
 }

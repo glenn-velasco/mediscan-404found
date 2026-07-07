@@ -10,16 +10,15 @@ use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class HttpKycSidecarClient implements FaceMatchClientContract, OcrClientContract
 {
-    public function detectText(string $disk, string $path): string
+    public function detectText(string $imageContents): string
     {
         $response = $this->post(
             '/ocr',
-            fn (PendingRequest $request) => $request->attach('image', Storage::disk($disk)->get($path), 'image.jpg')
+            fn (PendingRequest $request) => $request->attach('image', $imageContents, 'image.jpg')
         );
 
         $response->throw();
@@ -30,13 +29,13 @@ class HttpKycSidecarClient implements FaceMatchClientContract, OcrClientContract
     /**
      * @return array{match: bool, score: float, faces_detected: array{source: int, target: int}}
      */
-    public function compare(string $disk, string $sourcePath, string $targetPath): array
+    public function compare(string $sourceContents, string $targetContents): array
     {
         $response = $this->post(
             '/compare',
             fn (PendingRequest $request) => $request
-                ->attach('source', Storage::disk($disk)->get($sourcePath), 'source.jpg')
-                ->attach('target', Storage::disk($disk)->get($targetPath), 'target.jpg')
+                ->attach('source', $sourceContents, 'source.jpg')
+                ->attach('target', $targetContents, 'target.jpg')
         );
 
         if ($response->status() === 422) {
@@ -57,19 +56,19 @@ class HttpKycSidecarClient implements FaceMatchClientContract, OcrClientContract
     }
 
     /**
-     * @param  array<int, string>  $framePaths
-     * @param  array<int, array{path: string, color: string}>  $flashFrames
+     * @param  array<int, string>  $frameContents
+     * @param  array<int, array{contents: string, color: string}>  $flashFrames
      * @return array{live: bool, score: float, blink_detected: bool, color_reflection_passed: bool}
      */
-    public function checkLiveness(string $disk, array $framePaths, array $flashFrames): array
+    public function checkLiveness(array $frameContents, array $flashFrames): array
     {
-        $response = $this->post('/liveness', function (PendingRequest $request) use ($disk, $framePaths, $flashFrames) {
-            foreach ($framePaths as $index => $path) {
-                $request->attach('frames', Storage::disk($disk)->get($path), "frame-{$index}.jpg");
+        $response = $this->post('/liveness', function (PendingRequest $request) use ($frameContents, $flashFrames) {
+            foreach ($frameContents as $index => $contents) {
+                $request->attach('frames', $contents, "frame-{$index}.jpg");
             }
 
             foreach ($flashFrames as $index => $flashFrame) {
-                $request->attach('flash_frames', Storage::disk($disk)->get($flashFrame['path']), "flash-{$index}.jpg");
+                $request->attach('flash_frames', $flashFrame['contents'], "flash-{$index}.jpg");
                 $request->attach('flash_colors', $flashFrame['color']);
             }
 

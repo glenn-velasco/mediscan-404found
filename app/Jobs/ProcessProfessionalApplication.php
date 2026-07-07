@@ -15,6 +15,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class ProcessProfessionalApplication implements ShouldQueue
@@ -39,8 +40,14 @@ class ProcessProfessionalApplication implements ShouldQueue
             return;
         }
 
+        // Fetched once and reused below (OCR + face-match both need the ID
+        // photo; the selfie's last frame doubles as both a liveness burst
+        // frame and the face-match source) rather than re-fetching the same
+        // S3 objects a second time per step.
+        $idPhotoContents = Storage::disk(self::DISK)->get($application->id_photo_path);
+
         try {
-            $fullText = $ocrClient->detectText(self::DISK, $application->id_photo_path);
+            $fullText = $ocrClient->detectText($idPhotoContents);
         } catch (KycSidecarUnavailableException) {
             $this->markPendingReview($application, 'OCR service unavailable; manual review required.');
 
@@ -71,13 +78,22 @@ class ProcessProfessionalApplication implements ShouldQueue
             return;
         }
 
-        if (filled($application->selfie_frame_paths)) {
+        // Keyed by path so the selfie_path frame (always the last one, see
+        // ProfessionalApplicationService::submit()) can be reused for the
+        // face-match call below instead of being fetched from S3 twice.
+        $frameContentsByPath = collect($application->selfie_frame_paths ?? [])
+            ->mapWithKeys(fn (string $path) => [$path => Storage::disk(self::DISK)->get($path)]);
+
+        if ($frameContentsByPath->isNotEmpty()) {
+            $flashFrameContents = collect($application->liveness_flash_frames ?? [])
+                ->map(fn (array $flashFrame) => [
+                    'contents' => Storage::disk(self::DISK)->get($flashFrame['path']),
+                    'color' => $flashFrame['color'],
+                ])
+                ->all();
+
             try {
-                $liveness = $faceMatchClient->checkLiveness(
-                    self::DISK,
-                    $application->selfie_frame_paths,
-                    $application->liveness_flash_frames ?? []
-                );
+                $liveness = $faceMatchClient->checkLiveness($frameContentsByPath->values()->all(), $flashFrameContents);
             } catch (KycSidecarUnavailableException) {
                 $this->markPendingReview($application, 'Liveness check service unavailable; manual review required.');
 
@@ -102,8 +118,11 @@ class ProcessProfessionalApplication implements ShouldQueue
             }
         }
 
+        $selfieContents = $frameContentsByPath->get($application->selfie_path)
+            ?? Storage::disk(self::DISK)->get($application->selfie_path);
+
         try {
-            $faceMatch = $faceMatchClient->compare(self::DISK, $application->selfie_path, $application->id_photo_path);
+            $faceMatch = $faceMatchClient->compare($selfieContents, $idPhotoContents);
         } catch (KycSidecarUnavailableException) {
             $this->markPendingReview($application, 'Face-match service unavailable; manual review required.');
 
