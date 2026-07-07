@@ -60,7 +60,7 @@ it('submits a professional application and dispatches the verification job', fun
 
     Event::assertDispatched(
         ProfessionalApplicationStatusChanged::class,
-        fn ($event) => $event->application->id === $application->id
+        fn ($event) => $event->applicationId === $application->id
     );
 });
 

@@ -76,7 +76,7 @@ class ProfessionalApplicationService
             throw $e;
         }
 
-        event(new ProfessionalApplicationStatusChanged($application));
+        $this->broadcastStatusChanged($application);
 
         return $application;
     }
@@ -163,7 +163,7 @@ class ProfessionalApplicationService
             ])->save();
         });
 
-        event(new ProfessionalApplicationStatusChanged($application));
+        $this->broadcastStatusChanged($application);
     }
 
     public function reject(ProfessionalApplication $application, User $admin, string $reason): void
@@ -183,6 +183,11 @@ class ProfessionalApplicationService
             $application->delete();
         });
 
-        event(new ProfessionalApplicationStatusChanged($application));
+        $this->broadcastStatusChanged($application);
+    }
+
+    private function broadcastStatusChanged(ProfessionalApplication $application): void
+    {
+        event(new ProfessionalApplicationStatusChanged($application->id, $application->user_id, $application->status->value));
     }
 }

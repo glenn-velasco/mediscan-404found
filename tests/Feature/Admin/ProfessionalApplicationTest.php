@@ -121,7 +121,7 @@ it('admin approving an application grants the specialty role without removing th
 
     Event::assertDispatched(
         ProfessionalApplicationStatusChanged::class,
-        fn ($event) => $event->application->id === $application->id
+        fn ($event) => $event->applicationId === $application->id
     );
 });
 
@@ -150,6 +150,6 @@ it('admin denying an application soft deletes it and records the reason', functi
 
     Event::assertDispatched(
         ProfessionalApplicationStatusChanged::class,
-        fn ($event) => $event->application->id === $application->id
+        fn ($event) => $event->applicationId === $application->id
     );
 });

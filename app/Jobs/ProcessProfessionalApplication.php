@@ -42,12 +42,7 @@ class ProcessProfessionalApplication implements ShouldQueue
         try {
             $fullText = $ocrClient->detectText(self::DISK, $application->id_photo_path);
         } catch (KycSidecarUnavailableException) {
-            $application->forceFill([
-                'status' => ProfessionalApplicationStatus::PendingReview,
-                'verification_notes' => 'OCR service unavailable; manual review required.',
-            ])->save();
-
-            event(new ProfessionalApplicationStatusChanged($application));
+            $this->markPendingReview($application, 'OCR service unavailable; manual review required.');
 
             return;
         }
@@ -84,12 +79,7 @@ class ProcessProfessionalApplication implements ShouldQueue
                     $application->liveness_flash_frames ?? []
                 );
             } catch (KycSidecarUnavailableException) {
-                $application->forceFill([
-                    'status' => ProfessionalApplicationStatus::PendingReview,
-                    'verification_notes' => 'Liveness check service unavailable; manual review required.',
-                ])->save();
-
-                event(new ProfessionalApplicationStatusChanged($application));
+                $this->markPendingReview($application, 'Liveness check service unavailable; manual review required.');
 
                 return;
             }
@@ -115,12 +105,7 @@ class ProcessProfessionalApplication implements ShouldQueue
         try {
             $faceMatch = $faceMatchClient->compare(self::DISK, $application->selfie_path, $application->id_photo_path);
         } catch (KycSidecarUnavailableException) {
-            $application->forceFill([
-                'status' => ProfessionalApplicationStatus::PendingReview,
-                'verification_notes' => 'Face-match service unavailable; manual review required.',
-            ])->save();
-
-            event(new ProfessionalApplicationStatusChanged($application));
+            $this->markPendingReview($application, 'Face-match service unavailable; manual review required.');
 
             return;
         }
@@ -147,7 +132,7 @@ class ProcessProfessionalApplication implements ShouldQueue
 
         $application->forceFill(['status' => ProfessionalApplicationStatus::PendingReview])->save();
 
-        event(new ProfessionalApplicationStatusChanged($application));
+        $this->broadcastStatusChanged($application);
     }
 
     public function failed(?Throwable $exception): void
@@ -158,12 +143,17 @@ class ProcessProfessionalApplication implements ShouldQueue
             return;
         }
 
+        $this->markPendingReview($application, 'Automatic verification failed after retries; manual review required.');
+    }
+
+    private function markPendingReview(ProfessionalApplication $application, string $note): void
+    {
         $application->forceFill([
             'status' => ProfessionalApplicationStatus::PendingReview,
-            'verification_notes' => 'Automatic verification failed after retries; manual review required.',
+            'verification_notes' => $note,
         ])->save();
 
-        event(new ProfessionalApplicationStatusChanged($application));
+        $this->broadcastStatusChanged($application);
     }
 
     private function autoReject(ProfessionalApplication $application, string $reason): void
@@ -173,6 +163,11 @@ class ProcessProfessionalApplication implements ShouldQueue
             'rejection_reason' => $reason,
         ])->save();
 
-        event(new ProfessionalApplicationStatusChanged($application));
+        $this->broadcastStatusChanged($application);
+    }
+
+    private function broadcastStatusChanged(ProfessionalApplication $application): void
+    {
+        event(new ProfessionalApplicationStatusChanged($application->id, $application->user_id, $application->status->value));
     }
 }
