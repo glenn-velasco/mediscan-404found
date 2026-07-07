@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Http\Controllers\Api\V1\MedicalInformationController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
+use App\Http\Controllers\Api\V1\ProfessionalApplicationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -30,5 +31,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/allergies', [AllergyController::class, 'store']);
         Route::patch('/allergies/{allergy}', [AllergyController::class, 'update']);
         Route::delete('/allergies/{allergy}', [AllergyController::class, 'destroy']);
+
+        Route::post('/professional-applications', [ProfessionalApplicationController::class, 'store']);
+        Route::get('/professional-applications', [ProfessionalApplicationController::class, 'index']);
+        Route::get('/professional-applications/{professionalApplication}', [ProfessionalApplicationController::class, 'show']);
     });
 });
