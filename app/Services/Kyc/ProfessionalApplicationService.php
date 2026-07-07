@@ -12,6 +12,7 @@ use App\Models\ProfessionalApplication;
 use App\Models\Role;
 use App\Models\User;
 use App\Repositories\Eloquent\ProfessionalApplicationRepository;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,8 @@ use Illuminate\Support\Str;
 class ProfessionalApplicationService
 {
     private const DISK = 's3';
+
+    private const ONE_ACTIVE_PER_USER_INDEX = 'professional_applications_one_active_per_user';
 
     public function __construct(private ProfessionalApplicationRepository $professionalApplicationRepository) {}
 
@@ -62,26 +65,51 @@ class ProfessionalApplicationService
         $idType = IdType::from($data['id_type']);
         $folder = 'professional-applications/'.$user->id.'/'.Str::uuid();
 
-        $application = DB::transaction(function () use ($user, $data, $idType, $folder) {
-            $idPhotoPath = $data['id_photo']->store($folder, self::DISK);
-            $coePath = $data['coe']->store($folder, self::DISK);
+        try {
+            $application = $this->insertApplication($user, $data, $idType, $folder);
+        } catch (QueryException $e) {
+            if (str_contains($e->getMessage(), self::ONE_ACTIVE_PER_USER_INDEX)) {
+                throw new ProfessionalApplicationAlreadyPendingException;
+            }
 
-            /** @var array<int, UploadedFile> $selfieFrames */
-            $selfieFrames = array_values($data['selfie_frames']);
-            $frames = collect($selfieFrames)
-                ->map(fn (UploadedFile $frame, int $index) => $frame->storeAs($folder, "selfie-frame-{$index}.jpg", self::DISK));
+            throw $e;
+        }
 
-            /** @var array<int, UploadedFile> $flashFrames */
-            $flashFrames = array_values($data['flash_frames']);
-            /** @var array<int, string> $flashColors */
-            $flashColors = array_values($data['flash_colors']);
-            $livenessFlashFrames = collect($flashFrames)
-                ->map(fn (UploadedFile $frame, int $index) => [
-                    'path' => $frame->storeAs($folder, "flash-frame-{$index}.jpg", self::DISK),
-                    'color' => $flashColors[$index],
-                ])
-                ->all();
+        event(new ProfessionalApplicationStatusChanged($application));
 
+        return $application;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     *
+     * File uploads happen here, outside any DB transaction - they're
+     * independent network I/O to S3 with nothing to roll back, so there's no
+     * reason to hold a DB connection/transaction open for their duration.
+     * Only the row insert (and the afterCommit job dispatch) needs one.
+     */
+    private function insertApplication(User $user, array $data, IdType $idType, string $folder): ProfessionalApplication
+    {
+        $idPhotoPath = $data['id_photo']->store($folder, self::DISK);
+        $coePath = $data['coe']->store($folder, self::DISK);
+
+        /** @var array<int, UploadedFile> $selfieFrames */
+        $selfieFrames = array_values($data['selfie_frames']);
+        $frames = collect($selfieFrames)
+            ->map(fn (UploadedFile $frame, int $index) => $frame->storeAs($folder, "selfie-frame-{$index}.jpg", self::DISK));
+
+        /** @var array<int, UploadedFile> $flashFrames */
+        $flashFrames = array_values($data['flash_frames']);
+        /** @var array<int, string> $flashColors */
+        $flashColors = array_values($data['flash_colors']);
+        $livenessFlashFrames = collect($flashFrames)
+            ->map(fn (UploadedFile $frame, int $index) => [
+                'path' => $frame->storeAs($folder, "flash-frame-{$index}.jpg", self::DISK),
+                'color' => $flashColors[$index],
+            ])
+            ->all();
+
+        return DB::transaction(function () use ($user, $data, $idType, $idPhotoPath, $coePath, $frames, $livenessFlashFrames) {
             $application = $this->professionalApplicationRepository->create([
                 'user_id' => $user->id,
                 'id_type' => $idType->value,
@@ -102,10 +130,6 @@ class ProfessionalApplicationService
 
             return $application;
         });
-
-        event(new ProfessionalApplicationStatusChanged($application));
-
-        return $application;
     }
 
     public function approve(ProfessionalApplication $application, User $admin): void
