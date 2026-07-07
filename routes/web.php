@@ -4,6 +4,7 @@ use App\Enums\Permission;
 use App\Enums\Role;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\InvitationController;
+use App\Http\Controllers\Admin\ProfessionalApplicationController as AdminProfessionalApplicationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AllergyController;
 use App\Http\Controllers\Auth\AcceptInvitationController;
@@ -81,6 +82,15 @@ Route::prefix('admin')->name('admin.')
         Route::post('invitations/prune', [InvitationController::class, 'prune'])->name('invitations.prune');
         Route::post('invitations/{invitation}/resend', [InvitationController::class, 'resend'])->name('invitations.resend');
         Route::delete('invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitations.destroy');
+
+        Route::get('professional-applications', [AdminProfessionalApplicationController::class, 'index'])->name('professional-applications.index');
+        Route::get('professional-applications/{professionalApplication}', [AdminProfessionalApplicationController::class, 'show'])
+            ->withTrashed()->name('professional-applications.show');
+        Route::get('professional-applications/{professionalApplication}/file/{type}', [AdminProfessionalApplicationController::class, 'file'])
+            ->whereIn('type', ['id-photo', 'selfie', 'coe'])
+            ->withTrashed()->name('professional-applications.file');
+        Route::patch('professional-applications/{professionalApplication}/approve', [AdminProfessionalApplicationController::class, 'approve'])->name('professional-applications.approve');
+        Route::patch('professional-applications/{professionalApplication}/reject', [AdminProfessionalApplicationController::class, 'reject'])->name('professional-applications.reject');
     });
 
 require __DIR__.'/settings.php';
