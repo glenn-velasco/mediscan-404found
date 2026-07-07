@@ -21,6 +21,10 @@ const FLASH_BACKGROUND: Record<(typeof FLASH_COLORS)[number], string> = {
     green: '#16a34a',
     blue: '#2563eb',
 };
+// Stateless options object - built once and reused across every detection
+// tick instead of being reallocated ~7 times a second during positioning
+// and blinking.
+const TINY_FACE_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions();
 
 type CaptureStatus =
     | 'idle'
@@ -83,8 +87,6 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
         null,
     );
     const detectionBusyRef = useRef(false);
-    const eyeStateRef = useRef<'open' | 'closed'>('open');
-    const peakEarRef = useRef(0);
     const selfieFramesRef = useRef<File[]>([]);
     const stoppedRef = useRef(false);
 
@@ -100,12 +102,7 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
             detectionTimerRef.current = null;
         }
 
-        const canvas = overlayCanvasRef.current;
-        const ctx = canvas?.getContext('2d');
-
-        if (canvas && ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
+        clearOverlayBox();
     }
 
     useEffect(() => {
@@ -132,7 +129,6 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
         setError(null);
         stoppedRef.current = false;
         selfieFramesRef.current = [];
-        eyeStateRef.current = 'open';
         setBlinkCount(0);
         setFlashIndex(null);
 
@@ -208,11 +204,11 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
     // proceeding - a user who never blinks cannot continue.
     function runBlinking() {
         setStatus('blinking');
-        eyeStateRef.current = 'open';
-        peakEarRef.current = 0;
 
         let deadline: number | null = null;
         let completedBlinks = 0;
+        let eyeState: 'open' | 'closed' = 'open';
+        let peakEar = 0;
 
         detectionTimerRef.current = setInterval(async () => {
             if (stoppedRef.current) {
@@ -235,12 +231,12 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
                 return;
             }
 
-            peakEarRef.current = Math.max(peakEarRef.current, result.ear);
-            const threshold = peakEarRef.current * EAR_DROP_RATIO;
-            const isClosed = peakEarRef.current > 0 && result.ear <= threshold;
+            peakEar = Math.max(peakEar, result.ear);
+            const threshold = peakEar * EAR_DROP_RATIO;
+            const isClosed = peakEar > 0 && result.ear <= threshold;
 
-            if (isClosed && eyeStateRef.current === 'open') {
-                eyeStateRef.current = 'closed';
+            if (isClosed && eyeState === 'open') {
+                eyeState = 'closed';
                 const frame = captureFrame(
                     `selfie-blink-${completedBlinks}-closed.jpg`,
                 );
@@ -248,8 +244,8 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
                 if (frame) {
                     selfieFramesRef.current.push(frame);
                 }
-            } else if (!isClosed && eyeStateRef.current === 'closed') {
-                eyeStateRef.current = 'open';
+            } else if (!isClosed && eyeState === 'closed') {
+                eyeState = 'open';
                 completedBlinks += 1;
                 setBlinkCount(completedBlinks);
 
@@ -326,7 +322,7 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
 
         try {
             const result = await faceapi
-                .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                .detectSingleFace(video, TINY_FACE_DETECTOR_OPTIONS)
                 .withFaceLandmarks(true);
 
             setFaceDetected(!!result);

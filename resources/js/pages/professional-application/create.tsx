@@ -43,10 +43,14 @@ export default function Create() {
         });
     }
 
-    function redoFaceScan() {
+    function clearFaceCapture() {
         setData('selfie_frames', []);
         setData('flash_frames', []);
         setData('flash_colors', []);
+    }
+
+    function redoFaceScan() {
+        clearFaceCapture();
         setStep('face');
     }
 
@@ -88,11 +92,7 @@ export default function Create() {
                                 setData('flash_colors', result.flashColors);
                                 setStep('id');
                             }}
-                            onReset={() => {
-                                setData('selfie_frames', []);
-                                setData('flash_frames', []);
-                                setData('flash_colors', []);
-                            }}
+                            onReset={clearFaceCapture}
                         />
                         <InputError
                             message={
