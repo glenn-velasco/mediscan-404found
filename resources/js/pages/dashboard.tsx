@@ -1,7 +1,15 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
+import { useEcho } from '@laravel/echo-react';
 import type { CountryCode } from 'libphonenumber-js';
 import { getCountryCallingCode } from 'libphonenumber-js';
-import { Pencil, Plus, Shield, ShieldAlert, Trash2 } from 'lucide-react';
+import {
+    BadgeCheck,
+    Pencil,
+    Plus,
+    Shield,
+    ShieldAlert,
+    Trash2,
+} from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import AllergyController from '@/actions/App/Http/Controllers/AllergyController';
@@ -296,10 +304,25 @@ function AllergiesSection({ allergies }: { allergies: Allergy[] }) {
                                 <AllergySeverityBadge
                                     severity={allergy.severity}
                                 />
+                                {allergy.verified_at && (
+                                    <Badge variant="secondary">
+                                        <BadgeCheck className="mr-1 h-3.5 w-3.5" />
+                                        Verified
+                                    </Badge>
+                                )}
                             </div>
                             {allergy.reaction && (
                                 <p className="text-sm text-muted-foreground">
                                     {allergy.reaction}
+                                </p>
+                            )}
+                            {allergy.verified_at && (
+                                <p className="text-xs text-muted-foreground">
+                                    Verified by{' '}
+                                    {allergy.verified_by_name ??
+                                        'a professional'}{' '}
+                                    on {allergy.verified_at}. Editing this
+                                    allergy resets its verification.
                                 </p>
                             )}
                         </div>
@@ -562,9 +585,23 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
     const [deletingContact, setDeletingContact] =
         useState<EmergencyContact | null>(null);
 
+    useEcho(
+        `App.Models.User.${user.id}`,
+        ['.AllergyVerified', '.TransfusionConsentUpdated'],
+        () => router.reload({ only: ['medicalInfo'] }),
+    );
+
     function submit(e: React.FormEvent) {
         e.preventDefault();
         patch('/dashboard', { preserveScroll: true });
+    }
+
+    function recordTransfusionDecision(noBloodTransfusion: boolean) {
+        router.patch(
+            '/transfusion-consent',
+            { no_blood_transfusion: noBloodTransfusion },
+            { preserveScroll: true },
+        );
     }
 
     return (
@@ -825,23 +862,77 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                     />
                                 </Field>
 
-                                <div className="flex items-center gap-2">
-                                    <Checkbox
-                                        id="no_blood_transfusion"
-                                        checked={data.no_blood_transfusion}
-                                        onCheckedChange={(v) =>
-                                            setData(
-                                                'no_blood_transfusion',
-                                                Boolean(v),
-                                            )
-                                        }
-                                    />
-                                    <Label
-                                        htmlFor="no_blood_transfusion"
-                                        className="text-sm"
-                                    >
-                                        No blood transfusion
-                                    </Label>
+                                <div className="flex flex-col gap-3 rounded-md border p-3">
+                                    <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            id="no_blood_transfusion"
+                                            checked={data.no_blood_transfusion}
+                                            onCheckedChange={(v) =>
+                                                setData(
+                                                    'no_blood_transfusion',
+                                                    Boolean(v),
+                                                )
+                                            }
+                                        />
+                                        <Label
+                                            htmlFor="no_blood_transfusion"
+                                            className="text-sm"
+                                        >
+                                            No blood transfusion
+                                        </Label>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        {medicalInfo?.transfusion_decision_at
+                                            ? `Decision recorded ${medicalInfo.transfusion_decision_at}.`
+                                            : 'You have not recorded your decision yet.'}{' '}
+                                        Recording a decision takes effect
+                                        immediately and resets any professional
+                                        attestations.
+                                    </p>
+                                    {medicalInfo?.transfusion_decision_at ? (
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            className="self-start"
+                                            onClick={() =>
+                                                recordTransfusionDecision(
+                                                    !medicalInfo.no_blood_transfusion,
+                                                )
+                                            }
+                                        >
+                                            {medicalInfo.no_blood_transfusion
+                                                ? 'Consent to transfusion'
+                                                : 'Withdraw consent'}
+                                        </Button>
+                                    ) : (
+                                        <div className="flex gap-2">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    recordTransfusionDecision(
+                                                        false,
+                                                    )
+                                                }
+                                            >
+                                                Consent
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    recordTransfusionDecision(
+                                                        true,
+                                                    )
+                                                }
+                                            >
+                                                Decline
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Allergies */}
@@ -1033,17 +1124,47 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                             ) : (
                                 <Shield className="h-4 w-4 shrink-0 text-green-400" />
                             )}
-                            <span
-                                className={cn(
-                                    'text-sm font-semibold text-green-400',
-                                    medicalInfo.no_blood_transfusion &&
-                                        'text-destructive',
+                            <div className="flex flex-1 flex-col">
+                                <span
+                                    className={cn(
+                                        'text-sm font-semibold text-green-400',
+                                        medicalInfo.no_blood_transfusion &&
+                                            'text-destructive',
+                                    )}
+                                >
+                                    {medicalInfo.no_blood_transfusion
+                                        ? 'No Blood Transfusion'
+                                        : 'Blood Transfusion Consented'}
+                                </span>
+                                {(medicalInfo.transfusion_witnesses ?? [])
+                                    .length > 0 && (
+                                    <span className="text-xs text-muted-foreground">
+                                        Witnessed by{' '}
+                                        {medicalInfo.transfusion_witnesses
+                                            .map(
+                                                (witness) =>
+                                                    witness.name ??
+                                                    'a professional',
+                                            )
+                                            .join(', ')}
+                                        . Changing this decision resets the
+                                        attestations.
+                                    </span>
                                 )}
-                            >
-                                {medicalInfo.no_blood_transfusion
-                                    ? 'No Blood Transfusion'
-                                    : 'Blood Transfusion Consented'}
-                            </span>
+                                {!medicalInfo.transfusion_decision_at && (
+                                    <span className="text-xs text-muted-foreground">
+                                        You have not recorded your decision yet.
+                                    </span>
+                                )}
+                            </div>
+                            {(medicalInfo.transfusion_witnesses ?? []).length >
+                                0 && (
+                                <Badge variant="secondary">
+                                    <BadgeCheck className="mr-1 h-3.5 w-3.5" />
+                                    Witnessed ×
+                                    {medicalInfo.transfusion_witnesses.length}
+                                </Badge>
+                            )}
                         </div>
 
                         {/* Primary stats */}

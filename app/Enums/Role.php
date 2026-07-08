@@ -30,6 +30,7 @@ enum Role: string
                 Permission::ManageRecords,
                 Permission::ManageAllergies,
                 Permission::InviteUserAsAdmin,
+                Permission::VerifiedProfessional,
             ],
             self::User => [],
         };

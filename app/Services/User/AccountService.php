@@ -55,7 +55,7 @@ class AccountService
 
         $this->userInvitationRepository->updateEmail($previousEmail, $newEmail);
 
-        Cache::forget("user.{$user->id}.dashboard");
+        Cache::forget(MedicalInfoService::cacheKey($user->id));
 
         if (request()->hasSession()) {
             session()->put('email_change_origin', $origin);

@@ -1,5 +1,7 @@
 <?php
 
+use App\Exceptions\ProfessionalApplicationAlreadyPendingException;
+use App\Exceptions\ProfessionalApplicationAlreadyReviewedException;
 use App\Exceptions\TooManyAttemptsException;
 use App\Exceptions\UserInvitationLinkInvalidException;
 use App\Http\Controllers\Api\Controller as ApiController;
@@ -68,6 +70,20 @@ return Application::configure(basePath: dirname(__DIR__))
             return redirect()->route('login');
         });
 
+        $exceptions->renderable(fn (ProfessionalApplicationAlreadyPendingException $exception) => redirect()
+            ->back()
+            ->withErrors(['id_type' => $exception->getMessage()])
+        );
+
+        $exceptions->renderable(function (ProfessionalApplicationAlreadyReviewedException $exception) {
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => $exception->getMessage(),
+            ]);
+
+            return redirect()->route('admin.professional-applications.index');
+        });
+
         // GLOBAL EXCEPTION HANDLER FOR API
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
@@ -84,6 +100,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     422,
                     $e->errors(),
                 ),
+                $e instanceof ProfessionalApplicationAlreadyPendingException => ApiController::error($e->getMessage(), 422),
                 $e instanceof AuthenticationException => ApiController::error('Unauthenticated.', 401),
                 $e instanceof MethodNotAllowedHttpException => ApiController::error('Method not allowed.', 405),
                 $e instanceof NotFoundHttpException => ApiController::error('Not found.', 404),

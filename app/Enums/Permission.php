@@ -15,6 +15,8 @@ enum Permission: string
 
     case InviteUserAsAdmin = 'invite user as admin';
 
+    case VerifiedProfessional = 'verified professional';
+
     public function label(): string
     {
         return match ($this) {
@@ -23,6 +25,7 @@ enum Permission: string
             self::ManageRecords => 'Manage Records',
             self::ManageAllergies => 'Manage Allergies',
             self::InviteUserAsAdmin => 'Invite User As Admin',
+            self::VerifiedProfessional => 'Verified Professional',
         };
     }
 }

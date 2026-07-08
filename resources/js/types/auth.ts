@@ -43,6 +43,14 @@ export type Allergy = {
     allergen: string;
     reaction: string | null;
     severity: string;
+    verified_at: string | null;
+    verified_by_name: string | null;
+};
+
+export type TransfusionWitness = {
+    user_id: number;
+    name: string | null;
+    witnessed_at: string;
 };
 
 export type EmergencyContact = {
@@ -68,6 +76,8 @@ export type MedicalInfo = {
     address: string | null;
     religion: string | null;
     no_blood_transfusion: boolean;
+    transfusion_decision_at: string | null;
+    transfusion_witnesses: TransfusionWitness[];
     allergies: Allergy[];
     emergency_contacts: EmergencyContact[];
     created_at: string | null;

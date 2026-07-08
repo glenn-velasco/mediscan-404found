@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'face_match' => [
+        'base_url' => env('FACE_MATCH_BASE_URL', 'http://face-match:8500'),
+        'token' => env('FACE_MATCH_SHARED_SECRET'),
+        'timeout' => env('FACE_MATCH_TIMEOUT', 15),
+    ],
+
 ];

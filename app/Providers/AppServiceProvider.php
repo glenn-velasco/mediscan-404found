@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Contracts\Kyc\FaceMatchClientContract;
+use App\Contracts\Kyc\OcrClientContract;
+use App\Services\Kyc\HttpKycSidecarClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +18,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(OcrClientContract::class, HttpKycSidecarClient::class);
+        $this->app->bind(FaceMatchClientContract::class, HttpKycSidecarClient::class);
     }
 
     /**

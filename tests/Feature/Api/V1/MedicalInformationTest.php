@@ -210,3 +210,57 @@ it('returns not found when updating a nonexistent allergy via api', function () 
         ->assertNotFound()
         ->assertJson(['status' => 404, 'message' => 'Not found.']);
 });
+
+// --- Transfusion consent ---
+
+it('records transfusion consent via the api', function () {
+    $user = ($this->withMedicalInfo)(User::factory()->create());
+    Sanctum::actingAs($user, ['*']);
+
+    $this->patchJson('/api/v1/medical-information/transfusion-consent', [
+        'no_blood_transfusion' => true,
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.no_blood_transfusion', true)
+        ->assertJsonPath('data.transfusion_decision_by', $user->id);
+
+    expect($user->medicalInformation->fresh()->transfusion_decision_at)->not->toBeNull();
+});
+
+it('resets the professional witnesses when consent changes via the api', function () {
+    $witness = User::factory()->create();
+    $user = ($this->withMedicalInfo)(User::factory()->create());
+    $user->medicalInformation->forceFill([
+        'no_blood_transfusion' => true,
+        'transfusion_decision_by' => $user->id,
+        'transfusion_decision_at' => now()->subDay(),
+        'transfusion_witnesses' => [
+            ['user_id' => $witness->id, 'name' => $witness->name, 'witnessed_at' => now()->subDay()->toIso8601String()],
+        ],
+    ])->save();
+
+    Sanctum::actingAs($user, ['*']);
+
+    $this->patchJson('/api/v1/medical-information/transfusion-consent', [
+        'no_blood_transfusion' => false,
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.transfusion_witnesses', []);
+});
+
+it('validates the transfusion consent payload via the api', function () {
+    $user = ($this->withMedicalInfo)(User::factory()->create());
+    Sanctum::actingAs($user, ['*']);
+
+    $this->patchJson('/api/v1/medical-information/transfusion-consent', [])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('no_blood_transfusion');
+});
+
+it('returns not found for transfusion consent without medical information', function () {
+    Sanctum::actingAs(User::factory()->create(), ['*']);
+
+    $this->patchJson('/api/v1/medical-information/transfusion-consent', [
+        'no_blood_transfusion' => false,
+    ])->assertNotFound();
+});

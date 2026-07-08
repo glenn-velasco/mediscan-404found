@@ -26,9 +26,9 @@
         "eslint-plugin-react": "^7.37.3",
         "eslint-plugin-react-hooks": "^7.0.0",
         "laravel-echo": "^2.3.7",
+        "playwright": "^1.59.1",
         "prettier": "^3.4.2",
         "prettier-plugin-tailwindcss": "^0.6.11",
-        "playwright": "^1.59.1",
         "pusher-js": "^8.5.0",
         "typescript-eslint": "^8.23.0"
     },
@@ -56,6 +56,7 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^9.0.1",
+        "face-api.js": "^0.22.2",
         "globals": "^15.14.0",
         "input-otp": "^1.4.2",
         "laravel-vite-plugin": "^3.0.0",

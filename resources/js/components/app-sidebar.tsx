@@ -1,5 +1,5 @@
 import { usePage } from '@inertiajs/react';
-import { LayoutGrid, Mail, Users } from 'lucide-react';
+import { IdCard, LayoutGrid, Mail, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -40,6 +40,11 @@ export function AppSidebar() {
                   title: 'Invitations',
                   href: admin.invitations.index(),
                   icon: Mail,
+              },
+              {
+                  title: 'Professional Applications',
+                  href: admin.professionalApplications.index(),
+                  icon: IdCard,
               },
           ]
         : [
