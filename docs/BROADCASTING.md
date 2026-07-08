@@ -97,6 +97,8 @@ Used by: `UserDeactivated`, `UserDeleted`, `ProfessionalApplicationStatusChanged
 | `App.Models.User.{id}` | `.UserDeactivated` | `App\Events\UserDeactivated` (self-broadcasting), dispatched from `UserService::setActive()` | `{ user_id: number }` |
 | `App.Models.User.{id}` | `.UserDeleted` | `App\Events\UserDeleted` (self-broadcasting), dispatched from `UserService::delete()` | `{ user_id: number }` |
 | `App.Models.User.{id}` | `.ProfessionalApplicationStatusChanged` | Same event as above, on the applicant's own channel | `{ application_id: number, status: string }` |
+| `App.Models.User.{id}` | `.AllergyVerified` | `App\Events\AllergyVerified` (self-broadcasting), dispatched from `PatientVerificationService::verifyAllergy()` | `{ allergy_id: number }` |
+| `App.Models.User.{id}` | `.TransfusionConsentUpdated` | `App\Events\TransfusionConsentUpdated` (self-broadcasting), dispatched from `MedicalInfoService` (patient records/changes a decision, which also clears all witnesses) and `PatientVerificationService::witnessTransfusionDecision()` (a professional witnesses it; multiple professionals can each witness once, stored as a JSON array on `medical_information.transfusion_witnesses`) | `{ no_blood_transfusion: boolean, witness_count: number }` |
 
 ## Frontend consumption
 
@@ -114,6 +116,7 @@ Real usages:
 - `resources/js/layouts/user-layout.tsx` — listens on the current user's own `App.Models.User.{id}` channel for `.UserDeactivated`/`.UserDeleted` and force-logs the user out (`router.post(logout.url())`) so a deactivated/deleted user's open tab reacts immediately instead of waiting for their next request to hit `CheckUserActive`/`EnsureApiUserActive` middleware. It also listens for `.EmailChanged` on the same channel and does a partial `router.reload({ only: ['auth'] })` so `useAuth()`-driven UI (e.g. the email shown on `resources/js/pages/dashboard.tsx`) reflects an email change made elsewhere without a full page reload.
 - `resources/js/pages/admin/professional-applications/index.tsx` and `.../show.tsx` — listen on `admin-dashboard` for `.ProfessionalApplicationStatusChanged` and `router.reload()`, so the list/detail view picks up automatic-verification results and other admins' approve/deny actions live.
 - `resources/js/pages/professional-application/show.tsx` — listens on the applicant's own `App.Models.User.{id}` channel for `.ProfessionalApplicationStatusChanged` and `router.reload()`, so the status page updates the moment the background job or an admin decision changes it, without the applicant needing to refresh.
+- `resources/js/pages/dashboard.tsx` — listens on the patient's own `App.Models.User.{id}` channel for `.AllergyVerified`/`.TransfusionConsentUpdated` and does a partial `router.reload({ only: ['medicalInfo'] })`, so verification badges and witness attribution appear the moment a professional attests them.
 
 Note: `EmailVerified` is broadcast on `App.Models.User.{id}` but currently has **no frontend consumer** — nothing subscribes to it yet.
 
