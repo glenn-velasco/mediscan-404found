@@ -30,6 +30,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $blood_type
  * @property string|null $religion
  * @property bool $no_blood_transfusion
+ * @property int|null $transfusion_decision_by
+ * @property Carbon|null $transfusion_decision_at
+ * @property array<int, array{user_id: int, name: string|null, witnessed_at: string}>|null $transfusion_witnesses
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -47,6 +50,8 @@ class MedicalInformation extends Model
             'date_of_birth' => 'date',
             'gender' => Gender::class,
             'no_blood_transfusion' => 'boolean',
+            'transfusion_decision_at' => 'datetime',
+            'transfusion_witnesses' => 'array',
         ];
     }
 
@@ -56,6 +61,14 @@ class MedicalInformation extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function transfusionDecisionMaker(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'transfusion_decision_by');
     }
 
     /**

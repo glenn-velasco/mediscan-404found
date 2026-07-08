@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\UpdateMedicalInfoRequest;
+use App\Http\Requests\UpdateTransfusionConsentRequest;
 use App\Http\Resources\Api\V1\MedicalInformationResource;
 use App\Services\User\MedicalInfoService;
 use Illuminate\Http\JsonResponse;
@@ -31,6 +32,31 @@ class MedicalInformationController extends Controller
             $result['emailChanged']
                 ? 'Medical information saved. Please verify your new email address.'
                 : 'Medical information saved.',
+        );
+    }
+
+    /**
+     * Record the transfusion decision.
+     *
+     * Records who made the decision and when. Any authenticated patient can
+     * consent or refuse — no professional permission is required. Changing
+     * the decision voids all professional witness attestations.
+     *
+     * @response status=200 scenario="Consent recorded" {"status":200,"message":"Transfusion consent recorded.","data":{"id":1,"full_name":"Jane Doe","no_blood_transfusion":false,"transfusion_decision_by":1,"transfusion_decision_at":"2026-07-08T12:00:00+00:00","transfusion_witnesses":[]}}
+     * @response 422 {"status":422,"message":"The no blood transfusion field is required.","errors":{"no_blood_transfusion":["The no blood transfusion field is required."]}}
+     * @response status=404 scenario="No medical information on file" {"status":404,"message":"Not found.","errors":null}
+     */
+    public function updateTransfusionConsent(UpdateTransfusionConsentRequest $request): JsonResponse
+    {
+        $noBloodTransfusion = $request->boolean('no_blood_transfusion');
+
+        $medicalInfo = $this->medicalInfoService->recordTransfusionDecision($request->user(), $noBloodTransfusion);
+
+        return $this->success(
+            new MedicalInformationResource($medicalInfo),
+            $noBloodTransfusion
+                ? 'Transfusion refusal recorded.'
+                : 'Transfusion consent recorded.',
         );
     }
 }

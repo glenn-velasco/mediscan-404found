@@ -22,7 +22,9 @@ class MedicalInformationRepository extends BaseRepository
 
     public function findWithRelationsByUser(User $user): ?MedicalInformation
     {
-        return $user->medicalInformation()->with(['allergies', 'emergencyContacts'])->first();
+        return $user->medicalInformation()
+            ->with(['allergies.verifier', 'emergencyContacts'])
+            ->first();
     }
 
     /** @param  array<string, mixed>  $data */

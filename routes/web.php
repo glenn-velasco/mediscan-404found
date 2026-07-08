@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\VerifyApiEmailController;
 use App\Http\Controllers\BroadcastingDocsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmergencyContactController;
+use App\Http\Controllers\Professional\PatientController;
 use App\Http\Controllers\ProfessionalApplicationController;
 use App\Http\Middleware\CheckUserActive;
 use Illuminate\Support\Facades\Route;
@@ -44,6 +45,7 @@ Route::get('/verify-email/{id}/{hash}', VerifyApiEmailController::class)
 Route::middleware(['auth', CheckUserActive::class])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::patch('/dashboard', [DashboardController::class, 'update'])->name('dashboard.update');
+    Route::patch('/transfusion-consent', [DashboardController::class, 'updateTransfusionConsent'])->name('transfusion-consent.update');
 
     Route::post('/allergies', [AllergyController::class, 'store'])->name('allergies.store');
     Route::patch('/allergies/{allergy}', [AllergyController::class, 'update'])->name('allergies.update');
@@ -62,6 +64,14 @@ Route::middleware(['auth', 'verified', CheckUserActive::class])
         Route::get('/', [ProfessionalApplicationController::class, 'show'])->name('show');
         Route::get('/apply', [ProfessionalApplicationController::class, 'create'])->name('create');
         Route::post('/', [ProfessionalApplicationController::class, 'store'])->name('store');
+    });
+
+Route::prefix('professional')->name('professional.')
+    ->middleware(['auth', 'verified', CheckUserActive::class, PermissionMiddleware::using(Permission::VerifiedProfessional)])
+    ->group(function () {
+        Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
+        Route::post('/allergies/{allergy}/verify', [PatientController::class, 'verifyAllergy'])->name('allergies.verify');
+        Route::post('/patients/{patient}/transfusion-witness', [PatientController::class, 'witnessTransfusion'])->name('patients.transfusion-witness');
     });
 
 Route::prefix('admin')->name('admin.')

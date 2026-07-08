@@ -26,6 +26,9 @@ class MedicalInformationResource extends JsonResource
             'blood_type' => $this->blood_type,
             'religion' => $this->religion,
             'no_blood_transfusion' => $this->no_blood_transfusion,
+            'transfusion_decision_by' => $this->transfusion_decision_by,
+            'transfusion_decision_at' => $this->transfusion_decision_at?->toIso8601String(),
+            'transfusion_witnesses' => $this->transfusion_witnesses ?? [],
             'allergies' => AllergyResource::collection($this->whenLoaded('allergies')),
         ];
     }

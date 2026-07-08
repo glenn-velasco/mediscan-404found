@@ -14,6 +14,8 @@ use Illuminate\Support\Carbon;
  * @property string $allergen
  * @property string|null $reaction
  * @property AllergySeverity $severity
+ * @property int|null $verified_by
+ * @property Carbon|null $verified_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -24,6 +26,7 @@ class Allergy extends Model
     {
         return [
             'severity' => AllergySeverity::class,
+            'verified_at' => 'datetime',
         ];
     }
 
@@ -33,5 +36,18 @@ class Allergy extends Model
     public function medicalInformation(): BelongsTo
     {
         return $this->belongsTo(MedicalInformation::class);
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function verifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->verified_at !== null;
     }
 }
