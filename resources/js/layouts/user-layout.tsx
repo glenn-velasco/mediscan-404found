@@ -6,6 +6,7 @@ import {
     LayoutGrid,
     LogOut,
     Settings,
+    Stethoscope,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import AppLogo from '@/components/app-logo';
@@ -24,12 +25,13 @@ import { useInitials } from '@/hooks/use-initials';
 import { dashboard, logout } from '@/routes';
 import { edit as editAccount } from '@/routes/account';
 import admin from '@/routes/admin';
+import professional from '@/routes/professional';
 import professionalApplication from '@/routes/professional-application';
-import { Role } from '@/types';
+import { Permission, Role } from '@/types';
 
 export default function UsersLayout({ children }: { children: ReactNode }) {
     const { auth } = usePage().props;
-    const { hasRole } = useAuth();
+    const { hasRole, hasPermission } = useAuth();
     const getInitials = useInitials();
     const user = auth.user;
 
@@ -121,15 +123,27 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                                 Dashboard
                                             </Link>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <Link
-                                                href={professionalApplication.show()}
-                                                className="cursor-pointer"
-                                            >
-                                                <IdCard className="mr-2 h-4 w-4" />
-                                                Professional Application
-                                            </Link>
-                                        </DropdownMenuItem>
+                                        {hasPermission(Permission.VerifiedProfessional) ?
+                                            <DropdownMenuItem asChild>
+                                                <Link
+                                                    href={professional.patients.index()}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <Stethoscope className="mr-2 h-4 w-4" />
+                                                    Professional
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            :
+                                            <DropdownMenuItem asChild>
+                                                <Link
+                                                    href={professionalApplication.show()}
+                                                    className="cursor-pointer"
+                                                >
+                                                    <IdCard className="mr-2 h-4 w-4" />
+                                                    Professional Application
+                                                </Link>
+                                            </DropdownMenuItem>
+                                        }
                                         <DropdownMenuItem asChild>
                                             <Link
                                                 href={editAccount()}

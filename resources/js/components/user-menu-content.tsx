@@ -1,5 +1,11 @@
 import { Link, router } from '@inertiajs/react';
-import { IdCard, LayoutGrid, LogOut, Settings } from 'lucide-react';
+import {
+    IdCard,
+    LayoutGrid,
+    LogOut,
+    Settings,
+    Stethoscope,
+} from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -12,8 +18,9 @@ import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { dashboard, logout } from '@/routes';
 import { edit as editAccount } from '@/routes/account';
 import admin from '@/routes/admin';
+import professional from '@/routes/professional';
 import professionalApplication from '@/routes/professional-application';
-import { Role } from '@/types';
+import { Permission, Role } from '@/types';
 import type { User } from '@/types';
 
 type Props = {
@@ -22,7 +29,7 @@ type Props = {
 
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
-    const { hasRole } = useAuth();
+    const { hasRole, hasPermission } = useAuth();
     const handleLogout = () => {
         cleanup();
         router.flushAll();
@@ -59,16 +66,39 @@ export function UserMenuContent({ user }: Props) {
                         Dashboard
                     </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    <Link
-                        className="block w-full cursor-pointer"
-                        href={professionalApplication.show()}
-                        onClick={cleanup}
-                    >
-                        <IdCard className="mr-2" />
-                        Professional Application
-                    </Link>
-                </DropdownMenuItem>
+                {hasPermission(Permission.VerifiedProfessional) && (
+                    <DropdownMenuItem asChild>
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href={professional.patients.index()}
+                            onClick={cleanup}
+                        >
+                            <Stethoscope className="mr-2" />
+                            Patient Lookup
+                        </Link>
+                    </DropdownMenuItem>
+                )}
+                {hasPermission(Permission.VerifiedProfessional) ?
+                    <DropdownMenuItem asChild>
+                        <Link
+                            href={professional.patients.index()}
+                            className="cursor-pointer"
+                        >
+                            <Stethoscope className="mr-2 h-4 w-4" />
+                            Professional
+                        </Link>
+                    </DropdownMenuItem>
+                    :
+                    <DropdownMenuItem asChild>
+                        <Link
+                            href={professionalApplication.show()}
+                            className="cursor-pointer"
+                        >
+                            <IdCard className="mr-2 h-4 w-4" />
+                            Professional Application
+                        </Link>
+                    </DropdownMenuItem>
+                }
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"

@@ -28,6 +28,7 @@ createInertiaApp({
             case name === 'dashboard':
             case name.startsWith('medical-information/'):
             case name.startsWith('professional-application/'):
+            case name.startsWith('professional/'):
             case name === 'welcome':
                 return UsersLayout;
             case name.startsWith('settings/'):
