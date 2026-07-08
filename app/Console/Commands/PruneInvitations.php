@@ -8,7 +8,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('invitations:prune')]
-#[Description('Delete all expired and accepted invitations')]
+#[Description('Delete all invitations that expired without being accepted')]
 class PruneInvitations extends Command
 {
     public function handle(InvitationService $invitationService): void

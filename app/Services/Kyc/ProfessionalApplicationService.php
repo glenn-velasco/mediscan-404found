@@ -186,6 +186,29 @@ class ProfessionalApplicationService
         $this->broadcastStatusChanged($application);
     }
 
+    /**
+     * Permanently remove stale auto-rejected, denied, and pending-review
+     * applications (default: no state change for 5 days), including their
+     * uploaded KYC files. All of an application's files live in one
+     * per-application folder, so deleting the id photo's directory removes
+     * the selfie frames, flash frames, and CoE with it.
+     */
+    public function prune(int $days = 5): int
+    {
+        $count = 0;
+
+        $this->professionalApplicationRepository->stale(now()->subDays($days))
+            ->each(function (ProfessionalApplication $application) use (&$count) {
+                Storage::disk(self::DISK)->deleteDirectory(dirname($application->id_photo_path));
+
+                $application->forceDelete();
+
+                $count++;
+            });
+
+        return $count;
+    }
+
     private function broadcastStatusChanged(ProfessionalApplication $application): void
     {
         event(new ProfessionalApplicationStatusChanged($application->id, $application->user_id, $application->status->value));

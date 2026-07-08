@@ -4,7 +4,9 @@ namespace App\Repositories\Eloquent;
 
 use App\Enums\ProfessionalApplicationStatus;
 use App\Models\ProfessionalApplication;
+use Carbon\CarbonInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\LazyCollection;
 
 /**
  * @extends BaseRepository<ProfessionalApplication>
@@ -61,6 +63,26 @@ class ProfessionalApplicationRepository extends BaseRepository
             ->where('user_id', $userId)
             ->latest()
             ->first();
+    }
+
+    /**
+     * Stale applications eligible for pruning: auto-rejected, denied, or
+     * still pending review, with no state change since the cutoff. Includes
+     * trashed rows because rejection soft-deletes the application.
+     *
+     * @return LazyCollection<int, ProfessionalApplication>
+     */
+    public function stale(CarbonInterface $cutoff): LazyCollection
+    {
+        return $this->model->newQuery()
+            ->withTrashed()
+            ->whereIn('status', [
+                ProfessionalApplicationStatus::PendingReview->value,
+                ProfessionalApplicationStatus::Denied->value,
+                ProfessionalApplicationStatus::AutoRejected->value,
+            ])
+            ->where('updated_at', '<=', $cutoff)
+            ->lazyById();
     }
 
     /** @return array<string, mixed> */
