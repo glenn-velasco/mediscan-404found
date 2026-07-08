@@ -123,7 +123,9 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                                 Dashboard
                                             </Link>
                                         </DropdownMenuItem>
-                                        {hasPermission(Permission.VerifiedProfessional) ?
+                                        {hasPermission(
+                                            Permission.VerifiedProfessional,
+                                        ) ? (
                                             <DropdownMenuItem asChild>
                                                 <Link
                                                     href={professional.patients.index()}
@@ -133,7 +135,7 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                                     Professional
                                                 </Link>
                                             </DropdownMenuItem>
-                                            :
+                                        ) : (
                                             <DropdownMenuItem asChild>
                                                 <Link
                                                     href={professionalApplication.show()}
@@ -143,7 +145,7 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                                     Professional Application
                                                 </Link>
                                             </DropdownMenuItem>
-                                        }
+                                        )}
                                         <DropdownMenuItem asChild>
                                             <Link
                                                 href={editAccount()}

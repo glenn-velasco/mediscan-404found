@@ -78,7 +78,7 @@ export function UserMenuContent({ user }: Props) {
                         </Link>
                     </DropdownMenuItem>
                 )}
-                {hasPermission(Permission.VerifiedProfessional) ?
+                {hasPermission(Permission.VerifiedProfessional) ? (
                     <DropdownMenuItem asChild>
                         <Link
                             href={professional.patients.index()}
@@ -88,7 +88,7 @@ export function UserMenuContent({ user }: Props) {
                             Professional
                         </Link>
                     </DropdownMenuItem>
-                    :
+                ) : (
                     <DropdownMenuItem asChild>
                         <Link
                             href={professionalApplication.show()}
@@ -98,7 +98,7 @@ export function UserMenuContent({ user }: Props) {
                             Professional Application
                         </Link>
                     </DropdownMenuItem>
-                }
+                )}
                 <DropdownMenuItem asChild>
                     <Link
                         className="block w-full cursor-pointer"
