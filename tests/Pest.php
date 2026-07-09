@@ -14,6 +14,8 @@ use Tests\TestCase;
 |
 */
 
+pest()->browser()->timeout(15000);
+
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature', 'Unit', 'Browser');

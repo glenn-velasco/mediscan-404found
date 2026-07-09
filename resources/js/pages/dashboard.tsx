@@ -387,6 +387,7 @@ function EmergencyContactFormDialog({
                 <form onSubmit={submit} className="flex flex-col gap-4">
                     <Field label="Name">
                         <Input
+                            name="name"
                             value={form.data.name}
                             onChange={(e) =>
                                 form.setData('name', e.target.value)
@@ -401,6 +402,7 @@ function EmergencyContactFormDialog({
 
                     <Field label="Relationship">
                         <Input
+                            name="relationship"
                             value={form.data.relationship}
                             onChange={(e) =>
                                 form.setData('relationship', e.target.value)
@@ -454,7 +456,7 @@ function EmergencyContactFormDialog({
                     )}
 
                     <DialogFooter>
-                        <Button type="submit" disabled={form.processing}>
+                        <Button type="submit" disabled={form.processing} data-test="save-emergency-contact">
                             {form.processing ? 'Saving…' : 'Save'}
                         </Button>
                     </DialogFooter>
@@ -1021,6 +1023,7 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                             type="button"
                                             variant="outline"
                                             size="sm"
+                                            data-test="add-emergency-contact"
                                             onClick={() =>
                                                 setAddContactOpen(true)
                                             }
@@ -1063,6 +1066,7 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                                                 type="button"
                                                                 variant="ghost"
                                                                 size="icon"
+                                                                data-test="edit-emergency-contact"
                                                                 onClick={() =>
                                                                     setEditingContact(
                                                                         contact,
@@ -1075,6 +1079,7 @@ export default function Dashboard({ medicalInfo }: DashboardProps) {
                                                                 type="button"
                                                                 variant="ghost"
                                                                 size="icon"
+                                                                data-test="delete-emergency-contact"
                                                                 onClick={() =>
                                                                     setDeletingContact(
                                                                         contact,
