@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use libphonenumber\PhoneNumberUtil;
 use Propaganistas\LaravelPhone\Rules\Phone;
 
 class UpdateEmergencyContactRequest extends FormRequest
@@ -15,7 +16,7 @@ class UpdateEmergencyContactRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        $phoneCountry = $this->input('phone_country_code');
+        $phoneCountry = $this->normalizePhoneCountry($this->input('phone_country_code'));
 
         $phoneRules = ['nullable', 'string'];
         if ($phoneCountry) {
@@ -29,5 +30,23 @@ class UpdateEmergencyContactRequest extends FormRequest
             'phone' => $phoneRules,
             'is_primary' => ['sometimes', 'boolean'],
         ];
+    }
+
+    private function normalizePhoneCountry(?string $value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+
+        if (strlen($value) === 2 && ctype_alpha($value)) {
+            return strtoupper($value);
+        }
+
+        $dialCode = (int) ltrim($value, '+');
+        if ($dialCode > 0) {
+            return PhoneNumberUtil::getInstance()->getRegionCodeForCountryCode($dialCode);
+        }
+
+        return null;
     }
 }

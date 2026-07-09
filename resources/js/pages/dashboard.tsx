@@ -456,7 +456,11 @@ function EmergencyContactFormDialog({
                     )}
 
                     <DialogFooter>
-                        <Button type="submit" disabled={form.processing} data-test="save-emergency-contact">
+                        <Button
+                            type="submit"
+                            disabled={form.processing}
+                            data-test="save-emergency-contact"
+                        >
                             {form.processing ? 'Saving…' : 'Save'}
                         </Button>
                     </DialogFooter>
