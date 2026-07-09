@@ -10,6 +10,7 @@ use App\Models\Allergy;
 use App\Services\User\AllergyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 /**
  * @group Allergies
@@ -17,6 +18,20 @@ use Illuminate\Http\Request;
 class AllergyController extends Controller
 {
     public function __construct(private AllergyService $allergyService) {}
+
+    /**
+     * List allergies.
+     *
+     * Returns a paginated list of allergies for the authenticated user.
+     *
+     * @response 200 {"status":200,"message":"Success","data":[{"id":1,"allergen":"Peanuts","reaction":"Hives","severity":"severe"}]}
+     */
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        $allergies = $this->allergyService->paginate($request->user(), perPage: $request->integer('per_page', 15));
+
+        return AllergyResource::collection($allergies);
+    }
 
     /**
      * @response 201 {"status":201,"message":"Allergy added.","data":{"id":1,"allergen":"Peanuts","reaction":"Hives","severity":"severe"}}

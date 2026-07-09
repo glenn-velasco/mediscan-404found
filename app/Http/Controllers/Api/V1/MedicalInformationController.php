@@ -6,15 +6,36 @@ use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\UpdateMedicalInfoRequest;
 use App\Http\Requests\UpdateTransfusionConsentRequest;
 use App\Http\Resources\Api\V1\MedicalInformationResource;
+use App\Repositories\Eloquent\MedicalInformationRepository;
 use App\Services\User\MedicalInfoService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 /**
  * @group Medical Information
  */
 class MedicalInformationController extends Controller
 {
-    public function __construct(private MedicalInfoService $medicalInfoService) {}
+    public function __construct(
+        private MedicalInfoService $medicalInfoService,
+        private MedicalInformationRepository $medicalInfoRepository,
+    ) {}
+
+    /**
+     * Show medical information.
+     *
+     * Returns the medical information for the authenticated user.
+     *
+     * @response 200 {"status":200,"message":"Success","data":{"id":1,"full_name":"Jane Doe","date_of_birth":"1995-06-15","gender":"female","phone":"9171234567","address":"123 Rizal St, Manila","blood_type":"O+","religion":"Catholic","no_blood_transfusion":false}}
+     * @response status=404 scenario="No medical information on file" {"status":404,"message":"Not found.","errors":null}
+     */
+    public function show(Request $request): JsonResponse
+    {
+        $medicalInfo = $this->medicalInfoRepository->findByUser($request->user());
+        abort_if(! $medicalInfo, 404, 'No medical information on file.');
+
+        return $this->success(new MedicalInformationResource($medicalInfo));
+    }
 
     /**
      * @response status=200 scenario="Saved" {"status":200,"message":"Medical information saved.","data":{"id":1,"full_name":"Jane Doe","date_of_birth":"1995-06-15","gender":"female","phone":"9171234567","address":"123 Rizal St, Manila","blood_type":"O+","religion":"Catholic","no_blood_transfusion":false,"allergies":[{"id":1,"allergen":"Peanuts","reaction":"Hives","severity":"severe"}]}}

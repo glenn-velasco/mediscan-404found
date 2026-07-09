@@ -6,6 +6,7 @@ use App\Models\Allergy;
 use App\Models\User;
 use App\Repositories\Eloquent\AllergyRepository;
 use App\Repositories\Eloquent\MedicalInformationRepository;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class AllergyService
 {
@@ -14,6 +15,18 @@ class AllergyService
         private MedicalInformationRepository $medicalInfoRepository,
         private MedicalInfoService $medicalInfoService,
     ) {}
+
+    /**
+     * @return LengthAwarePaginator<int, Allergy>
+     */
+    public function paginate(User $user, int $perPage = 15): LengthAwarePaginator
+    {
+        $medicalInfo = $this->medicalInfoRepository->findByUser($user);
+
+        abort_if(! $medicalInfo, 404);
+
+        return $this->repository->paginateByMedicalInformation($medicalInfo, $perPage);
+    }
 
     /** @param  array<string, mixed>  $data */
     public function create(User $user, array $data): Allergy

@@ -99,6 +99,9 @@ Used by: `UserDeactivated`, `UserDeleted`, `ProfessionalApplicationStatusChanged
 | `App.Models.User.{id}` | `.ProfessionalApplicationStatusChanged` | Same event as above, on the applicant's own channel | `{ application_id: number, status: string }` |
 | `App.Models.User.{id}` | `.AllergyVerified` | `App\Events\AllergyVerified` (self-broadcasting), dispatched from `PatientVerificationService::verifyAllergy()` | `{ allergy_id: number }` |
 | `App.Models.User.{id}` | `.TransfusionConsentUpdated` | `App\Events\TransfusionConsentUpdated` (self-broadcasting), dispatched from `MedicalInfoService` (patient records/changes a decision, which also clears all witnesses) and `PatientVerificationService::witnessTransfusionDecision()` (a professional witnesses it; multiple professionals can each witness once, stored as a JSON array on `medical_information.transfusion_witnesses`) | `{ no_blood_transfusion: boolean, witness_count: number }` |
+| `App.Models.User.{id}` | `.EmergencyContactCreated` | `App\Events\EmergencyContactCreated` (self-broadcasting), dispatched from `EmergencyContactService::create()` | `{ emergency_contact_id: number, name: string }` |
+| `App.Models.User.{id}` | `.EmergencyContactUpdated` | `App\Events\EmergencyContactUpdated` (self-broadcasting), dispatched from `EmergencyContactService::update()` | `{ emergency_contact_id: number, name: string }` |
+| `App.Models.User.{id}` | `.EmergencyContactDeleted` | `App\Events\EmergencyContactDeleted` (self-broadcasting), dispatched from `EmergencyContactService::delete()` | `{ emergency_contact_id: number }` |
 
 ## Frontend consumption
 
@@ -119,6 +122,8 @@ Real usages:
 - `resources/js/pages/dashboard.tsx` — listens on the patient's own `App.Models.User.{id}` channel for `.AllergyVerified`/`.TransfusionConsentUpdated` and does a partial `router.reload({ only: ['medicalInfo'] })`, so verification badges and witness attribution appear the moment a professional attests them.
 
 Note: `EmailVerified` is broadcast on `App.Models.User.{id}` but currently has **no frontend consumer** — nothing subscribes to it yet.
+
+Note: `EmergencyContactCreated`, `EmergencyContactUpdated`, and `EmergencyContactDeleted` are broadcast on `App.Models.User.{id}` but currently have **no frontend consumers** — nothing subscribes to them yet.
 
 ## Testing
 

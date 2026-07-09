@@ -18,6 +18,7 @@ class MedicalInformationResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'email' => $this->email,
             'full_name' => $this->full_name,
             'date_of_birth' => $this->date_of_birth->toDateString(),
             'gender' => $this->gender->value,
@@ -30,6 +31,7 @@ class MedicalInformationResource extends JsonResource
             'transfusion_decision_at' => $this->transfusion_decision_at?->toIso8601String(),
             'transfusion_witnesses' => $this->transfusion_witnesses ?? [],
             'allergies' => AllergyResource::collection($this->whenLoaded('allergies')),
+            'emergency_contacts' => EmergencyContactResource::collection($this->whenLoaded('emergencyContacts')),
         ];
     }
 }

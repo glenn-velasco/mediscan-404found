@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AllergyController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\EmailVerificationController;
+use App\Http\Controllers\Api\V1\EmergencyContactController;
 use App\Http\Controllers\Api\V1\MedicalInformationController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\Professional\PatientController as ProfessionalPatientController;
@@ -28,12 +29,19 @@ Route::prefix('v1')->group(function () {
         Route::put('/email', [AccountController::class, 'updateEmail'])->middleware('throttle:6,1');
         Route::put('/password', [AccountController::class, 'updatePassword'])->middleware('throttle:6,1');
 
+        Route::get('/medical-information', [MedicalInformationController::class, 'show']);
         Route::put('/medical-information', [MedicalInformationController::class, 'update']);
         Route::patch('/medical-information/transfusion-consent', [MedicalInformationController::class, 'updateTransfusionConsent']);
 
+        Route::get('/allergies', [AllergyController::class, 'index']);
         Route::post('/allergies', [AllergyController::class, 'store']);
         Route::patch('/allergies/{allergy}', [AllergyController::class, 'update']);
         Route::delete('/allergies/{allergy}', [AllergyController::class, 'destroy']);
+
+        Route::get('/emergency-contacts', [EmergencyContactController::class, 'index']);
+        Route::post('/emergency-contacts', [EmergencyContactController::class, 'store']);
+        Route::patch('/emergency-contacts/{emergencyContact}', [EmergencyContactController::class, 'update']);
+        Route::delete('/emergency-contacts/{emergencyContact}', [EmergencyContactController::class, 'destroy']);
 
         // Uploading a government ID + biometric selfie is sensitive enough to
         // also require a verified email, unlike the routes above.

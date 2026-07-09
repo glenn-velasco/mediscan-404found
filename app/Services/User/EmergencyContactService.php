@@ -2,10 +2,14 @@
 
 namespace App\Services\User;
 
+use App\Events\EmergencyContactCreated;
+use App\Events\EmergencyContactDeleted;
+use App\Events\EmergencyContactUpdated;
 use App\Models\EmergencyContact;
 use App\Models\User;
 use App\Repositories\Eloquent\EmergencyContactRepository;
 use App\Repositories\Eloquent\MedicalInformationRepository;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class EmergencyContactService
@@ -15,6 +19,18 @@ class EmergencyContactService
         private MedicalInformationRepository $medicalInfoRepository,
         private MedicalInfoService $medicalInfoService,
     ) {}
+
+    /**
+     * @return LengthAwarePaginator<int, EmergencyContact>
+     */
+    public function paginate(User $user, int $perPage = 15): LengthAwarePaginator
+    {
+        $medicalInfo = $this->medicalInfoRepository->findByUser($user);
+
+        abort_if(! $medicalInfo, 404);
+
+        return $this->repository->findByMedicalInformation($medicalInfo, $perPage);
+    }
 
     /** @param  array<string, mixed>  $data */
     public function create(User $user, array $data): EmergencyContact
@@ -37,6 +53,8 @@ class EmergencyContactService
 
         $this->medicalInfoService->flushCache($user->id);
 
+        EmergencyContactCreated::dispatch($user->id, $contact->id, $contact->name);
+
         return $contact;
     }
 
@@ -57,6 +75,8 @@ class EmergencyContactService
 
         $this->medicalInfoService->flushCache($user->id);
 
+        EmergencyContactUpdated::dispatch($user->id, $contact->id, $contact->fresh()->name);
+
         return $result;
     }
 
@@ -64,9 +84,12 @@ class EmergencyContactService
     {
         $this->authorizeOwnership($user, $contact);
 
+        $contactId = $contact->id;
         $result = $this->repository->delete($contact);
 
         $this->medicalInfoService->flushCache($user->id);
+
+        EmergencyContactDeleted::dispatch($user->id, $contactId);
 
         return $result;
     }

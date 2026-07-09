@@ -94,7 +94,10 @@ class AuthController extends Controller
      */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user()->loadMissing('medicalInformation.allergies');
+        $user = $request->user()->loadMissing([
+            'medicalInformation.allergies',
+            'medicalInformation.emergencyContacts',
+        ]);
 
         return $this->success([
             'user' => new UserResource($user),
