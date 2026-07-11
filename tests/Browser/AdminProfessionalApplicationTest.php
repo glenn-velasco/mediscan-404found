@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Role;
+use App\Models\ProfessionalApplication;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Support\Facades\Storage;
@@ -13,7 +14,12 @@ beforeEach(function () {
     $this->admin = User::factory()->create();
     $this->admin->assignRole(Role::Admin->value);
 
-    $applicant = User::factory()->create();
+    $applicant = User::factory()->create([
+        'first_name' => 'Juan',
+        'middle_name' => 'Santos',
+        'last_name' => 'Delacruz',
+        'suffix' => null,
+    ]);
     $applicant->assignRole(Role::User->value);
 
     Storage::disk('s3')->put('demo/id.jpg', 'fake-id-bytes');
@@ -39,7 +45,7 @@ beforeEach(function () {
     ]);
 });
 
-it('admin can find and approve a pending application via the sidebar link', function () {
+it('admin can find a pending application via the sidebar link', function () {
     $this->actingAs($this->admin);
 
     visit(route('admin.dashboard'))
@@ -48,11 +54,17 @@ it('admin can find and approve a pending application via the sidebar link', func
         ->click('Professional Applications')
         ->assertPathIs('/admin/professional-applications')
         ->assertSee($this->application->user->email)
+        ->assertSee($this->application->user->fullname)
         ->assertSee('pending review')
         ->screenshot(filename: 'admin-applications-index')
         ->assertNoJavascriptErrors();
+});
+
+it('admin can approve a pending application', function () {
+    $this->actingAs($this->admin);
 
     visit(route('admin.professional-applications.show', $this->application))
+        ->assertSee($this->application->user->fullname)
         ->assertSee('Physician')
         ->assertSee('Orthopedic')
         ->assertSee('Approve')
@@ -64,4 +76,23 @@ it('admin can find and approve a pending application via the sidebar link', func
     $applicant = $this->application->user->fresh();
     expect($applicant->hasRole('orthopedic'))->toBeTrue()
         ->and($this->application->fresh()->status->value)->toBe('approved');
+});
+
+it('admin can reject a pending application', function () {
+    $this->actingAs($this->admin);
+
+    visit(route('admin.professional-applications.show', $this->application))
+        ->assertSee($this->application->user->fullname)
+        ->click('Deny')
+        ->assertSee('Deny application?')
+        ->type('rejection_reason', 'Blurry ID photo.')
+        ->press('Deny application')
+        ->assertPathIs('/admin/professional-applications')
+        ->assertNoJavascriptErrors();
+
+    $fresh = $this->application->fresh()->status->value;
+    expect($fresh)->toBe('denied');
+
+    $trashed = ProfessionalApplication::withTrashed()->findOrFail($this->application->id);
+    expect($trashed->rejection_reason)->toBe('Blurry ID photo.');
 });
