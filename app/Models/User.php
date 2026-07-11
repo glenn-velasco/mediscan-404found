@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\Gender;
 use App\Models\Builders\UserBuilder;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -13,7 +14,6 @@ use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -26,7 +26,15 @@ use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
- * @property string|null $name
+ * @property string|null $username
+ * @property string|null $first_name
+ * @property string|null $middle_name
+ * @property string|null $last_name
+ * @property string|null $suffix
+ * @property Carbon|null $dob
+ * @property Gender|null $gender
+ * @property string|null $address
+ * @property string|null $phone_number
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property Carbon|null $deactivated_at
@@ -39,9 +47,9 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'suffix', 'dob', 'gender', 'address', 'phone_number', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-#[Appends(['avatar'])]
+#[Appends(['avatar', 'fullname', 'age'])]
 #[UseEloquentBuilder(UserBuilder::class)]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -60,15 +68,9 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'deactivated_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'dob' => 'date',
+            'gender' => Gender::class,
         ];
-    }
-
-    /**
-     * @return HasOne<MedicalInformation, $this>
-     */
-    public function medicalInformation(): HasOne
-    {
-        return $this->hasOne(MedicalInformation::class);
     }
 
     /**
@@ -93,6 +95,28 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             get: fn () => $this->profile_photo_path
                 ? Storage::disk('public')->url($this->profile_photo_path)
                 : null,
+        );
+    }
+
+    /**
+     * @return Attribute<string, never>
+     */
+    protected function fullname(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => collect([$this->first_name, $this->middle_name, $this->last_name, $this->suffix])
+                ->filter()
+                ->implode(' '),
+        );
+    }
+
+    /**
+     * @return Attribute<int|null, never>
+     */
+    protected function age(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->dob?->age,
         );
     }
 

@@ -24,7 +24,10 @@ class ProfessionalApplicationRepository extends BaseRepository
      */
     public function paginate(int $perPage, array $filters = []): LengthAwarePaginator
     {
-        $query = $this->model->newQuery()->with(['user:id,name,email', 'reviewer:id,name']);
+        $query = $this->model->newQuery()->with([
+            'user:id,username,first_name,middle_name,last_name,suffix,email',
+            'reviewer:id,username,first_name,middle_name,last_name,suffix',
+        ]);
 
         $status = $filters['status'] ?? null;
 
@@ -92,7 +95,7 @@ class ProfessionalApplicationRepository extends BaseRepository
             'id' => $application->id,
             'applicant' => [
                 'id' => $application->user->id,
-                'name' => $application->user->name,
+                'name' => $application->user->fullname,
                 'email' => $application->user->email,
             ],
             'id_type' => $application->id_type->value,
@@ -108,7 +111,7 @@ class ProfessionalApplicationRepository extends BaseRepository
             'rejection_reason' => $application->rejection_reason,
             'verification_notes' => $application->verification_notes,
             'role_granted' => $application->role_granted,
-            'reviewed_by' => $application->reviewer?->name,
+            'reviewed_by' => $application->reviewer?->fullname,
             'reviewed_at' => $application->reviewed_at?->toDateTimeString(),
             'created_at' => $application->created_at?->toDateTimeString(),
         ];

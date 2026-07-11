@@ -1,4 +1,3 @@
-import { usePage } from '@inertiajs/react';
 import { IdCard, LayoutGrid, Mail, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
@@ -12,48 +11,34 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
 import admin from '@/routes/admin';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
-    const { auth } = usePage().props;
     const { open } = useSidebar();
 
-    const isAdmin = auth.roles?.includes('admin');
-
-    const dashboardHref = isAdmin ? admin.dashboard() : dashboard();
-
-    const mainNavItems: NavItem[] = isAdmin
-        ? [
-              {
-                  title: 'Dashboard',
-                  href: admin.dashboard(),
-                  icon: LayoutGrid,
-              },
-              {
-                  title: 'Users',
-                  href: admin.users.index(),
-                  icon: Users,
-              },
-              {
-                  title: 'Invitations',
-                  href: admin.invitations.index(),
-                  icon: Mail,
-              },
-              {
-                  title: 'Professional Applications',
-                  href: admin.professionalApplications.index(),
-                  icon: IdCard,
-              },
-          ]
-        : [
-              {
-                  title: 'Dashboard',
-                  href: dashboard(),
-                  icon: LayoutGrid,
-              },
-          ];
+    const mainNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: admin.dashboard(),
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Users',
+            href: admin.users.index(),
+            icon: Users,
+        },
+        {
+            title: 'Invitations',
+            href: admin.invitations.index(),
+            icon: Mail,
+        },
+        {
+            title: 'Professional Applications',
+            href: admin.professionalApplications.index(),
+            icon: IdCard,
+        },
+    ];
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -62,7 +47,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <div className="px-2 pb-2">
                             <AppLogo
-                                href={dashboardHref}
+                                href={admin.dashboard()}
                                 prefetch
                                 sidebar={open}
                             />

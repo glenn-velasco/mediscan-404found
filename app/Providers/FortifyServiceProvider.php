@@ -5,7 +5,6 @@ namespace App\Providers;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Http\Responses\LoginResponse;
-use App\Http\Responses\RegisterResponse;
 use App\Http\Responses\VerifyEmailResponse;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -15,7 +14,6 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
-use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use Laravel\Fortify\Contracts\VerifyEmailResponse as VerifyEmailResponseContract;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
@@ -28,7 +26,6 @@ class FortifyServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
-        $this->app->singleton(RegisterResponseContract::class, RegisterResponse::class);
         $this->app->singleton(VerifyEmailResponseContract::class, VerifyEmailResponse::class);
     }
 
@@ -73,7 +70,6 @@ class FortifyServiceProvider extends ServiceProvider
 
         Fortify::verifyEmailView(function (Request $request) {
             $backLink = match ($request->session()->get('email_change_origin')) {
-                'dashboard' => ['url' => route('dashboard'), 'label' => 'Back to dashboard'],
                 'settings' => ['url' => route('account.edit'), 'label' => 'Back to account settings'],
                 default => null,
             };
@@ -84,10 +80,6 @@ class FortifyServiceProvider extends ServiceProvider
                 'emailChangeBackLabel' => $backLink['label'] ?? null,
             ]);
         });
-
-        Fortify::registerView(fn () => Inertia::render('auth/register', [
-            'passwordRules' => Password::defaults()->toPasswordRulesString(),
-        ]));
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
 

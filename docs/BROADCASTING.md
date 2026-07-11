@@ -38,7 +38,9 @@ class BroadcastEmailChanged implements ShouldQueueAfterCommit
 }
 ```
 
-Used by: `EmailChanged` → `BroadcastEmailChanged`, `Illuminate\Auth\Events\Verified` → `BroadcastEmailVerified`, `Illuminate\Auth\Events\Registered` → `BroadcastUserRegistered` (this one also flushes the admin dashboard cache in the same listener — a non-broadcast side effect, which is exactly why this pattern is useful).
+Used by: `EmailChanged` → `BroadcastEmailChanged`, `Illuminate\Auth\Events\Verified` → `BroadcastEmailVerified`, `Illuminate\Auth\Events\Registered` → `BroadcastUserRegistered` (this one also flushes the admin dashboard cache in the same listener — a non-broadcast side effect, which is exactly why this pattern is useful). Also `Illuminate\Auth\Events\Login`/`Logout` → `LogSuccessfulLogin`/`LogSuccessfulLogout` (audit-only, no broadcast — see `docs/TODO.MD` / `AuditLogger`).
+
+Note: public web registration (`/register`) has been removed — regular users now sign up via the mobile app (`POST /api/v1/register`), which does **not** dispatch `Registered`. The only remaining trigger for `Registered` (and therefore `BroadcastUserRegistered`/`.UserRegistered`) is an admin invitation being accepted (`InvitationService::acceptInvitation()` dispatches it manually).
 
 ### 2. Self-broadcasting: event implements `ShouldBroadcast`
 
@@ -88,7 +90,7 @@ Used by: `UserDeactivated`, `UserDeleted`, `ProfessionalApplicationStatusChanged
 
 | Channel | Event name | Dispatched from | Payload |
 |---|---|---|---|
-| `admin-dashboard` | `.UserRegistered` | `BroadcastUserRegistered` (listens to `Illuminate\Auth\Events\Registered`) | `{ stats: DashboardStats }` — see `resources/js/pages/admin/dashboard.tsx` for the `DashboardStats` shape (`total`, `active`, `deactivated`, `by_role`) |
+| `admin-dashboard` | `.UserRegistered` | `BroadcastUserRegistered` (listens to `Illuminate\Auth\Events\Registered`, now only dispatched via `InvitationService::acceptInvitation()` since public web registration was removed) | `{ stats: DashboardStats }` — see `resources/js/pages/admin/dashboard.tsx` for the `DashboardStats` shape (`total`, `active`, `deactivated`, `by_role`) |
 | `admin-dashboard` | `.EmailChanged` | `BroadcastEmailChanged` (listens to `App\Events\EmailChanged`) | `{ user_id: number }` |
 | `admin-dashboard` | `.InvitationSent` | Inline in `app/Services/User/InvitationService.php` | `{}` (no payload) |
 | `admin-dashboard` | `.ProfessionalApplicationStatusChanged` | `App\Events\ProfessionalApplicationStatusChanged` (self-broadcasting), dispatched from `ProfessionalApplicationService::submit()`/`approve()`/`reject()` and the `ProcessProfessionalApplication` job | `{ application_id: number, status: string }` |
@@ -97,8 +99,7 @@ Used by: `UserDeactivated`, `UserDeleted`, `ProfessionalApplicationStatusChanged
 | `App.Models.User.{id}` | `.UserDeactivated` | `App\Events\UserDeactivated` (self-broadcasting), dispatched from `UserService::setActive()` | `{ user_id: number }` |
 | `App.Models.User.{id}` | `.UserDeleted` | `App\Events\UserDeleted` (self-broadcasting), dispatched from `UserService::delete()` | `{ user_id: number }` |
 | `App.Models.User.{id}` | `.ProfessionalApplicationStatusChanged` | Same event as above, on the applicant's own channel | `{ application_id: number, status: string }` |
-| `App.Models.User.{id}` | `.AllergyVerified` | `App\Events\AllergyVerified` (self-broadcasting), dispatched from `PatientVerificationService::verifyAllergy()` | `{ allergy_id: number }` |
-| `App.Models.User.{id}` | `.TransfusionConsentUpdated` | `App\Events\TransfusionConsentUpdated` (self-broadcasting), dispatched from `MedicalInfoService` (patient records/changes a decision, which also clears all witnesses) and `PatientVerificationService::witnessTransfusionDecision()` (a professional witnesses it; multiple professionals can each witness once, stored as a JSON array on `medical_information.transfusion_witnesses`) | `{ no_blood_transfusion: boolean, witness_count: number }` |
+
 
 ## Frontend consumption
 
@@ -113,18 +114,16 @@ useEcho('channel-name', ['.EventOne', '.EventTwo'], (payload) => {
 Real usages:
 - `resources/js/pages/admin/users/index.tsx` and `resources/js/pages/admin/invitations/index.tsx` — listen on `admin-dashboard` for `.UserRegistered`/`.EmailChanged`/`.InvitationSent` and `router.reload()` the list.
 - `resources/js/pages/admin/dashboard.tsx` — listens on `admin-dashboard` for `.UserRegistered` and updates local stats state from the payload.
-- `resources/js/layouts/user-layout.tsx` — listens on the current user's own `App.Models.User.{id}` channel for `.UserDeactivated`/`.UserDeleted` and force-logs the user out (`router.post(logout.url())`) so a deactivated/deleted user's open tab reacts immediately instead of waiting for their next request to hit `CheckUserActive`/`EnsureApiUserActive` middleware. It also listens for `.EmailChanged` on the same channel and does a partial `router.reload({ only: ['auth'] })` so `useAuth()`-driven UI (e.g. the email shown on `resources/js/pages/dashboard.tsx`) reflects an email change made elsewhere without a full page reload.
+- `resources/js/layouts/user-layout.tsx` — listens on the current user's own `App.Models.User.{id}` channel for `.UserDeactivated`/`.UserDeleted` and force-logs the user out (`router.post(logout.url())`) so a deactivated/deleted user's open tab reacts immediately instead of waiting for their next request to hit `CheckUserActive`/`EnsureApiUserActive` middleware. It also listens for `.EmailChanged` on the same channel and does a partial `router.reload({ only: ['auth'] })` so `useAuth()`-driven UI (e.g. the email shown on `resources/js/components/user-info.tsx`) reflects an email change made elsewhere without a full page reload.
 - `resources/js/pages/admin/professional-applications/index.tsx` and `.../show.tsx` — listen on `admin-dashboard` for `.ProfessionalApplicationStatusChanged` and `router.reload()`, so the list/detail view picks up automatic-verification results and other admins' approve/deny actions live.
 - `resources/js/pages/professional-application/show.tsx` — listens on the applicant's own `App.Models.User.{id}` channel for `.ProfessionalApplicationStatusChanged` and `router.reload()`, so the status page updates the moment the background job or an admin decision changes it, without the applicant needing to refresh.
-- `resources/js/pages/dashboard.tsx` — listens on the patient's own `App.Models.User.{id}` channel for `.AllergyVerified`/`.TransfusionConsentUpdated` and does a partial `router.reload({ only: ['medicalInfo'] })`, so verification badges and witness attribution appear the moment a professional attests them.
-
 Note: `EmailVerified` is broadcast on `App.Models.User.{id}` but currently has **no frontend consumer** — nothing subscribes to it yet.
 
 ## Testing
 
 Self-broadcasting events (`ShouldBroadcast`) get a `tests/Unit/Events/{Event}Test.php` that asserts `broadcastOn()`, `broadcastAs()`, and `broadcastWith()` directly on the event object — no DB or queue involved, since these are pure value assertions. See `tests/Unit/Events/UserDeactivatedTest.php` and `tests/Unit/Events/UserDeletedTest.php` for the pattern.
 
-Gaps today: the decoupled pattern (`BroadcastEmailChanged`, `BroadcastEmailVerified`, `BroadcastUserRegistered`) and the inline `InvitationSent` broadcast in `InvitationService` have no equivalent tests, and no Feature-level test confirms that `UserService::setActive()`/`delete()` actually dispatch `UserDeactivated`/`UserDeleted` — only the events' own broadcast metadata is unit-tested. `ProfessionalApplicationStatusChanged` is the exception: in addition to its own `tests/Unit/Events/ProfessionalApplicationStatusChangedTest.php`, `tests/Feature/Admin/ProfessionalApplicationTest.php` uses `Event::fake([ProfessionalApplicationStatusChanged::class])` + `Event::assertDispatched(...)` to confirm `approve()`/`reject()` actually dispatch it.
+Gaps today: the decoupled pattern (`BroadcastEmailChanged`, `BroadcastEmailVerified`, `BroadcastUserRegistered`) and the inline `InvitationSent` broadcast in `InvitationService` have no broadcast-specific tests. `ProfessionalApplicationStatusChanged` is tested in `tests/Feature/Admin/ProfessionalApplicationTest.php` via `Event::fake()` + `Event::assertDispatched()`. The login/logout audit listeners (`LogSuccessfulLogin`/`LogSuccessfulLogout`) are covered in `tests/Feature/Audit/AuditLoggerTest.php`.
 
 ## Adding a new broadcast event
 

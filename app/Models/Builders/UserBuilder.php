@@ -14,7 +14,14 @@ class UserBuilder extends Builder
     {
         return $this->where(function ($q) use ($term) {
             $q->where('users.email', 'ilike', "%{$term}%")
-                ->orWhere('mi.full_name', 'ilike', "%{$term}%");
+                ->orWhere('users.username', 'ilike', "%{$term}%")
+                ->orWhere('users.first_name', 'ilike', "%{$term}%")
+                ->orWhere('users.middle_name', 'ilike', "%{$term}%")
+                ->orWhere('users.last_name', 'ilike', "%{$term}%")
+                ->orWhereRaw(
+                    "trim(regexp_replace(coalesce(users.first_name, '') || ' ' || coalesce(users.middle_name, '') || ' ' || coalesce(users.last_name, '') || ' ' || coalesce(users.suffix, ''), '\\s+', ' ', 'g')) ilike ?",
+                    ["%{$term}%"]
+                );
         });
     }
 
@@ -35,5 +42,16 @@ class UserBuilder extends Builder
     public function whereActive(): self
     {
         return $this->whereNull('deactivated_at');
+    }
+
+    public function filterByAge(int $min, ?int $max = null): static
+    {
+        $this->whereRaw('extract(year from age(users.dob)) >= ?', [$min]);
+
+        if ($max !== null) {
+            $this->whereRaw('extract(year from age(users.dob)) <= ?', [$max]);
+        }
+
+        return $this;
     }
 }

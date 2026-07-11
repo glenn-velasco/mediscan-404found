@@ -1,9 +1,7 @@
 import type { ReactNode } from 'react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
-import { PhoneInput } from '@/components/phone-input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -14,27 +12,21 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { BloodType } from '@/types';
+import { Textarea } from '@/components/ui/textarea';
+import { genderOptions } from '@/types/gender';
 
 export interface RegistrationFormData {
-    password: string;
-    password_confirmation: string;
+    username: string;
     first_name: string;
     middle_name: string;
     last_name: string;
     suffix: string;
-    date_of_birth: string;
+    dob: string;
     gender: string;
-    phone_country_code: string;
-    phone: string;
-    blood_type: string;
-    religion: string;
     address: string;
-    no_blood_transfusion: boolean;
-    emergency_contact_name: string;
-    emergency_contact_phone_country_code: string;
-    emergency_contact_phone: string;
-    emergency_contact_relationship: string;
+    phone_number: string;
+    password: string;
+    password_confirmation: string;
 }
 
 interface Props {
@@ -76,7 +68,21 @@ export function RegistrationFormFields({
                 {/* Account */}
                 <SectionHeading>Account</SectionHeading>
 
-                <div className="col-span-2 grid gap-1.5">
+                <div className="grid gap-1.5">
+                    <Label htmlFor="username">
+                        Username <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                        id="username"
+                        value={data.username}
+                        onChange={(e) => setData('username', e.target.value)}
+                        autoComplete="username"
+                        autoFocus={editable}
+                    />
+                    <InputError message={errors.username} />
+                </div>
+
+                <div className="grid gap-1.5">
                     <Label htmlFor="email">
                         Email address{' '}
                         {editable && (
@@ -88,7 +94,6 @@ export function RegistrationFormFields({
                             <Input
                                 id="email"
                                 type="email"
-                                autoFocus
                                 autoComplete="email"
                                 value={email}
                                 onChange={(e) => onEmailChange(e.target.value)}
@@ -108,44 +113,8 @@ export function RegistrationFormFields({
                     )}
                 </div>
 
-                <div className="grid gap-1.5">
-                    <Label htmlFor="password">
-                        Password <span className="text-destructive">*</span>
-                    </Label>
-                    <PasswordInput
-                        id="password"
-                        autoFocus={!editable}
-                        autoComplete="new-password"
-                        value={data.password}
-                        onChange={(e) => setData('password', e.target.value)}
-                        placeholder={
-                            editable ? 'Password' : 'Choose a password'
-                        }
-                        passwordrules={passwordRules}
-                    />
-                    <InputError message={errors.password} />
-                </div>
-
-                <div className="grid gap-1.5">
-                    <Label htmlFor="password_confirmation">
-                        Confirm password{' '}
-                        <span className="text-destructive">*</span>
-                    </Label>
-                    <PasswordInput
-                        id="password_confirmation"
-                        autoComplete="new-password"
-                        value={data.password_confirmation}
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                        placeholder="Confirm password"
-                        passwordrules={passwordRules}
-                    />
-                    <InputError message={errors.password_confirmation} />
-                </div>
-
-                {/* Personal Information */}
-                <SectionHeading>Personal Information</SectionHeading>
+                {/* Personal details */}
+                <SectionHeading>Personal details</SectionHeading>
 
                 <div className="grid gap-1.5">
                     <Label htmlFor="first_name">
@@ -190,25 +159,24 @@ export function RegistrationFormFields({
                         id="suffix"
                         value={data.suffix}
                         onChange={(e) => setData('suffix', e.target.value)}
-                        placeholder="Jr., Sr., III…"
+                        autoComplete="honorific-suffix"
                     />
                     <InputError message={errors.suffix} />
                 </div>
 
                 <div className="grid gap-1.5">
-                    <Label htmlFor="date_of_birth">
+                    <Label htmlFor="dob">
                         Date of birth{' '}
                         <span className="text-destructive">*</span>
                     </Label>
                     <Input
-                        id="date_of_birth"
+                        id="dob"
                         type="date"
-                        value={data.date_of_birth}
-                        onChange={(e) =>
-                            setData('date_of_birth', e.target.value)
-                        }
+                        value={data.dob}
+                        onChange={(e) => setData('dob', e.target.value)}
+                        autoComplete="bday"
                     />
-                    <InputError message={errors.date_of_birth} />
+                    <InputError message={errors.dob} />
                 </div>
 
                 <div className="grid gap-1.5">
@@ -220,143 +188,80 @@ export function RegistrationFormFields({
                         onValueChange={(v) => setData('gender', v)}
                     >
                         <SelectTrigger id="gender">
-                            <SelectValue placeholder="Select…" />
+                            <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
+                            {genderOptions.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                     <InputError message={errors.gender} />
                 </div>
 
-                {/* Medical Details */}
-                <SectionHeading>Medical Details</SectionHeading>
-
-                <div className="col-span-2 grid gap-1.5">
-                    <Label>Phone number</Label>
-                    <PhoneInput
-                        idPrefix="phone"
-                        countryValue={data.phone_country_code}
-                        phoneValue={data.phone}
-                        onCountryChange={(v) =>
-                            setData('phone_country_code', v)
-                        }
-                        onPhoneChange={(v) => setData('phone', v)}
-                        countryError={errors.phone_country_code}
-                        phoneError={errors.phone}
-                    />
-                </div>
-
                 <div className="grid gap-1.5">
-                    <Label htmlFor="blood_type">Blood type</Label>
-                    <Select
-                        value={data.blood_type}
-                        onValueChange={(v) => setData('blood_type', v)}
-                    >
-                        <SelectTrigger id="blood_type">
-                            <SelectValue placeholder="Unknown" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {(Object.values(BloodType) as BloodType[]).map(
-                                (bt) => (
-                                    <SelectItem key={bt} value={bt}>
-                                        {bt}
-                                    </SelectItem>
-                                ),
-                            )}
-                        </SelectContent>
-                    </Select>
-                    <InputError message={errors.blood_type} />
-                </div>
-
-                <div className="grid gap-1.5">
-                    <Label htmlFor="religion">Religion</Label>
+                    <Label htmlFor="phone_number">Phone number</Label>
                     <Input
-                        id="religion"
-                        value={data.religion}
-                        onChange={(e) => setData('religion', e.target.value)}
+                        id="phone_number"
+                        type="tel"
+                        value={data.phone_number}
+                        onChange={(e) =>
+                            setData('phone_number', e.target.value)
+                        }
+                        autoComplete="tel"
                     />
-                    <InputError message={errors.religion} />
+                    <InputError message={errors.phone_number} />
                 </div>
 
                 <div className="col-span-2 grid gap-1.5">
                     <Label htmlFor="address">Address</Label>
-                    <Input
+                    <Textarea
                         id="address"
                         value={data.address}
                         onChange={(e) => setData('address', e.target.value)}
+                        autoComplete="street-address"
                     />
                     <InputError message={errors.address} />
                 </div>
 
-                <div className="col-span-2 flex items-center gap-2">
-                    <Checkbox
-                        id="no_blood_transfusion"
-                        checked={data.no_blood_transfusion}
-                        onCheckedChange={(v) =>
-                            setData('no_blood_transfusion', Boolean(v))
-                        }
-                    />
-                    <Label
-                        htmlFor="no_blood_transfusion"
-                        className="cursor-pointer font-normal"
-                    >
-                        No blood transfusion (religious / personal objection)
+                <div className="col-span-2">
+                    <Separator />
+                </div>
+
+                <div className="grid gap-1.5">
+                    <Label htmlFor="password">
+                        Password <span className="text-destructive">*</span>
                     </Label>
-                </div>
-
-                {/* Emergency Contact */}
-                <SectionHeading>Emergency Contact</SectionHeading>
-
-                <div className="grid gap-1.5">
-                    <Label htmlFor="ec_name">Contact name</Label>
-                    <Input
-                        id="ec_name"
-                        value={data.emergency_contact_name}
-                        onChange={(e) =>
-                            setData('emergency_contact_name', e.target.value)
-                        }
-                        autoComplete="off"
+                    <PasswordInput
+                        id="password"
+                        autoFocus={!editable}
+                        autoComplete="new-password"
+                        value={data.password}
+                        onChange={(e) => setData('password', e.target.value)}
+                        placeholder="Choose a password"
+                        passwordrules={passwordRules}
                     />
-                    <InputError message={errors.emergency_contact_name} />
+                    <InputError message={errors.password} />
                 </div>
 
                 <div className="grid gap-1.5">
-                    <Label htmlFor="ec_relationship">Relationship</Label>
-                    <Input
-                        id="ec_relationship"
-                        value={data.emergency_contact_relationship}
+                    <Label htmlFor="password_confirmation">
+                        Confirm password{' '}
+                        <span className="text-destructive">*</span>
+                    </Label>
+                    <PasswordInput
+                        id="password_confirmation"
+                        autoComplete="new-password"
+                        value={data.password_confirmation}
                         onChange={(e) =>
-                            setData(
-                                'emergency_contact_relationship',
-                                e.target.value,
-                            )
+                            setData('password_confirmation', e.target.value)
                         }
-                        placeholder="e.g. Spouse, Parent"
+                        placeholder="Confirm password"
+                        passwordrules={passwordRules}
                     />
-                    <InputError
-                        message={errors.emergency_contact_relationship}
-                    />
-                </div>
-
-                <div className="col-span-2 grid gap-1.5">
-                    <Label>Phone number</Label>
-                    <PhoneInput
-                        idPrefix="ec_phone"
-                        countryValue={data.emergency_contact_phone_country_code}
-                        phoneValue={data.emergency_contact_phone}
-                        onCountryChange={(v) =>
-                            setData('emergency_contact_phone_country_code', v)
-                        }
-                        onPhoneChange={(v) =>
-                            setData('emergency_contact_phone', v)
-                        }
-                        countryError={
-                            errors.emergency_contact_phone_country_code
-                        }
-                        phoneError={errors.emergency_contact_phone}
-                    />
+                    <InputError message={errors.password_confirmation} />
                 </div>
             </CardContent>
         </Card>

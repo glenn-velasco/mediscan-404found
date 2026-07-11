@@ -17,24 +17,17 @@ export default function AcceptInvitation({
     passwordRules,
 }: AcceptInvitationProps) {
     const { data, setData, post, processing, errors } = useForm({
-        password: '',
-        password_confirmation: '',
+        username: '',
         first_name: '',
         middle_name: '',
         last_name: '',
         suffix: '',
-        date_of_birth: '',
+        dob: '',
         gender: '',
-        phone_country_code: '',
-        phone: '',
-        blood_type: '',
-        religion: '',
         address: '',
-        no_blood_transfusion: false,
-        emergency_contact_name: '',
-        emergency_contact_phone_country_code: '',
-        emergency_contact_phone: '',
-        emergency_contact_relationship: '',
+        phone_number: '',
+        password: '',
+        password_confirmation: '',
     });
 
     function submit(e: FormEvent) {

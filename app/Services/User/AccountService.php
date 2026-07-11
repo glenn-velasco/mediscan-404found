@@ -3,11 +3,12 @@
 namespace App\Services\User;
 
 use App\Actions\Fortify\CreateNewUser;
+use App\Enums\AuditLogType;
 use App\Events\EmailChanged;
 use App\Models\User;
 use App\Repositories\Eloquent\UserInvitationRepository;
 use App\Repositories\Eloquent\UserRepository;
-use Illuminate\Support\Facades\Cache;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\NewAccessToken;
@@ -18,6 +19,7 @@ class AccountService
         private UserRepository $userRepository,
         private UserInvitationRepository $userInvitationRepository,
         private CreateNewUser $createNewUser,
+        private AuditLogger $auditLogger,
     ) {}
 
     public function login(string $email, string $password, string $deviceName): NewAccessToken
@@ -36,7 +38,18 @@ class AccountService
             ]);
         }
 
-        return $user->createToken($deviceName, $user->tokenAbilities());
+        $token = $user->createToken($deviceName, $user->tokenAbilities());
+
+        $this->auditLogger->log(
+            action: 'auth.login',
+            type: AuditLogType::Authentication,
+            actor: $user,
+            subject: $user,
+            metadata: ['device_name' => $deviceName],
+            channel: 'api',
+        );
+
+        return $token;
     }
 
     /** @param  array<string, mixed>  $data */
@@ -54,8 +67,6 @@ class AccountService
         $this->userRepository->updateEmail($user, $newEmail);
 
         $this->userInvitationRepository->updateEmail($previousEmail, $newEmail);
-
-        Cache::forget(MedicalInfoService::cacheKey($user->id));
 
         if (request()->hasSession()) {
             session()->put('email_change_origin', $origin);

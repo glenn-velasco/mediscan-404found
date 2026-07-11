@@ -18,7 +18,7 @@ class VerifyEmailResponse implements VerifyEmailResponseContract
         $user = $request->user();
 
         return redirect()->intended(
-            ($user->hasRole(Role::Admin->value) ? route('admin.dashboard') : route('dashboard')).'?verified=1'
+            ($user->hasRole(Role::Admin->value) ? route('admin.dashboard') : route('professional-application.show')).'?verified=1'
         );
     }
 }

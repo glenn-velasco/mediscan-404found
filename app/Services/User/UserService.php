@@ -2,13 +2,16 @@
 
 namespace App\Services\User;
 
+use App\Enums\AuditLogType;
 use App\Enums\Role;
 use App\Events\UserDeactivated;
 use App\Events\UserDeleted;
 use App\Models\User;
 use App\Repositories\Eloquent\UserRepository;
 use App\Services\Admin\DashboardService;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class UserService
@@ -16,6 +19,7 @@ class UserService
     public function __construct(
         private UserRepository $userRepository,
         private DashboardService $adminDashboard,
+        private AuditLogger $auditLogger,
     ) {}
 
     /**
@@ -38,6 +42,15 @@ class UserService
         $user->syncRoles([$role->value]);
         $this->adminDashboard->flushCache();
 
+        $this->auditLogger->log(
+            action: 'user.role_assigned',
+            type: AuditLogType::Update,
+            actor: Auth::user(),
+            subject: $user,
+            metadata: ['role' => $role->value],
+            channel: 'web',
+        );
+
         return $user;
     }
 
@@ -51,12 +64,21 @@ class UserService
             event(new UserDeactivated($user));
         }
 
+        $this->auditLogger->log(
+            action: $active ? 'user.activated' : 'user.deactivated',
+            type: AuditLogType::Update,
+            actor: Auth::user(),
+            subject: $user,
+            channel: 'web',
+        );
+
         return $user;
     }
 
     public function delete(User $user): void
     {
         $userId = $user->id;
+        $actor = Auth::user();
 
         DB::transaction(function () use ($user) {
             $user->tokens()->delete();
@@ -66,5 +88,13 @@ class UserService
         $this->adminDashboard->flushCache();
 
         event(new UserDeleted($userId));
+
+        $this->auditLogger->log(
+            action: 'user.deleted',
+            type: AuditLogType::Delete,
+            actor: $actor,
+            metadata: ['user_id' => $userId],
+            channel: 'web',
+        );
     }
 }

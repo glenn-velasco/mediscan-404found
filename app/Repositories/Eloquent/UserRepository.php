@@ -26,9 +26,7 @@ class UserRepository extends BaseRepository
         $status = $filters['status'] ?? '';
 
         return $this->model->newQuery()
-            ->leftJoin('medical_information as mi', 'mi.user_id', '=', 'users.id')
-            ->select('users.*')
-            ->with(['roles:id,name', 'medicalInformation:user_id,full_name'])
+            ->with(['roles:id,name'])
             ->when($search !== '', fn ($q) => $q->search($search))
             ->when($role !== '', fn ($q) => $q->filterByRole($role))
             ->when($status !== '', fn ($q) => $q->filterByStatus($status))
@@ -67,12 +65,13 @@ class UserRepository extends BaseRepository
     /** @return array<string, mixed> */
     public function transform(User $user): array
     {
-        $user->loadMissing(['roles', 'medicalInformation']);
+        $user->loadMissing(['roles']);
 
         return [
             'id' => $user->id,
-            'name' => $user->name,
-            'full_name' => $user->medicalInformation?->full_name,
+            'username' => $user->username,
+            'fullname' => $user->fullname,
+            'age' => $user->age,
             'email' => $user->email,
             'role' => $user->roles->pluck('name')->first(),
             'is_active' => $user->isActive(),

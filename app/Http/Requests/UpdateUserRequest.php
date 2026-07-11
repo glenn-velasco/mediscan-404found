@@ -2,12 +2,15 @@
 
 namespace App\Http\Requests;
 
+use App\Concerns\ProfileValidationRules;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends FormRequest
 {
+    use ProfileValidationRules;
+
     public function authorize(): bool
     {
         return true;
@@ -23,6 +26,15 @@ class UpdateUserRequest extends FormRequest
 
         return [
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($userId)],
+            'username' => ['sometimes', ...$this->usernameRules($userId)],
+            'first_name' => ['sometimes', ...$this->firstNameRules()],
+            'middle_name' => $this->middleNameRules(),
+            'last_name' => ['sometimes', ...$this->lastNameRules()],
+            'suffix' => $this->suffixRules(),
+            'dob' => ['sometimes', ...$this->dobRules()],
+            'gender' => ['sometimes', ...$this->genderRules()],
+            'address' => $this->addressRules(),
+            'phone_number' => $this->phoneNumberRules(),
         ];
     }
 }

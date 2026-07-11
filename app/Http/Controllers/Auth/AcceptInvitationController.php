@@ -27,6 +27,6 @@ class AcceptInvitationController extends Controller
     {
         $this->userInvitationService->acceptInvitation($token, $request->all());
 
-        return redirect()->intended('dashboard');
+        return redirect()->intended(route('professional-application.show'));
     }
 }

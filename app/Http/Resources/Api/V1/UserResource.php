@@ -18,13 +18,22 @@ class UserResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
+            'username' => $this->username,
+            'first_name' => $this->first_name,
+            'middle_name' => $this->middle_name,
+            'last_name' => $this->last_name,
+            'suffix' => $this->suffix,
+            'fullname' => $this->fullname,
+            'dob' => $this->dob?->toDateString(),
+            'age' => $this->age,
+            'gender' => $this->gender,
+            'address' => $this->address,
+            'phone_number' => $this->phone_number,
             'email' => $this->email,
             'email_verified_at' => $this->email_verified_at,
             'is_active' => $this->isActive(),
             'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),
             'permissions' => $this->whenLoaded('permissions', fn () => $this->getAllPermissions()->pluck('name')),
-            'medical_information' => $this->whenLoaded('medicalInformation', fn () => new MedicalInformationResource($this->medicalInformation)),
         ];
     }
 }

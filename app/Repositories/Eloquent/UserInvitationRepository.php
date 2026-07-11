@@ -22,7 +22,7 @@ class UserInvitationRepository extends BaseRepository
     public function paginate(int $perPage, array $filters = []): LengthAwarePaginator
     {
         return $this->model->newQuery()
-            ->with(['role:id,name', 'invitedBy:id,name'])
+            ->with(['role:id,name', 'invitedBy:id,first_name,middle_name,last_name,suffix'])
             ->latest()
             ->paginate($perPage);
     }
@@ -64,7 +64,7 @@ class UserInvitationRepository extends BaseRepository
             'email' => $invitation->email,
             'role' => $invitation->role?->name,
             'status' => $status,
-            'invited_by' => $invitation->invitedBy?->name,
+            'invited_by' => $invitation->invitedBy?->fullname,
             'expires_at' => $invitation->expires_at->toDateString(),
             'accepted_at' => $invitation->accepted_at?->toDateString(),
         ];

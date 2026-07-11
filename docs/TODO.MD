@@ -1,10 +1,9 @@
 
 TODO: Implement a kyc that will verify the face and the id they sent and checking there profession like Professional Regulation Commission if verified give them a custom role but the permission is static (verify user input. it's for making the other user input a verified by a licensed or professional Dr. John Doe or nurse John Doe). like if the id have Licensed PHD in orthopedic the make a role Orthopedic but createorfail it. also the picture on the verification will be there profile. also the Certification of Employment. there's a kyc verificator but it still needs an admin verification via dashboard accept, denied (trashed).
 
-TODO: ADD /dashboard user profile editting on the same page.
-TODO: update the dashboard cache if a user registered.
-TODO: BroadcastUserRegistered the cache flash and reflush doesn't work
+TODO: update the admin dashboard cache if a user registers via invitation (BroadcastUserRegistered cache flash and reflush doesn't work)
 
-TODO: AuditTrailing logs to all actions.
-TODO: Add a section for user medical information allergy on dashboard don't show counts. include the email also.
-TODO: Add a breadcrumbs for /admin/users/{user}, also add a section for Invitations that shows all invited users with resend functionality only show it if the invitation is expired also implement a schedule pruning for it.
+TODO: AuditTrailing logs to all actions. Partially done — `AuditLog` now has a `type` column (`App\Enums\AuditLogType`: Authentication, View, Create, Update, Delete, Accepted, Denied) and is wired into login/logout (web + mobile), invitations (create/resend/delete/accept), user management (role assignment/activation/deletion), professional application review (approve/reject), and professional-application file viewing. Still not covered: most other admin reads, patient-side actions, and mobile sync beyond what already had logging.
+TODO: Add breadcrumbs for /admin/users/{user}, also add a section for Invitations that shows all invited users with resend functionality only show it if the invitation is expired also implement a schedule pruning for it.
+
+TODO: Registration is now invite-only on the web (admin invitations, always granted as Admin — no role picker anymore). Regular users sign up via the mobile app only.

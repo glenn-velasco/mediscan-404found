@@ -6,7 +6,6 @@ import {
     LayoutGrid,
     LogOut,
     Settings,
-    Stethoscope,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import AppLogo from '@/components/app-logo';
@@ -22,16 +21,15 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
 import { useInitials } from '@/hooks/use-initials';
-import { dashboard, logout } from '@/routes';
+import { logout } from '@/routes';
 import { edit as editAccount } from '@/routes/account';
-import admin from '@/routes/admin';
-import professional from '@/routes/professional';
+import admin, { dashboard } from '@/routes/admin';
 import professionalApplication from '@/routes/professional-application';
-import { Permission, Role } from '@/types';
+import { Role } from '@/types';
 
 export default function UsersLayout({ children }: { children: ReactNode }) {
     const { auth } = usePage().props;
-    const { hasRole, hasPermission } = useAuth();
+    const { hasRole } = useAuth();
     const getInitials = useInitials();
     const user = auth.user;
 
@@ -51,7 +49,7 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
             <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
                     {/* Brand */}
-                    <AppLogo href={auth ? dashboard.url() : '/'} />
+                    <AppLogo href={auth ? dashboard() : '/'} />
 
                     {user && (
                         <div className="flex items-center gap-4">
@@ -61,16 +59,16 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                     <Avatar className="h-8 w-8">
                                         <AvatarImage
                                             src={user.avatar}
-                                            alt={user.name ?? undefined}
+                                            alt={user.fullname || undefined}
                                         />
                                         <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
                                             {getInitials(
-                                                user.name ?? user.email,
+                                                user.fullname || user.email,
                                             )}
                                         </AvatarFallback>
                                     </Avatar>
                                     <span className="hidden text-sm font-medium sm:block">
-                                        {user.name ?? user.email}
+                                        {user.fullname || user.email}
                                     </span>
                                     <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground" />
                                 </DropdownMenuTrigger>
@@ -83,17 +81,21 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                             <Avatar className="h-8 w-8">
                                                 <AvatarImage
                                                     src={user.avatar}
-                                                    alt={user.name ?? undefined}
+                                                    alt={
+                                                        user.fullname ||
+                                                        undefined
+                                                    }
                                                 />
                                                 <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
                                                     {getInitials(
-                                                        user.name ?? user.email,
+                                                        user.fullname ||
+                                                            user.email,
                                                     )}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="grid flex-1 text-left text-sm leading-tight">
                                                 <span className="truncate font-medium">
-                                                    {user.name ?? '—'}
+                                                    {user.fullname || '—'}
                                                 </span>
                                                 <span className="truncate text-xs text-muted-foreground">
                                                     {user.email}
@@ -123,29 +125,15 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                                 Dashboard
                                             </Link>
                                         </DropdownMenuItem>
-                                        {hasPermission(
-                                            Permission.VerifiedProfessional,
-                                        ) ? (
-                                            <DropdownMenuItem asChild>
-                                                <Link
-                                                    href={professional.patients.index()}
-                                                    className="cursor-pointer"
-                                                >
-                                                    <Stethoscope className="mr-2 h-4 w-4" />
-                                                    Professional
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        ) : (
-                                            <DropdownMenuItem asChild>
-                                                <Link
-                                                    href={professionalApplication.show()}
-                                                    className="cursor-pointer"
-                                                >
-                                                    <IdCard className="mr-2 h-4 w-4" />
-                                                    Professional Application
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        )}
+                                        <DropdownMenuItem asChild>
+                                            <Link
+                                                href={professionalApplication.show()}
+                                                className="cursor-pointer"
+                                            >
+                                                <IdCard className="mr-2 h-4 w-4" />
+                                                Professional Application
+                                            </Link>
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link
                                                 href={editAccount()}

@@ -2,14 +2,23 @@ import type { Permission, Role } from '@/types';
 
 export type User = {
     id: number;
-    name: string | null;
+    username: string | null;
+    first_name: string | null;
+    middle_name: string | null;
+    last_name: string | null;
+    suffix: string | null;
+    fullname: string;
+    dob: string | null;
+    age: number | null;
+    gender: string | null;
+    address: string | null;
+    phone_number: string | null;
     email: string;
     avatar?: string;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
-    medicalInfo: MedicalInfo;
     [key: string]: unknown;
 };
 
@@ -36,50 +45,4 @@ export type TwoFactorSetupData = {
 
 export type TwoFactorSecretKey = {
     secretKey: string;
-};
-
-export type Allergy = {
-    id: number;
-    allergen: string;
-    reaction: string | null;
-    severity: string;
-    verified_at: string | null;
-    verified_by_name: string | null;
-};
-
-export type TransfusionWitness = {
-    user_id: number;
-    name: string | null;
-    witnessed_at: string;
-};
-
-export type EmergencyContact = {
-    id: number;
-    name: string;
-    relationship: string | null;
-    phone_country_code: string | null;
-    phone: string | null;
-    is_primary: boolean;
-};
-
-export type MedicalInfo = {
-    full_name: string;
-    first_name: string;
-    middle_name: string | null;
-    last_name: string;
-    suffix: string | null;
-    date_of_birth: string | null;
-    gender: string | null;
-    blood_type: string | null;
-    phone: string | null;
-    phone_country_code: string | null;
-    address: string | null;
-    religion: string | null;
-    no_blood_transfusion: boolean;
-    transfusion_decision_at: string | null;
-    transfusion_witnesses: TransfusionWitness[];
-    allergies: Allergy[];
-    emergency_contacts: EmergencyContact[];
-    created_at: string | null;
-    updated_at: string | null;
 };

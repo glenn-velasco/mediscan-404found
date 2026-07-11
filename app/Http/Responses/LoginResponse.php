@@ -15,7 +15,7 @@ class LoginResponse implements LoginResponseContract
         return redirect()->intended(
             $user->hasRole(Role::Admin->value)
                 ? route('admin.dashboard')
-                : route('dashboard')
+                : route('professional-application.show')
         );
     }
 }

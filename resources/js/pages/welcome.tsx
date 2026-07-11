@@ -2,8 +2,9 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { ActivitySquare, QrCode, ShieldCheck } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { login, register, dashboard } from '@/routes';
+import { login } from '@/routes';
 import admin from '@/routes/admin';
+import professionalApplication from '@/routes/professional-application';
 
 const features = [
     {
@@ -32,7 +33,7 @@ export default function Welcome() {
     const dashboardHref = auth.user
         ? auth.roles?.includes('admin')
             ? admin.dashboard()
-            : dashboard()
+            : professionalApplication.show()
         : null;
 
     return (
@@ -60,16 +61,9 @@ export default function Welcome() {
                             <Link href={dashboardHref}>Go to Dashboard</Link>
                         </Button>
                     ) : (
-                        <>
-                            <Button asChild size="lg">
-                                <Link href={register()}>
-                                    Create your profile
-                                </Link>
-                            </Button>
-                            <Button asChild size="lg" variant="outline">
-                                <Link href={login()}>Log in</Link>
-                            </Button>
-                        </>
+                        <Button asChild size="lg">
+                            <Link href={login()}>Log in</Link>
+                        </Button>
                     )}
                 </div>
             </section>
