@@ -3,6 +3,7 @@
 namespace App\Services\User;
 
 use App\Actions\Fortify\CreateNewUser;
+use App\Enums\AuditLogType;
 use App\Enums\Role as RoleEnum;
 use App\Exceptions\TooManyAttemptsException;
 use App\Exceptions\UserInvitationLinkInvalidException;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitationNotification;
 use App\Repositories\Eloquent\UserInvitationRepository;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -25,6 +27,7 @@ class InvitationService
     public function __construct(
         private UserInvitationRepository $userInvitationRepository,
         private CreateNewUser $createNewUser,
+        private AuditLogger $auditLogger,
     ) {}
 
     /** @return LengthAwarePaginator<int, array<string, mixed>> */
@@ -51,11 +54,26 @@ class InvitationService
                 $invitation->role->name
             ));
 
+        $this->auditLogger->log(
+            action: 'invitation.resent',
+            type: AuditLogType::Update,
+            actor: Auth::user(),
+            metadata: ['email' => $invitation->email],
+            channel: 'web',
+        );
     }
 
     public function delete(UserInvitation $invitation): void
     {
         $this->userInvitationRepository->delete($invitation);
+
+        $this->auditLogger->log(
+            action: 'invitation.deleted',
+            type: AuditLogType::Delete,
+            actor: Auth::user(),
+            metadata: ['email' => $invitation->email],
+            channel: 'web',
+        );
     }
 
     public function pruneExpired(): int
@@ -88,6 +106,14 @@ class InvitationService
             ->as('InvitationSent')
             ->with([])
             ->send();
+
+        $this->auditLogger->log(
+            action: 'invitation.created',
+            type: AuditLogType::Create,
+            actor: $invitedBy instanceof User ? $invitedBy : null,
+            metadata: ['email' => $email],
+            channel: 'web',
+        );
     }
 
     public function verifyInvitation(string $token): ?UserInvitation
@@ -134,6 +160,14 @@ class InvitationService
         RateLimiter::clear($throttleKey);
 
         event(new Registered($user));
+
+        $this->auditLogger->log(
+            action: 'invitation.accepted',
+            type: AuditLogType::Accepted,
+            actor: $user,
+            subject: $user,
+            channel: 'web',
+        );
 
         return $user;
     }

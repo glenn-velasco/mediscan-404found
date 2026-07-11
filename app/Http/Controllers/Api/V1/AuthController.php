@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\AuditLogType;
 use App\Http\Controllers\Api\Controller;
 use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Services\Audit\AuditLogger;
 use App\Services\User\AccountService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,7 +16,10 @@ use Illuminate\Http\Request;
  */
 class AuthController extends Controller
 {
-    public function __construct(private AccountService $accountService) {}
+    public function __construct(
+        private AccountService $accountService,
+        private AuditLogger $auditLogger,
+    ) {}
 
     /**
      * @unauthenticated
@@ -68,7 +73,16 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
+
+        $this->auditLogger->log(
+            action: 'auth.logout',
+            type: AuditLogType::Authentication,
+            actor: $user,
+            subject: $user,
+            channel: 'api',
+        );
 
         return $this->success(message: 'Logged out.');
     }

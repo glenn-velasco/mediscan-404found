@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AuditLogType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RejectProfessionalApplicationRequest;
 use App\Models\ProfessionalApplication;
+use App\Services\Audit\AuditLogger;
 use App\Services\Kyc\ProfessionalApplicationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +18,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProfessionalApplicationController extends Controller
 {
-    public function __construct(private ProfessionalApplicationService $professionalApplicationService) {}
+    public function __construct(
+        private ProfessionalApplicationService $professionalApplicationService,
+        private AuditLogger $auditLogger,
+    ) {}
 
     public function index(Request $request): Response
     {
@@ -52,6 +57,15 @@ class ProfessionalApplicationController extends Controller
             'coe' => $professionalApplication->coe_path,
             default => abort(404),
         };
+
+        $this->auditLogger->log(
+            action: 'professional_application.file_viewed',
+            type: AuditLogType::View,
+            actor: Auth::user(),
+            subject: $professionalApplication->user,
+            metadata: ['professional_application_id' => $professionalApplication->id, 'file_type' => $type],
+            channel: 'web',
+        );
 
         return Storage::disk('s3')->response($path);
     }

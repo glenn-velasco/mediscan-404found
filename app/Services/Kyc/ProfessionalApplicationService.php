@@ -2,6 +2,7 @@
 
 namespace App\Services\Kyc;
 
+use App\Enums\AuditLogType;
 use App\Enums\IdType;
 use App\Enums\Permission;
 use App\Enums\ProfessionalApplicationStatus;
@@ -13,6 +14,7 @@ use App\Models\ProfessionalApplication;
 use App\Models\Role;
 use App\Models\User;
 use App\Repositories\Eloquent\ProfessionalApplicationRepository;
+use App\Services\Audit\AuditLogger;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -26,7 +28,10 @@ class ProfessionalApplicationService
 
     private const ONE_ACTIVE_PER_USER_INDEX = 'professional_applications_one_active_per_user';
 
-    public function __construct(private ProfessionalApplicationRepository $professionalApplicationRepository) {}
+    public function __construct(
+        private ProfessionalApplicationRepository $professionalApplicationRepository,
+        private AuditLogger $auditLogger,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $filters
@@ -163,6 +168,15 @@ class ProfessionalApplicationService
             ])->save();
         });
 
+        $this->auditLogger->log(
+            action: 'professional_application.approved',
+            type: AuditLogType::Accepted,
+            actor: $admin,
+            subject: $application->user,
+            metadata: ['professional_application_id' => $application->id],
+            channel: 'web',
+        );
+
         $this->broadcastStatusChanged($application);
     }
 
@@ -171,6 +185,9 @@ class ProfessionalApplicationService
         if ($application->isTerminal()) {
             throw new ProfessionalApplicationAlreadyReviewedException;
         }
+
+        $applicationId = $application->id;
+        $applicant = $application->user;
 
         DB::transaction(function () use ($application, $admin, $reason) {
             $application->forceFill([
@@ -182,6 +199,15 @@ class ProfessionalApplicationService
 
             $application->delete();
         });
+
+        $this->auditLogger->log(
+            action: 'professional_application.rejected',
+            type: AuditLogType::Denied,
+            actor: $admin,
+            subject: $applicant,
+            metadata: ['professional_application_id' => $applicationId, 'reason' => $reason],
+            channel: 'web',
+        );
 
         $this->broadcastStatusChanged($application);
     }
