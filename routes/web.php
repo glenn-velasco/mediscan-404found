@@ -6,13 +6,9 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\ProfessionalApplicationController as AdminProfessionalApplicationController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\AllergyController;
 use App\Http\Controllers\Auth\AcceptInvitationController;
 use App\Http\Controllers\Auth\VerifyApiEmailController;
 use App\Http\Controllers\BroadcastingDocsController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\EmergencyContactController;
-use App\Http\Controllers\Professional\PatientController;
 use App\Http\Controllers\ProfessionalApplicationController;
 use App\Http\Middleware\CheckUserActive;
 use Illuminate\Support\Facades\Route;
@@ -40,22 +36,6 @@ Route::get('/verify-email/{id}/{hash}', VerifyApiEmailController::class)
     ->middleware(['signed', 'throttle:6,1'])
     ->name('email.verify');
 
-// Dashboard and its sub-resources are accessible while unverified — a user
-// who just changed their email must be able to return here before re-verifying.
-Route::middleware(['auth', CheckUserActive::class])->group(function () {
-    Route::get('/dashboard', DashboardController::class)->name('dashboard');
-    Route::patch('/dashboard', [DashboardController::class, 'update'])->name('dashboard.update');
-    Route::patch('/transfusion-consent', [DashboardController::class, 'updateTransfusionConsent'])->name('transfusion-consent.update');
-
-    Route::post('/allergies', [AllergyController::class, 'store'])->name('allergies.store');
-    Route::patch('/allergies/{allergy}', [AllergyController::class, 'update'])->name('allergies.update');
-    Route::delete('/allergies/{allergy}', [AllergyController::class, 'destroy'])->name('allergies.destroy');
-
-    Route::post('/emergency-contacts', [EmergencyContactController::class, 'store'])->name('emergency-contacts.store');
-    Route::patch('/emergency-contacts/{emergencyContact}', [EmergencyContactController::class, 'update'])->name('emergency-contacts.update');
-    Route::delete('/emergency-contacts/{emergencyContact}', [EmergencyContactController::class, 'destroy'])->name('emergency-contacts.destroy');
-});
-
 // Uploading a government ID + biometric selfie is sensitive enough to also
 // require a verified email, unlike the dashboard group above.
 Route::middleware(['auth', 'verified', CheckUserActive::class])
@@ -64,14 +44,6 @@ Route::middleware(['auth', 'verified', CheckUserActive::class])
         Route::get('/', [ProfessionalApplicationController::class, 'show'])->name('show');
         Route::get('/apply', [ProfessionalApplicationController::class, 'create'])->name('create');
         Route::post('/', [ProfessionalApplicationController::class, 'store'])->name('store');
-    });
-
-Route::prefix('professional')->name('professional.')
-    ->middleware(['auth', 'verified', CheckUserActive::class, PermissionMiddleware::using(Permission::VerifiedProfessional)])
-    ->group(function () {
-        Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
-        Route::post('/allergies/{allergy}/verify', [PatientController::class, 'verifyAllergy'])->name('allergies.verify');
-        Route::post('/patients/{patient}/transfusion-witness', [PatientController::class, 'witnessTransfusion'])->name('patients.transfusion-witness');
     });
 
 Route::prefix('admin')->name('admin.')
