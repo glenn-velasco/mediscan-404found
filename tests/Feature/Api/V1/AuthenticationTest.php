@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\Gender;
 use App\Enums\Role;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
@@ -9,14 +8,19 @@ use Laravel\Sanctum\Sanctum;
 beforeEach(function () {
     $this->validPayload = function (array $overrides = []): array {
         return array_merge([
+            'username' => 'juan.delacruz',
+            'first_name' => 'Juan',
+            'middle_name' => null,
+            'last_name' => 'dela Cruz',
+            'suffix' => null,
+            'dob' => '1990-01-15',
+            'gender' => 'male',
+            'address' => null,
+            'phone_number' => null,
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
             'device_name' => 'phpunit-test',
-            'first_name' => 'Juan',
-            'last_name' => 'dela Cruz',
-            'date_of_birth' => '1990-06-15',
-            'gender' => 'male',
         ], $overrides);
     };
 });
@@ -117,6 +121,95 @@ it('registration token name matches the submitted device_name', function () {
     expect($user->tokens()->first()->name)->toBe('my-iphone');
 });
 
+it('registration rejects a duplicate username', function () {
+    $this->seed(RoleAndPermissionSeeder::class);
+    User::factory()->create(['username' => 'juan.delacruz']);
+
+    $this->postJson('/api/v1/register', ($this->validPayload)())
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('username');
+});
+
+it('registration rejects an invalid gender', function () {
+    $this->seed(RoleAndPermissionSeeder::class);
+
+    $this->postJson('/api/v1/register', ($this->validPayload)(['gender' => 'other']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('gender');
+});
+
+it('registration rejects a future dob', function () {
+    $this->seed(RoleAndPermissionSeeder::class);
+
+    $this->postJson('/api/v1/register', ($this->validPayload)(['dob' => now()->addDay()->toDateString()]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('dob');
+});
+
+it('registration rejects an oversized suffix or address', function () {
+    $this->seed(RoleAndPermissionSeeder::class);
+
+    $this->postJson('/api/v1/register', ($this->validPayload)(['suffix' => str_repeat('a', 51)]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('suffix');
+
+    $this->postJson('/api/v1/register', ($this->validPayload)(['address' => str_repeat('a', 1001)]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('address');
+});
+
+it('registration rejects a malformed phone number', function () {
+    $this->seed(RoleAndPermissionSeeder::class);
+
+    $this->postJson('/api/v1/register', ($this->validPayload)(['phone_number' => 'not-a-phone-number']))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('phone_number');
+});
+
+it('register response and me endpoint expose the full user resource shape', function () {
+    $this->seed(RoleAndPermissionSeeder::class);
+
+    $response = $this->postJson('/api/v1/register', ($this->validPayload)([
+        'middle_name' => 'Santos',
+        'suffix' => 'Jr.',
+        'address' => '123 Main St',
+        'phone_number' => '+639171234567',
+    ]));
+
+    $response->assertCreated()
+        ->assertJson(['data' => [
+            'user' => [
+                'username' => 'juan.delacruz',
+                'first_name' => 'Juan',
+                'middle_name' => 'Santos',
+                'last_name' => 'dela Cruz',
+                'suffix' => 'Jr.',
+                'fullname' => 'Juan Santos dela Cruz Jr.',
+                'dob' => '1990-01-15',
+                'gender' => 'male',
+                'address' => '123 Main St',
+                'phone_number' => '+639171234567',
+                'email' => 'test@example.com',
+                'is_active' => true,
+            ],
+        ]]);
+
+    $user = User::where('email', 'test@example.com')->first();
+    Sanctum::actingAs($user, ['*']);
+
+    $this->getJson('/api/v1/me')
+        ->assertOk()
+        ->assertJson(['data' => ['user' => [
+            'fullname' => 'Juan Santos dela Cruz Jr.',
+            'age' => $user->age,
+            'dob' => '1990-01-15',
+            'gender' => 'male',
+            'address' => '123 Main St',
+            'phone_number' => '+639171234567',
+            'is_active' => true,
+        ]]]);
+});
+
 it('authenticated users can fetch their profile via api', function () {
     $user = User::factory()->create();
     Sanctum::actingAs($user, ['*']);
@@ -124,35 +217,6 @@ it('authenticated users can fetch their profile via api', function () {
     $this->getJson('/api/v1/me')
         ->assertOk()
         ->assertJson(['data' => ['user' => ['email' => $user->email]]]);
-});
-
-it('me includes medical information and allergies when present', function () {
-    $user = User::factory()->create();
-    $user->medicalInformation()->create([
-        'first_name' => 'Ana',
-        'last_name' => 'Reyes',
-        'date_of_birth' => '1992-04-10',
-        'gender' => Gender::Female,
-        'no_blood_transfusion' => false,
-    ]);
-    $user->medicalInformation->allergies()->create([
-        'allergen' => 'Peanuts',
-        'reaction' => 'Hives',
-        'severity' => 'severe',
-    ]);
-
-    Sanctum::actingAs($user, ['*']);
-
-    $this->getJson('/api/v1/me')
-        ->assertOk()
-        ->assertJson(['data' => ['user' => [
-            'medical_information' => [
-                'full_name' => 'Ana Reyes',
-                'allergies' => [
-                    ['allergen' => 'Peanuts', 'reaction' => 'Hives', 'severity' => 'severe'],
-                ],
-            ],
-        ]]]);
 });
 
 it('unauthenticated requests to me are rejected', function () {

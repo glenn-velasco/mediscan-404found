@@ -64,6 +64,27 @@ it('users can logout', function () {
     $this->assertGuest();
 });
 
+it('deactivated user cannot login via the web login screen', function () {
+    // Fortify's default authentication pipeline only checks credentials, so a
+    // deactivated user's login form submission succeeds momentarily; it's the
+    // CheckUserActive middleware on the very next protected-route request that
+    // logs them back out. This mirrors the existing "kicked out on protected
+    // routes" coverage, but drives it through the real login form instead of
+    // actingAs(), matching the API-level rejection already covered for /api/v1/login.
+    $user = User::factory()->create(['deactivated_at' => now()]);
+
+    $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->assertRedirect(route('professional-application.show'));
+
+    $this->get(route('professional-application.show'))
+        ->assertRedirect(route('login'))
+        ->assertSessionHasErrors('email');
+
+    $this->assertGuest();
+});
+
 it('users are rate limited', function () {
     $user = User::factory()->create();
 

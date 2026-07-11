@@ -127,3 +127,33 @@ it('a user cannot see another users application via the status page transform', 
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('application', null));
 });
+
+it('the owner sees their application status reflected correctly on the status page', function (string $status) {
+    $owner = User::factory()->create();
+
+    $application = $owner->professionalApplications()->create([
+        'id_type' => 'ph_prc',
+        'issuing_country' => 'PH',
+        'id_photo_path' => 'demo/id.jpg',
+        'selfie_path' => 'demo/selfie.jpg',
+        'coe_path' => 'demo/coe.pdf',
+        'status' => $status,
+        'rejection_reason' => $status === 'denied' ? 'Blurry ID photo.' : null,
+        'deleted_at' => $status === 'denied' ? now() : null,
+    ]);
+
+    $this->actingAs($owner)
+        ->get(route('professional-application.show'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('professional-application/show')
+            ->where('application.id', $application->id)
+            ->where('application.status', $status)
+        );
+})->with([
+    'processing',
+    'pending_review',
+    'approved',
+    'denied',
+    'auto_rejected',
+]);

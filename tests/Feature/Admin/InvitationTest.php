@@ -1,12 +1,15 @@
 <?php
 
 use App\Enums\Role;
+use App\Models\Role as RoleModel;
 use App\Models\User;
 use App\Models\UserInvitation;
 use App\Notifications\UserInvitationNotification;
+use App\Services\Admin\DashboardService;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Broadcasting\AnonymousEvent;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -23,38 +26,54 @@ beforeEach(function () {
 
     $this->invitePayload = fn (array $overrides = []): array => array_merge([
         'email' => 'invite@example.com',
-        'role' => Role::User->value,
         'expires_in_days' => 3,
     ], $overrides);
 
     $this->acceptPayload = fn (array $overrides = []): array => array_merge([
+        'username' => 'juan.delacruz',
+        'first_name' => 'Juan',
+        'middle_name' => null,
+        'last_name' => 'dela Cruz',
+        'suffix' => null,
+        'dob' => '1990-01-15',
+        'gender' => 'male',
+        'address' => null,
+        'phone_number' => null,
         'password' => 'password',
         'password_confirmation' => 'password',
-        'first_name' => 'Juan',
-        'last_name' => 'dela Cruz',
-        'date_of_birth' => '1990-06-15',
-        'gender' => 'male',
     ], $overrides);
 });
 
-it('admin can view invitation form', function () {
-    $this->actingAs(($this->admin)())
-        ->get(route('admin.invitations.create'))
+it('admin can list invitations, showing the fullname of who invited them', function () {
+    $admin = ($this->admin)();
+
+    UserInvitation::create([
+        'email' => 'listed@example.com',
+        'token' => Str::random(64),
+        'invited_by' => $admin->id,
+        'expires_at' => now()->addDays(3),
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.invitations.index'))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->component('admin/invitations/create'));
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('admin/invitations/index')
+            ->where('invitations.data.0.invited_by', $admin->fullname)
+        );
 });
 
-it('non admin cannot view invitation form', function () {
+it('non admin cannot send invitation', function () {
     $user = User::factory()->create();
     $user->assignRole(Role::User->value);
 
     $this->actingAs($user)
-        ->get(route('admin.invitations.create'))
+        ->post(route('admin.invitations.store'), ($this->invitePayload)())
         ->assertForbidden();
 });
 
-it('guest is redirected from invitation form', function () {
-    $this->get(route('admin.invitations.create'))
+it('guest is redirected when sending invitation', function () {
+    $this->post(route('admin.invitations.store'), ($this->invitePayload)())
         ->assertRedirect(route('login'));
 });
 
@@ -66,6 +85,20 @@ it('admin can send invitation', function () {
         ->assertRedirect(route('admin.users.index'));
 
     $this->assertDatabaseHas('user_invitations', ['email' => 'invite@example.com']);
+
+    $invitation = UserInvitation::where('email', 'invite@example.com')->first();
+    $this->assertSame(Role::Admin->value, $invitation->role->name);
+});
+
+it('invitations are always sent as admin regardless of any role field posted', function () {
+    Notification::fake();
+
+    $this->actingAs(($this->admin)())
+        ->post(route('admin.invitations.store'), ($this->invitePayload)(['role' => Role::User->value]))
+        ->assertRedirect(route('admin.users.index'));
+
+    $invitation = UserInvitation::where('email', 'invite@example.com')->first();
+    $this->assertSame(Role::Admin->value, $invitation->role->name);
 });
 
 it('invitation email is sent', function () {
@@ -196,7 +229,7 @@ it('guest can accept invitation and create account', function () {
     ]);
 
     $this->post(route('invitation.store', $token), ($this->acceptPayload)())
-        ->assertRedirect(route('dashboard'));
+        ->assertRedirect(route('professional-application.show'));
 
     $this->assertDatabaseHas('users', ['email' => 'invited@example.com']);
     $this->assertAuthenticated();
@@ -221,17 +254,18 @@ it('broadcasts UserRegistered on the admin dashboard channel when an invitation 
         ->andReturn($event);
 
     $this->post(route('invitation.store', $token), ($this->acceptPayload)())
-        ->assertRedirect(route('dashboard'));
+        ->assertRedirect(route('professional-application.show'));
 
     expect($event->broadcastAs())->toBe('UserRegistered');
     expect($event->broadcastWith())->toHaveKey('stats');
 });
 
-it('accepted user gets user role', function () {
+it('accepted user gets admin role', function () {
     $token = Str::random(64);
 
     UserInvitation::create([
         'email' => 'newuser@example.com',
+        'role_id' => RoleModel::where('name', Role::Admin->value)->value('id'),
         'token' => $token,
         'invited_by' => ($this->admin)()->id,
         'expires_at' => now()->addDays(3),
@@ -241,7 +275,7 @@ it('accepted user gets user role', function () {
 
     $user = User::where('email', 'newuser@example.com')->first();
     $this->assertNotNull($user);
-    $this->assertTrue($user->hasRole(Role::User->value));
+    $this->assertTrue($user->hasRole(Role::Admin->value));
 });
 
 it('invitation is marked accepted after use', function () {
@@ -309,4 +343,135 @@ it('cannot accept invitation with mismatched passwords', function () {
     ]))->assertSessionHasErrors('password');
 
     $this->assertGuest();
+});
+
+it('cannot accept invitation with a duplicate username', function () {
+    User::factory()->create(['username' => 'juan.delacruz']);
+
+    $token = Str::random(64);
+    UserInvitation::create([
+        'email' => 'invited@example.com',
+        'token' => $token,
+        'invited_by' => ($this->admin)()->id,
+        'expires_at' => now()->addDays(3),
+    ]);
+
+    $this->post(route('invitation.store', $token), ($this->acceptPayload)())
+        ->assertSessionHasErrors('username');
+
+    $this->assertGuest();
+});
+
+it('cannot accept invitation with an invalid gender', function () {
+    $token = Str::random(64);
+    UserInvitation::create([
+        'email' => 'invited@example.com',
+        'token' => $token,
+        'invited_by' => ($this->admin)()->id,
+        'expires_at' => now()->addDays(3),
+    ]);
+
+    $this->post(route('invitation.store', $token), ($this->acceptPayload)(['gender' => 'other']))
+        ->assertSessionHasErrors('gender');
+
+    $this->assertGuest();
+});
+
+it('cannot accept invitation with a future dob', function () {
+    $token = Str::random(64);
+    UserInvitation::create([
+        'email' => 'invited@example.com',
+        'token' => $token,
+        'invited_by' => ($this->admin)()->id,
+        'expires_at' => now()->addDays(3),
+    ]);
+
+    $this->post(route('invitation.store', $token), ($this->acceptPayload)(['dob' => now()->addDay()->toDateString()]))
+        ->assertSessionHasErrors('dob');
+
+    $this->assertGuest();
+});
+
+it('cannot accept invitation with an oversized suffix or address', function () {
+    $token = Str::random(64);
+    UserInvitation::create([
+        'email' => 'invited@example.com',
+        'token' => $token,
+        'invited_by' => ($this->admin)()->id,
+        'expires_at' => now()->addDays(3),
+    ]);
+
+    $this->post(route('invitation.store', $token), ($this->acceptPayload)(['suffix' => str_repeat('a', 51)]))
+        ->assertSessionHasErrors('suffix');
+
+    $this->assertGuest();
+
+    $this->post(route('invitation.store', $token), ($this->acceptPayload)(['address' => str_repeat('a', 1001)]))
+        ->assertSessionHasErrors('address');
+
+    $this->assertGuest();
+});
+
+it('cannot accept invitation with a malformed phone number', function () {
+    $token = Str::random(64);
+    UserInvitation::create([
+        'email' => 'invited@example.com',
+        'token' => $token,
+        'invited_by' => ($this->admin)()->id,
+        'expires_at' => now()->addDays(3),
+    ]);
+
+    $this->post(route('invitation.store', $token), ($this->acceptPayload)(['phone_number' => 'not-a-phone-number']))
+        ->assertSessionHasErrors('phone_number');
+
+    $this->assertGuest();
+});
+
+it('accepts invitation with every optional field filled and persists them', function () {
+    $token = Str::random(64);
+    UserInvitation::create([
+        'email' => 'invited@example.com',
+        'token' => $token,
+        'invited_by' => ($this->admin)()->id,
+        'expires_at' => now()->addDays(3),
+    ]);
+
+    $this->post(route('invitation.store', $token), ($this->acceptPayload)([
+        'middle_name' => 'Santos',
+        'suffix' => 'Jr.',
+        'address' => '123 Main St',
+        'phone_number' => '+639171234567',
+    ]))->assertRedirect(route('professional-application.show'));
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'invited@example.com',
+        'username' => 'juan.delacruz',
+        'first_name' => 'Juan',
+        'middle_name' => 'Santos',
+        'last_name' => 'dela Cruz',
+        'suffix' => 'Jr.',
+        'address' => '123 Main St',
+        'phone_number' => '+639171234567',
+    ]);
+});
+
+it('accepting an invitation flushes the admin dashboard stats cache', function () {
+    // The BroadcastUserRegistered listener flushes the cache and then
+    // immediately recomputes it (fresh) to build the broadcast payload, so
+    // the key ends up repopulated rather than empty. The invariant to check
+    // is that the stale sentinel is gone, replaced by real, current stats.
+    Cache::put(DashboardService::STATS_CACHE_KEY, ['stale' => true], now()->addMonth());
+
+    $token = Str::random(64);
+    UserInvitation::create([
+        'email' => 'invited@example.com',
+        'token' => $token,
+        'invited_by' => ($this->admin)()->id,
+        'expires_at' => now()->addDays(3),
+    ]);
+
+    $this->post(route('invitation.store', $token), ($this->acceptPayload)());
+
+    expect(Cache::get(DashboardService::STATS_CACHE_KEY))->not->toBe(['stale' => true])
+        ->and(Cache::get(DashboardService::STATS_CACHE_KEY))->toHaveKey('total');
 });

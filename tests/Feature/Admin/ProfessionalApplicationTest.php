@@ -47,13 +47,21 @@ it('non admin cannot view the professional applications list', function () {
 
 it('admin can list and filter applications by status', function () {
     $admin = ($this->admin)();
-    $applicant = User::factory()->create();
+    $applicant = User::factory()->create([
+        'first_name' => 'Juan',
+        'middle_name' => 'Santos',
+        'last_name' => 'Delacruz',
+        'suffix' => null,
+    ]);
     ($this->pendingApplication)($applicant);
 
     $this->actingAs($admin)
         ->get(route('admin.professional-applications.index', ['status' => 'pending_review']))
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('admin/professional-applications/index'));
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/professional-applications/index')
+            ->where('applications.data.0.applicant.name', 'Juan Santos Delacruz')
+        );
 });
 
 it('admin can stream each evidence file for an application', function () {
