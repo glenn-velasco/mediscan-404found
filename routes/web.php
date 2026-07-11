@@ -57,10 +57,9 @@ Route::prefix('admin')->name('admin.')
         Route::patch('users/{user}/activation', [UserController::class, 'toggleActivation'])->name('users.activation');
 
         Route::get('invitations', [InvitationController::class, 'index'])->name('invitations.index');
-        Route::get('invitations/create', [InvitationController::class, 'create'])
+        Route::post('invitations', [InvitationController::class, 'store'])
             ->middleware([PermissionMiddleware::using(Permission::InviteUserAsAdmin)])
-            ->name('invitations.create');
-        Route::post('invitations', [InvitationController::class, 'store'])->name('invitations.store');
+            ->name('invitations.store');
         Route::post('invitations/prune', [InvitationController::class, 'prune'])->name('invitations.prune');
         Route::post('invitations/{invitation}/resend', [InvitationController::class, 'resend'])->name('invitations.resend');
         Route::delete('invitations/{invitation}', [InvitationController::class, 'destroy'])->name('invitations.destroy');

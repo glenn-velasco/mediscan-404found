@@ -35,13 +35,12 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/hooks/use-auth';
 import admin from '@/routes/admin';
-import { Permission, Role, roleOptions } from '@/types';
+import { Permission } from '@/types';
 import type { Paginated } from '@/types';
 
 interface InvitationListItem {
     id: number;
     email: string;
-    role: Role | null;
     status: 'pending' | 'accepted' | 'expired';
     invited_by: string | null;
     expires_at: string;
@@ -80,7 +79,6 @@ export default function Index({ invitations }: IndexProps) {
     const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
     const inviteForm = useForm({
         email: '',
-        role: Role.User as Role,
         expires_in_days: 3,
     });
 
@@ -121,7 +119,6 @@ export default function Index({ invitations }: IndexProps) {
                         <thead className="bg-muted/50 text-left">
                             <tr>
                                 <th className="px-4 py-3 font-medium">Email</th>
-                                <th className="px-4 py-3 font-medium">Role</th>
                                 <th className="px-4 py-3 font-medium">
                                     Status
                                 </th>
@@ -141,9 +138,6 @@ export default function Index({ invitations }: IndexProps) {
                                     className="border-t border-sidebar-border/70 dark:border-sidebar-border"
                                 >
                                     <td className="px-4 py-3">{inv.email}</td>
-                                    <td className="px-4 py-3 capitalize">
-                                        {inv.role ?? '—'}
-                                    </td>
                                     <td className="px-4 py-3">
                                         <Badge
                                             variant={statusVariant[inv.status]}
@@ -183,7 +177,7 @@ export default function Index({ invitations }: IndexProps) {
                             {invitations.data.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={6}
+                                        colSpan={5}
                                         className="px-4 py-6 text-center text-muted-foreground"
                                     >
                                         No invitations found.
@@ -263,30 +257,6 @@ export default function Index({ invitations }: IndexProps) {
                                     required
                                 />
                                 <InputError message={inviteForm.errors.email} />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="invite-role">Role</Label>
-                                <Select
-                                    value={inviteForm.data.role}
-                                    onValueChange={(v) =>
-                                        inviteForm.setData('role', v as Role)
-                                    }
-                                >
-                                    <SelectTrigger id="invite-role">
-                                        <SelectValue placeholder="Select role" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {roleOptions.map((opt) => (
-                                            <SelectItem
-                                                key={opt.value}
-                                                value={opt.value}
-                                            >
-                                                {opt.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <InputError message={inviteForm.errors.role} />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="invite-expires">

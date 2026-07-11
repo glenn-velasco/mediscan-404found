@@ -3,6 +3,7 @@
 namespace App\Services\User;
 
 use App\Actions\Fortify\CreateNewUser;
+use App\Enums\Role as RoleEnum;
 use App\Exceptions\TooManyAttemptsException;
 use App\Exceptions\UserInvitationLinkInvalidException;
 use App\Models\Role;
@@ -23,7 +24,7 @@ class InvitationService
 {
     public function __construct(
         private UserInvitationRepository $userInvitationRepository,
-        private CreateNewUser $createNewUser
+        private CreateNewUser $createNewUser,
     ) {}
 
     /** @return LengthAwarePaginator<int, array<string, mixed>> */
@@ -62,9 +63,9 @@ class InvitationService
         return $this->userInvitationRepository->pruneExpired();
     }
 
-    public function invite(string $email, string $role, int $expiresInDays, Authenticatable $invitedBy): void
+    public function invite(string $email, int $expiresInDays, Authenticatable $invitedBy): void
     {
-        $roleId = Role::where('name', $role)->value('id');
+        $roleId = Role::where('name', RoleEnum::Admin->value)->value('id');
         $token = Str::random(64);
         $expiresAt = now()->addDays($expiresInDays);
 
@@ -80,14 +81,13 @@ class InvitationService
             ->notify(new UserInvitationNotification(
                 route('invitation.accept', ['token' => $token]),
                 $expiresAt,
-                $role
+                RoleEnum::Admin->value
             ));
 
         Broadcast::private('admin-dashboard')
             ->as('InvitationSent')
             ->with([])
             ->send();
-
     }
 
     public function verifyInvitation(string $token): ?UserInvitation

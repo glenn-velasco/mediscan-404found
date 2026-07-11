@@ -2,11 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\Role;
 use App\Models\UserInvitation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Enum;
 
 class InviteUserRequest extends FormRequest
 {
@@ -37,7 +35,6 @@ class InviteUserRequest extends FormRequest
                     }
                 },
             ],
-            'role' => ['required', 'string', new Enum(Role::class)],
             'expires_in_days' => ['required', 'integer', Rule::in([1, 3, 7, 14, 30])],
         ];
     }

@@ -22,11 +22,6 @@ class InvitationController extends Controller
         return Inertia::render('admin/invitations/index', ['invitations' => $invitations]);
     }
 
-    public function create(): Response
-    {
-        return Inertia::render('admin/invitations/create');
-    }
-
     public function resend(UserInvitation $invitation): RedirectResponse
     {
         $this->userInvitationService->resend($invitation);
@@ -59,9 +54,9 @@ class InvitationController extends Controller
 
     public function store(InviteUserRequest $request): RedirectResponse
     {
-        ['email' => $email, 'role' => $role, 'expires_in_days' => $days] = $request->validated();
+        ['email' => $email, 'expires_in_days' => $days] = $request->validated();
 
-        $this->userInvitationService->invite($email, $role, $days, Auth::user());
+        $this->userInvitationService->invite($email, $days, Auth::user());
 
         Inertia::flash('toast', [
             'type' => 'success',
