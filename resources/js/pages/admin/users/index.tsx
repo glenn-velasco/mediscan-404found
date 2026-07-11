@@ -18,7 +18,9 @@ import type { Paginated, Role } from '@/types';
 
 interface UserListItem {
     id: number;
-    name: string | null;
+    username: string | null;
+    fullname: string;
+    age: number | null;
     email: string;
     role: Role | null;
     is_active: boolean;
@@ -63,7 +65,7 @@ export default function Index({ users, filters }: IndexProps) {
                         <Input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Search by name or email…"
+                            placeholder="Search by name, username, or email…"
                             className="w-64"
                         />
                         <Select value={role} onValueChange={setRole}>
@@ -102,6 +104,9 @@ export default function Index({ users, filters }: IndexProps) {
                         <thead className="bg-muted/50 text-left">
                             <tr>
                                 <th className="px-4 py-3 font-medium">Name</th>
+                                <th className="px-4 py-3 font-medium">
+                                    Username
+                                </th>
                                 <th className="px-4 py-3 font-medium">Email</th>
                                 <th className="px-4 py-3 font-medium">Role</th>
                                 <th className="px-4 py-3 font-medium">
@@ -117,7 +122,10 @@ export default function Index({ users, filters }: IndexProps) {
                                     className="border-t border-sidebar-border/70 dark:border-sidebar-border"
                                 >
                                     <td className="px-4 py-3">
-                                        {user.name ?? '—'}
+                                        {user.fullname || '—'}
+                                    </td>
+                                    <td className="px-4 py-3 text-muted-foreground">
+                                        {user.username ?? '—'}
                                     </td>
                                     <td className="px-4 py-3 text-muted-foreground">
                                         {user.email}
@@ -151,7 +159,7 @@ export default function Index({ users, filters }: IndexProps) {
                             {users.data.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan={5}
+                                        colSpan={6}
                                         className="px-4 py-6 text-center text-muted-foreground"
                                     >
                                         No users found.

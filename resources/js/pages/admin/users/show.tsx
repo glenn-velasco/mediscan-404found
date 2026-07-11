@@ -15,8 +15,9 @@ import { roleOptions } from '@/types';
 
 interface UserDetail {
     id: number;
-    name: string;
-    full_name: string | null;
+    username: string | null;
+    fullname: string;
+    age: number | null;
     email: string;
     role: string | null;
     is_active: boolean;
@@ -46,16 +47,24 @@ export default function UserShow({ user }: Props) {
 
     return (
         <>
-            <Head title={user.name} />
+            <Head title={user.fullname} />
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
                 <Card>
                     <CardContent className="divide-y p-0">
                         <div className="flex items-center justify-between px-6 py-4">
                             <div className="space-y-1">
-                                <p className="font-medium">{user.name}</p>
+                                <p className="font-medium">{user.fullname}</p>
+                                <p className="text-sm text-muted-foreground">
+                                    @{user.username ?? '—'}
+                                </p>
                                 <p className="text-sm text-muted-foreground">
                                     {user.email}
                                 </p>
+                                {user.age !== null && (
+                                    <p className="text-sm text-muted-foreground">
+                                        {user.age} years old
+                                    </p>
+                                )}
                                 {user.created_at && (
                                     <p className="text-sm text-muted-foreground">
                                         Joined {user.created_at}
@@ -126,7 +135,7 @@ UserShow.layout = ({ user }: Props) => ({
         { title: 'Dashboard', href: admin.dashboard() },
         { title: 'Users', href: admin.users.index() },
         {
-            title: user.full_name ?? user.email,
+            title: user.fullname,
             href: admin.users.show(user.id),
         },
     ],

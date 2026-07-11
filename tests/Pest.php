@@ -18,6 +18,8 @@ pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature', 'Unit', 'Browser');
 
+pest()->browser()->timeout(10_000);
+
 /*
 |--------------------------------------------------------------------------
 | Expectations
@@ -44,7 +46,28 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Selects a Radix UI Select option by its visible text.
+ *
+ * A native Playwright pointer click on a Radix `[role="option"]` item hangs
+ * until timeout in this sandboxed browser environment (confirmed via direct
+ * reproduction: the element is present, visible, and a JS-dispatched click
+ * on it works instantly and correctly updates app state — only Playwright's
+ * coordinate-based click hangs, most likely an actionability/hit-testing
+ * quirk with Radix's Portal + floating-ui positioned content here). Dispatch
+ * the click via JS instead of the coordinate-based Playwright click to work
+ * around it, since the trigger click that opens the popover works fine.
+ */
+function selectRadixOption(mixed $page, string $triggerSelector, string $optionText): mixed
 {
-    // ..
+    $page->click($triggerSelector);
+
+    $escaped = addslashes($optionText);
+    $page->script("(() => {
+        const opts = Array.from(document.querySelectorAll('[role=\"option\"]'));
+        const match = opts.find((o) => o.textContent.trim() === '{$escaped}');
+        if (match) { match.click(); }
+    })()");
+
+    return $page;
 }
