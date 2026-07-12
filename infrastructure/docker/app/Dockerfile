@@ -56,7 +56,7 @@ RUN install-php-extensions pdo_pgsql pgsql redis pcntl sockets gd intl zip bcmat
 
 RUN groupadd -g 1000 appuser && useradd -u 1000 -g appuser -m -s /usr/sbin/nologin appuser
 
-ENV HOME=/home/appuser
+ENV HOME=/home/appuser XDG_CONFIG_HOME=/home/appuser/.config
 
 COPY --from=build --chown=appuser:appuser /app/vendor ./vendor
 COPY --from=build --chown=appuser:appuser /app/public/build ./public/build
