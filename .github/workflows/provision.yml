@@ -37,18 +37,15 @@ jobs:
         # environments), your personal key for manual access (root login
         # gets disabled and the deploy key's private half only lives in
         # GitHub Secrets), and a cert/DNS covering all four app/cdn hostnames.
+        id: vars
         run: |
-          jq -n \
-            --arg deploy_key "${{ vars.DEPLOY_SSH_PUBLIC_KEY }}" \
-            --arg admin_key "${{ vars.ADMIN_SSH_PUBLIC_KEY }}" \
-            --arg cf_token "${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            '{
-              deploy_ssh_public_keys: [$deploy_key],
-              admin_ssh_public_keys: [$admin_key],
-              cloudflare_api_token: $cf_token,
-              tls_domains: ["app.mediscan.cloud","staging.app.mediscan.cloud","cdn.mediscan.cloud","cdn.staging.app.mediscan.cloud"],
-              deploy_user_sudo: true
-            }' > "$RUNNER_TEMP/extra-vars.json"
+          # Store SSH keys as proper JSON arrays
+          deploy_keys=$(jq -cn --arg key "${{ vars.DEPLOY_SSH_PUBLIC_KEY }}" '[$key]')
+          admin_keys=$(jq -cn --arg key "${{ vars.ADMIN_SSH_PUBLIC_KEY }}" '[$key]')
+
+          echo "deploy_ssh_public_keys=$deploy_keys" >> "$GITHUB_OUTPUT"
+          echo "admin_ssh_public_keys=$admin_keys" >> "$GITHUB_OUTPUT"
+          echo 'tls_domains=["app.mediscan.cloud","staging.app.mediscan.cloud","cdn.mediscan.cloud","cdn.staging.app.mediscan.cloud"]' >> "$GITHUB_OUTPUT"
 
       - name: Load bootstrap SSH key
         uses: webfactory/ssh-agent@v0.9.0
@@ -78,14 +75,14 @@ jobs:
           skip_args=()
           [ -n "$skip_tags" ] && skip_args=(--skip-tags "$skip_tags")
 
-          vars_file="$RUNNER_TEMP/extra-vars.json"
-          echo "Extra vars file: $vars_file"
-          cat "$vars_file"
-
           ansible-playbook playbook.yml \
             -i "${{ inputs.host }}," \
             -u root \
-            -e "@$vars_file" \
+            -e 'deploy_ssh_public_keys=${{ steps.vars.outputs.deploy_ssh_public_keys }}' \
+            -e 'admin_ssh_public_keys=${{ steps.vars.outputs.admin_ssh_public_keys }}' \
+            -e "cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -e 'tls_domains=${{ steps.vars.outputs.tls_domains }}' \
+            -e "deploy_user_sudo=true" \
             "${skip_args[@]}"
 
       - name: Configure Cloudflare zone SSL settings
