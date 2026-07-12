@@ -41,4 +41,8 @@ return [
         'timeout' => env('FACE_MATCH_TIMEOUT', 15),
     ],
 
+    'google' => [
+        'analytics_id' => env('GOOGLE_ANALYTICS_ID'),
+    ],
+
 ];

@@ -154,6 +154,7 @@ jobs:
           RUSTFS_ACCESS_KEY=${{ secrets.RUSTFS_ACCESS_KEY }}
           RUSTFS_SECRET_KEY=${{ secrets.RUSTFS_SECRET_KEY }}
           GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          GOOGLE_ANALYTICS_ID=${{ vars.GOOGLE_ANALYTICS_ID }}
           EOF
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cat > $REMOTE_DIR/.env" < /tmp/deploy.env
           rm -f /tmp/deploy.env

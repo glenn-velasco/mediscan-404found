@@ -10,12 +10,23 @@ use App\Http\Controllers\Auth\AcceptInvitationController;
 use App\Http\Controllers\Auth\VerifyApiEmailController;
 use App\Http\Controllers\BroadcastingDocsController;
 use App\Http\Controllers\ProfessionalApplicationController;
+use App\Http\Controllers\SeoController;
 use App\Http\Middleware\CheckUserActive;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::inertia('/', 'welcome', [
+    'seo' => [
+        'title' => 'Your medical history, one scan away',
+        'description' => 'Your complete medical profile behind a QR code. Any healthcare provider can scan it to instantly see your blood type, allergies, medications, and emergency contacts.',
+        'path' => '/',
+        'image' => '/apple-touch-icon.png',
+    ],
+])->name('home');
+
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 Route::get('/docs/broadcasting', BroadcastingDocsController::class)
     ->middleware('scribe.docs-access')

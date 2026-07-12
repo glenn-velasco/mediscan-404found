@@ -69,7 +69,7 @@ server {
         add_header Cache-Control "public, max-age=3600, must-revalidate";
     }
 
-    location ~* ^/(favicon\.ico|favicon\.svg|apple-touch-icon\.png|robots\.txt)$ {
+    location ~* ^/(favicon\.ico|favicon\.svg|apple-touch-icon\.png|robots\.txt|sitemap\.xml)$ {
         set $app_upstream app:8000;
         proxy_pass http://$app_upstream;
         proxy_set_header Host $host;

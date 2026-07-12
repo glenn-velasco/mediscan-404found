@@ -85,7 +85,9 @@ sudo chmod 600 /etc/mediscan/tls/origin.crt /etc/mediscan/tls/origin.key
 
 ### 1.6 Google site verification (optional)
 
-Not tied to anything in the app — nothing in the codebase reads a Google verification value. This only applies if you set up Google Workspace (for `@mediscan.cloud` email) or Google Search Console for the domain: Google gives you either a TXT record or an HTML-meta-tag/file method during setup — for a domain you don't have a webpage to drop a file into outside the app itself, use the **TXT record** option and add it via Cloudflare DNS → Add record → type `TXT`, name `@`, content whatever Google gives you. No app changes needed either way.
+Not tied to anything in the app — nothing in the codebase reads a Google verification value. Search Console for `mediscan.cloud` registers as a **Domain** property, which only offers **DNS TXT record** verification (no HTML tag option). Since Cloudflare already manages this domain's DNS (§1.2/1.3), add it there: Cloudflare DNS → Add record → type `TXT`, name `@`, content whatever Google gives you. A Domain property automatically covers every subdomain (`app.mediscan.cloud`, `staging.mediscan.cloud`, etc.) and both protocols once verified, so this one record is enough — no per-subdomain verification needed. No app changes needed either way.
+
+`GOOGLE_ANALYTICS_ID` (GA4 measurement ID) *is* read by the app — see `resources/views/app.blade.php`, wired up via a **Variable** in the GitHub **production** Environment (Settings → Environments → production → Variables).
 
 ---
 

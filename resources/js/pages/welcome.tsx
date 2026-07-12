@@ -1,10 +1,18 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { ActivitySquare, QrCode, ShieldCheck } from 'lucide-react';
 import React from 'react';
+import SeoHead from '@/components/seo-head';
 import { Button } from '@/components/ui/button';
 import { login } from '@/routes';
 import admin from '@/routes/admin';
 import professionalApplication from '@/routes/professional-application';
+
+interface SeoProps {
+    title: string;
+    description: string;
+    path: string;
+    image: string;
+}
 
 const features = [
     {
@@ -27,7 +35,7 @@ const features = [
     },
 ];
 
-export default function Welcome() {
+export default function Welcome({ seo }: { seo: SeoProps }) {
     const { auth } = usePage().props;
 
     const dashboardHref = auth.user
@@ -38,7 +46,12 @@ export default function Welcome() {
 
     return (
         <>
-            <Head title="MediScan — Your medical history, one scan away" />
+            <SeoHead
+                title={seo.title}
+                description={seo.description}
+                path={seo.path}
+                image={seo.image}
+            />
 
             {/* Hero */}
             <section className="flex flex-col items-center justify-center gap-8 px-6 py-20 text-center sm:py-28">
