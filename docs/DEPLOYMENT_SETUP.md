@@ -44,6 +44,8 @@ The VPS serves the app subdomains, each an **A record → the VPS IP, proxied** 
 
 Hostnames are kept flat (one level under `mediscan.cloud`, not nested like `cdn.staging.app.mediscan.cloud`) so they're covered by Cloudflare's free Universal SSL / origin cert wildcard without needing Advanced Certificate Manager.
 
+**Whenever a hostname is added, renamed, or removed** (here, in `infrastructure/docker/nginx/conf.d/*.conf`, and in the `tls_domains`/DNS-record lists in `.github/workflows/provision.yml`), re-run `provision.yml` (§6.2) afterward — it's what actually creates/updates the Cloudflare A record *and* reissues the origin cert to cover the new hostname list. Editing the nginx conf files alone does nothing on its own; Nginx will just fail TLS for a hostname that isn't on the cert yet.
+
 Don't flip these to proxied (orange cloud) until the VPS is actually serving valid HTTPS on those hostnames — see §1.4-1.5 first. If you're provisioning via Ansible (§6.2), the workflow's "Point DNS at this VPS" step does this for all six automatically on every run, upserting by record name.
 
 ### 1.4 SSL/TLS — Cloudflare edge settings
@@ -327,6 +329,8 @@ Push to `main` → deploys staging. Tag a commit (`git tag v0.1.0 && git push or
 ### 6.2 Running `provision.yml` (Ansible)
 
 Automates §1.3-1.5 (DNS A-records, Cloudflare SSL settings, origin cert) and user/firewall/Docker setup on the VPS, in one run, for the one VPS that serves both environments — all six hostnames on one cert, the shared CI deploy key, your personal admin key. Needs §2.3 (bootstrap key) and §3.2 (`provisioning` Environment) done first.
+
+**Re-run this any time the hostname list changes** (`tls_domains`/DNS loop in `provision.yml`, and the corresponding `nginx` conf files) — it's the only thing that actually creates the Cloudflare DNS record and reissues the origin cert to cover a new/renamed hostname; deploying the app itself (§6.1) doesn't touch DNS or TLS at all.
 
 **Prerequisite: a fresh VPS for the first run.** `provision.yml` itself never touches the OS install or reinstalls anything — it only connects over SSH and configures whatever's already running. What the *first* run needs going in is root SSH access via the bootstrap key (§2.3) on a box that doesn't already have conflicting state. That's naturally true for:
 - **A brand-new VPS** — already fresh the moment you buy it, nothing to do here.
