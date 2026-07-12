@@ -4,9 +4,9 @@ namespace App\Listeners;
 
 use App\Events\EmailChanged;
 use App\Notifications\Api\VerifyApiEmail;
-use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class SendEmailVerificationNotification implements ShouldQueueAfterCommit
+class SendEmailVerificationNotification implements ShouldQueue
 {
     public function handle(EmailChanged $event): void
     {
