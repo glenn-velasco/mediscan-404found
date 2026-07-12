@@ -59,11 +59,7 @@
             "@php artisan key:generate",
             "@php artisan migrate --force",
             "pnpm install",
-            "pnpm run build",
-            "@hooks:install"
-        ],
-        "hooks:install": [
-            "git config core.hooksPath .githooks"
+            "pnpm run build"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",

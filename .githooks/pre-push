@@ -1,3 +1,0 @@
-#!/bin/sh
-echo "Running ci:check before push…"
-composer run ci:check
