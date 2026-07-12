@@ -10,9 +10,13 @@ php -r '
     $host = getenv("REDIS_HOST") ?: "127.0.0.1";
     $port = (int) (getenv("REDIS_PORT") ?: 6379);
     for ($i = 0; $i < 30; $i++) {
-        $redis = new Redis();
-        if (@$redis->connect($host, $port, 1.0)) {
-            exit(0);
+        try {
+            $redis = new Redis();
+            if (@$redis->connect($host, $port, 1.0)) {
+                exit(0);
+            }
+        } catch (\Throwable $e) {
+            // DNS not resolvable yet or connection refused - retry below.
         }
         sleep(1);
     }
