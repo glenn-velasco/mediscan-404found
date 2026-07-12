@@ -1,0 +1,81 @@
+{
+  "title": "Host & Containers",
+  "uid": "mediscan-host-containers",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Host CPU usage",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 - (avg by (instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Host memory available",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "node_memory_MemAvailable_bytes" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Host disk usage (root filesystem)",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 - (node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"} * 100)"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Per-container CPU usage",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[5m])) * 100",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Per-container memory usage",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (name) (container_memory_usage_bytes{name!=\"\"})",
+          "legendFormat": "{{name}}"
+        }
+      ]
+    }
+  ]
+}

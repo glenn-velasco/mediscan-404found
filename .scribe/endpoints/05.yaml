@@ -1,0 +1,120 @@
+name: Sync
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/pending-sync
+    metadata:
+      custom: []
+      groupName: Sync
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get pending sync envelopes.'
+      description: |-
+        Retrieve all envelopes waiting to be delivered to the authenticated user.
+        The mobile app calls this on startup or when triggered by a broadcast notification.
+        Envelopes are ordered by creation time (oldest first) for consistent application order.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Success","data":[{"id":1,"sender_id":2,"envelope_type":"allergy_verification","created_at":"2026-01-01T00:00:00.000000Z"}]}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"status":403,"message":"Your account has been deactivated.","errors":null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/pending-sync/{pendingSyncEnvelope_id}/ack'
+    metadata:
+      custom: []
+      groupName: Sync
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Acknowledge receipt of a sync envelope.'
+      description: |-
+        Called after the mobile app successfully decrypts and merges an envelope.
+        This marks the envelope as acknowledged and logs the receipt for audit purposes.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      pendingSyncEnvelope_id:
+        custom: []
+        name: pendingSyncEnvelope_id
+        description: 'The ID of the pendingSyncEnvelope.'
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      pendingSyncEnvelope_id: 16
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Envelope acknowledged.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"status":403,"message":"Unauthenticated.","errors":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":404,"message":"Not found.","errors":null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

@@ -1,0 +1,50 @@
+name: 'Email Verification'
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/email/verification-notification
+    metadata:
+      custom: []
+      groupName: 'Email Verification'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Verification link sent.","data":null}'
+        headers: []
+        description: 'Verification link sent'
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Email already verified.","data":null}'
+        headers: []
+        description: 'Already verified'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

@@ -1,0 +1,139 @@
+# Local dev/test stack - builds the SAME Dockerfiles CI builds and pushes to
+# GHCR, so `docker compose -f infrastructure/docker-compose.dev.yml build`
+# catches image breakage before it ever reaches CI.
+#
+# One-time setup:
+#   cp infrastructure/.env.dev.example infrastructure/.env.dev
+#   php artisan key:generate --show   # paste the output into .env.dev's APP_KEY
+#   openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj "/CN=localhost" \
+#     -keyout infrastructure/docker/nginx/dev-tls/origin.key \
+#     -out infrastructure/docker/nginx/dev-tls/origin.crt
+#
+# Then: docker compose -f infrastructure/docker-compose.dev.yml up --build
+
+name: mediscan-dev
+
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: infrastructure/docker/app/Dockerfile
+    env_file: .env.dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rustfs:
+        condition: service_started
+    networks: [mediscan-dev]
+
+  horizon:
+    build:
+      context: ../
+      dockerfile: infrastructure/docker/app/Dockerfile
+    command: php artisan horizon
+    env_file: .env.dev
+    depends_on:
+      app:
+        condition: service_started
+    networks: [mediscan-dev]
+
+  scheduler:
+    build:
+      context: ../
+      dockerfile: infrastructure/docker/app/Dockerfile
+    command: php artisan schedule:work
+    env_file: .env.dev
+    depends_on:
+      app:
+        condition: service_started
+    networks: [mediscan-dev]
+
+  reverb:
+    build:
+      context: ../
+      dockerfile: infrastructure/docker/app/Dockerfile
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    env_file: .env.dev
+    depends_on:
+      app:
+        condition: service_started
+    networks: [mediscan-dev]
+
+  nginx:
+    build:
+      context: docker/nginx
+    ports:
+      - "8000:80"
+      - "8443:443"
+    volumes:
+      - ./docker/nginx/dev-tls:/etc/nginx/tls:ro
+    depends_on:
+      app:
+        condition: service_started
+      reverb:
+        condition: service_started
+      rustfs:
+        condition: service_started
+    networks: [mediscan-dev]
+
+  face-match:
+    build:
+      context: ../docker/face-match
+    networks: [mediscan-dev]
+
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: mediscan
+      POSTGRES_USER: mediscan
+      POSTGRES_PASSWORD: mediscan
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mediscan -d mediscan"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks: [mediscan-dev]
+
+  redis:
+    image: redis:7-alpine
+    networks: [mediscan-dev]
+
+  rustfs-permissions:
+    image: busybox
+    command: chown -R 10001:10001 /data/rustfs
+    volumes:
+      - rustfs_dev_data:/data/rustfs
+    networks: [mediscan-dev]
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    environment:
+      RUSTFS_VOLUMES: /data/rustfs
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_ACCESS_KEY: devaccesskey
+      RUSTFS_SECRET_KEY: devsecretkey
+    depends_on:
+      rustfs-permissions:
+        condition: service_completed_successfully
+    volumes:
+      - rustfs_dev_data:/data/rustfs
+    networks: [mediscan-dev]
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8026:8025" # web UI - http://localhost:8026 (8025 avoided - Sail's compose.yaml already uses it)
+    networks: [mediscan-dev]
+
+networks:
+  mediscan-dev:
+
+volumes:
+  postgres_dev_data:
+  rustfs_dev_data:

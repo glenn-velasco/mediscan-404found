@@ -1,0 +1,360 @@
+# Deployment setup
+
+This is not covered by Scribe — Scribe only documents HTTP routes under `api/v1/*`. This document is the source of truth for how the staging/production VPS is set up and how CI/CD reaches it. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the conceptual system design and [`infrastructure/README.md`](../infrastructure/README.md) for day-to-day commands.
+
+**Layout**: 7 sections, grouped by topic rather than chronological order — Cloudflare, SSH, GitHub Environments, Resend, Supabase, the GitHub Actions workflows themselves, and public-repo hygiene. Cross-references use these numbers (e.g. "§3.2").
+
+Nearly everything here is automated by Ansible (`infrastructure/provision/`) once the VPS is provisioned that way (§6.2) — the "manual way" shown in a few places is what Ansible replaces, kept only as historical reference for understanding what the roles actually do.
+
+---
+
+## 1. Cloudflare setup
+
+### 1.1 Domain + nameservers
+
+Bought one VPS and one domain (`mediscan.cloud`) from Hostinger. One-time, per domain — happens once ever, not worth automating:
+
+1. Add `mediscan.cloud` to Cloudflare (free plan) → Cloudflare issues two nameservers (yours will be specific to your zone, e.g. `conrad.ns.cloudflare.com` / `georgia.ns.cloudflare.com`).
+2. In Hostinger's domain panel, replace the nameservers with the two Cloudflare gave you.
+3. Wait for Cloudflare to show the zone as **Active**.
+
+### 1.2 DNS records
+
+Root domain and `www` stay on Hostinger's own hosting (not the VPS) — Hostinger's website builder / static hosting:
+
+| Type | Name | Target |
+|---|---|---|
+| CNAME | `@` | `connect.hostinger.com` |
+| CNAME | `www` | `connect.hostinger.com` |
+
+Also set up MX records for a general inbox (e.g. `contact@mediscan.cloud`) if wanted — unrelated to Resend, which verifies its own sending domain separately (§4).
+
+### 1.3 VPS → Cloudflare
+
+The VPS serves the app subdomains, each an **A record → the VPS IP, proxied** (orange cloud):
+
+| Type | Name | Result | Status |
+|---|---|---|---|
+| A | `app` | `app.mediscan.cloud` | done |
+| A | `staging.app` | `staging.app.mediscan.cloud` | done |
+| A | `cdn` | `cdn.mediscan.cloud` | **still needed** - RustFS/CDN reverse proxy (`infrastructure/docker/nginx/conf.d/cdn.conf`) won't be reachable without this |
+| A | `cdn.staging.app` | `cdn.staging.app.mediscan.cloud` | **still needed**, same reason |
+
+Don't flip these to proxied (orange cloud) until the VPS is actually serving valid HTTPS on those hostnames — see §1.4-1.5 first. If you're provisioning via Ansible (§6.2), the workflow's "Point DNS at this VPS" step does this for all four automatically on every run, upserting by record name.
+
+### 1.4 SSL/TLS — Cloudflare edge settings
+
+SSL/TLS → Overview:
+- Mode: **Full (Strict)** — validates the origin cert instead of just encrypting the hop (Full alone accepts a self-signed cert with no validation; Flexible doesn't encrypt the Cloudflare→origin hop at all).
+
+SSL/TLS → Edge Certificates:
+- **Always Use HTTPS**: on.
+- **Certificate Transparency Monitoring**: on (email when a CA issues a cert for your domain — an early signal if something issues one you didn't request). This one stays a manual dashboard toggle regardless of which path provisions the box — no confirmed simple Cloudflare API endpoint for it.
+
+If you're provisioning via Ansible (§6.2), the workflow's "Configure Cloudflare zone SSL settings" step sets Mode and Always Use HTTPS automatically via the Cloudflare API on every run — only Certificate Transparency Monitoring needs the manual toggle above.
+
+### 1.5 SSL/TLS — origin certificate (CSR / origin server)
+
+**Ansible does this end-to-end** (§6.2) — skip straight to that section if you're using it. The `tls` role calls Cloudflare's Origin CA API itself, generates the private key + CSR *on the VPS* (the private key never leaves it), requests a cert covering all four hostnames in one shot, and writes it straight to `/etc/mediscan/tls/origin.crt`/`origin.key`. Issued for 15 years, so no renewal reminder needed.
+
+<details>
+<summary>Manual way (historical — only relevant if you're not using Ansible)</summary>
+
+Cloudflare dashboard → SSL/TLS → Origin Server → Create Certificate:
+- Key type: **ECC**.
+- Hostnames: needs to cover **all four** app subdomains (`app.mediscan.cloud`, `staging.app.mediscan.cloud`, `cdn.mediscan.cloud`, `cdn.staging.app.mediscan.cloud`) or a wildcard (`*.mediscan.cloud` + `mediscan.cloud`) — `nginx`'s `app.conf`/`cdn.conf` (`infrastructure/docker/nginx/conf.d/`) serve all four `server_name`s off the one cert file.
+- Validity: **30 days** if matching a monthly billing cycle — **this means the cert needs manual renewal every 30 days, or the site goes down.** Put a recurring reminder on this; there's no auto-renewal wired up on this path.
+- Save the certificate and key as `yourdomain.pem` / `yourdomain.key`.
+
+Place them on the VPS at the exact path the compose files expect (`docker-compose.staging.yml`/`docker-compose.production.yml` both bind-mount `/etc/mediscan/tls` read-only into the `nginx` container):
+
+```sh
+sudo mkdir -p /etc/mediscan/tls
+sudo cp yourdomain.pem /etc/mediscan/tls/origin.crt
+sudo cp yourdomain.key /etc/mediscan/tls/origin.key
+sudo chmod 600 /etc/mediscan/tls/origin.crt /etc/mediscan/tls/origin.key
+```
+
+</details>
+
+### 1.6 Google site verification (optional)
+
+Not tied to anything in the app — nothing in the codebase reads a Google verification value. This only applies if you set up Google Workspace (for `@mediscan.cloud` email) or Google Search Console for the domain: Google gives you either a TXT record or an HTML-meta-tag/file method during setup — for a domain you don't have a webpage to drop a file into outside the app itself, use the **TXT record** option and add it via Cloudflare DNS → Add record → type `TXT`, name `@`, content whatever Google gives you. No app changes needed either way.
+
+---
+
+## 2. SSH setup
+
+### 2.1 Personal SSH access
+
+Generate your own keypair (same regardless of which path provisions the VPS):
+
+```sh
+ssh-keygen -t ed25519 -C "your-alias-or-email"
+```
+
+This writes **two files**. Whatever path you accept at the `Enter file in which to save the key` prompt (default `~/.ssh/id_ed25519`) becomes the **private** key — no extension, never leave your machine, never commit it. `ssh-keygen` adds `.pub` to that same path for the **public** key — the one you paste elsewhere. If you ever see a bare filename with no `.pub` twin missing, that's the private half.
+
+Run this from `~/.ssh/`, not from inside this repo — accepting a bare filename (or your email) as the save path while sitting in the repo directory drops both files into the working tree as untracked files, one keystroke away from `git add -A` committing your private key.
+
+**If provisioning via Ansible** (§6.2): put the public half in the `ADMIN_SSH_PUBLIC_KEY` variable in the `provisioning` GitHub Environment (§3.2), and the `users` role installs it into `mediscan`'s `authorized_keys` on every run. You never touch the VPS by hand for this.
+
+<details>
+<summary>Manual way (historical)</summary>
+
+```sh
+# as the mediscan user
+mkdir -p ~/.ssh
+nano ~/.ssh/authorized_keys   # paste the public key, save
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/authorized_keys
+sudo systemctl restart ssh
+```
+
+</details>
+
+Verify it worked: `ssh mediscan@<vps-ip>`.
+
+### 2.2 CI deploy SSH access
+
+A **separate** keypair from your personal one, used only by GitHub Actions:
+
+```sh
+# on your own device
+ssh-keygen -t ed25519 -C "github_actions_deployment"
+```
+
+Same private (no extension) / public (`.pub`) split as §2.1 — run it from `~/.ssh/`, not from inside this repo.
+
+**If provisioning via Ansible**: the public half goes in the `DEPLOY_SSH_PUBLIC_KEY` variable in the `provisioning` Environment (§3.2), and the `users` role installs it the same way as the personal key above — this deploys as `mediscan` itself (the same sudo-capable user, not a separate least-privileged deploy user). The **private** half goes into `deploy.yml`'s `SSH_PRIVATE_KEY` secret instead (§3.4) — that part is unrelated to Ansible and always manual, since a private key should never pass through a playbook run.
+
+<details>
+<summary>Manual way (historical)</summary>
+
+```sh
+# on the VPS, as mediscan
+echo "paste the .pub contents here" >> ~/.ssh/authorized_keys
+sudo systemctl restart ssh
+```
+
+</details>
+
+**How to confirm CI can actually log in**: you can't test the CI private key from your own machine (it only exists in the `SSH_PRIVATE_KEY` GitHub secret). Trigger a `deploy.yml` run (push to `main`) and check the **"Load deploy SSH key"** and **"Add host to known_hosts"** steps in the Actions log — if those pass and the subsequent `ssh` commands don't hang or reject, the key is correctly installed.
+
+### 2.3 What Ansible itself needs
+
+A **third** keypair, used exactly once per provisioning run and unrelated to the two above:
+
+```sh
+ssh-keygen -t ed25519 -C "mediscan_bootstrap" -f ~/.ssh/mediscan_bootstrap
+```
+
+The `-f` here pins the save path explicitly, so this one produces `~/.ssh/mediscan_bootstrap` (private) and `~/.ssh/mediscan_bootstrap.pub` (public) regardless of where you run it from.
+
+At OS-reinstall time, your provider lets you paste a public SSH key for `root` (on Hostinger: the reinstall panel has a field for it) — paste this key's public half there. Ansible's `users` role uses it once, as root, to create the `mediscan` user and install the two keys above, then **disables root login and password auth entirely** (`PermitRootLogin no`, `PasswordAuthentication no` in `sshd_config`) — the ordering (install keys, verify they're on disk, *then* disable root) is deliberate, so a failed key-install can't lock you out. After that run, the bootstrap key stops working (root login is off) and isn't needed again unless you reinstall the OS a second time.
+
+Its private half goes into the `PROVISION_SSH_PRIVATE_KEY` secret in the `provisioning` GitHub Environment (§3.2) — `provision.yml` loads it to make the initial root connection.
+
+**Net result after a provisioning run**: `mediscan`'s `authorized_keys` has 2 entries (your personal key, the CI deploy key); root login and password auth are both off; the only way in is as `mediscan` with one of those two keys.
+
+---
+
+## 3. GitHub environment setup
+
+Three separate GitHub Environments exist, each with its own secrets/variables, used by different workflows:
+
+| Environment | Used by | When |
+|---|---|---|
+| `provisioning` | `provision.yml` | manual (`workflow_dispatch`) — only when actually setting up/resetting the VPS |
+| `staging` | `deploy.yml` | every push to `main` |
+| `production` | `deploy.yml` | every tag matching `*.*.*` |
+
+Plus **repository-level** secrets/variables (Settings → Secrets and variables → Actions, *not* under any Environment) for values that are identical across all of them.
+
+`deploy.yml` pins its jobs to `environment: staging` or `environment: production` depending on the trigger; GitHub resolves environment-scoped secrets/variables first and only falls back to repository-level ones of the same name. Put each value at the level that matches how it actually varies — get this wrong and either both environments share a value that should differ (e.g. one DB used for both), or an environment-only value never gets set and deploys with an empty string.
+
+### 3.1 Repository-level (shared by everything)
+
+Settings → Secrets and variables → Actions → lands on **Repository secrets**; there's a **Variables** tab next to it for the non-secret ones.
+
+| Name | Kind | Where the value comes from |
+|---|---|---|
+| `SSH_PRIVATE_KEY` | secret | private half of the CI deploy key (§2.2) |
+| `SSH_HOST` | secret | the VPS IP |
+| `SSH_USER` | secret | `mediscan` |
+| `RESEND_API_KEY` | secret | Resend dashboard → API Keys (§4) |
+| `APP_NAME` | variable | `Mediscan` |
+| `AWS_DEFAULT_REGION` | variable | `us-east-1` (RustFS doesn't care about the region, but the S3 client requires *some* value) |
+| `AWS_BUCKET` | variable | `mediscan` |
+
+`GITHUB_TOKEN` (auto-provided) covers pushing/pulling images from GHCR — no PAT needed anywhere.
+
+### 3.2 `provisioning` Environment
+
+Only needed once you're actually setting up or resetting the VPS via Ansible (§6.2) — skip this until then. Keep it entirely separate from `staging`/`production`; it only runs on manual `workflow_dispatch`, never on a push.
+
+**Create it**: Settings → Environments → New environment → name it exactly `provisioning` (must match `environment: provisioning` in `.github/workflows/provision.yml`) → Configure environment. Its own page has separate **Environment secrets** → **Add secret** and **Environment variables** → **Add variable** buttons — not the same buttons as §3.1.
+
+**Its 5 entries** (2 secrets, 3 variables):
+
+| Name | Kind | Where the value comes from |
+|---|---|---|
+| `PROVISION_SSH_PRIVATE_KEY` | secret | private half of the bootstrap key (§2.3) — `cat ~/.ssh/mediscan_bootstrap`, paste the whole output including `-----BEGIN...`/`-----END...` |
+| `CLOUDFLARE_API_TOKEN` | secret | select `mediscan.cloud` zone → **API Tokens** → **Create Token** → name it `CLOUDFLARE_API_TOKEN` → **Edit policy** → **Specified Domains** → search "SSL and Certificates" → check **Edit** → search "dns" → check **Edit** on both **DNS** and **Zone DNS Settings** → **Review token** → **Create token** → copy the token value (shown once) |
+| `CLOUDFLARE_ZONE_ID` | variable | Cloudflare dashboard → select the `mediscan.cloud` zone → right sidebar of **Overview** → **Zone ID** |
+| `DEPLOY_SSH_PUBLIC_KEY` | variable | public half of the CI deploy key (§2.2) — same key `SSH_PRIVATE_KEY` (§3.1) is the private half of, reused so the box trusts the exact key it's deployed with |
+| `ADMIN_SSH_PUBLIC_KEY` | variable | public half of your personal key (§2.1) |
+
+When done, the `provisioning` Environment's page lists 2 secrets and 3 variables. This Environment and its entries stay permanently configured — it only runs on manual `workflow_dispatch` (never on a push), and you may need it again for a future VPS reset or reprovision run.
+
+### 3.3 `staging` Environment
+
+Settings → Environments → New environment → `staging` → Configure → Deployment branches and tags → Selected branches and tags → Add rule → Branch → `main`.
+
+Then fill in its own secrets/variables (its own **Environment secrets**/**Environment variables** buttons, same pattern as §3.2):
+
+| Name | Kind | Value |
+|---|---|---|
+| `APP_KEY` | secret | generate per §3.5 — a staging-only key |
+| `DB_PASSWORD` | secret | pick a password for staging's own local Postgres container, e.g. `openssl rand -hex 20` — the container gets created fresh from this value, so any password you choose becomes correct |
+| `DB_DATABASE` | variable | `mediscan` |
+| `DB_USERNAME` | variable | `mediscan` |
+| `APP_URL` | variable | `https://staging.app.mediscan.cloud` |
+| `AWS_URL` | variable | `https://cdn.staging.app.mediscan.cloud` |
+| `VITE_REVERB_HOST` | variable | `staging.app.mediscan.cloud` |
+| `APP_DEBUG` | variable | `true` |
+| `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY` | secret | self-issued — pick any values (e.g. `openssl rand -hex 20` twice), staging's RustFS container just needs to agree with itself |
+| `REVERB_APP_ID` | variable | self-issued, e.g. `1` |
+| `REVERB_APP_SECRET` | secret | self-issued, e.g. `openssl rand -hex 32` |
+| `VITE_REVERB_APP_KEY` | variable | self-issued, e.g. `openssl rand -hex 16` |
+| `VITE_REVERB_PORT` | variable | `443` |
+| `VITE_REVERB_SCHEME` | variable | `https` |
+| `FACE_MATCH_SHARED_SECRET` | secret | self-issued, e.g. `openssl rand -hex 32` — only needs to match between `app` and `face-match` *within* staging, nowhere else |
+| `GRAFANA_ADMIN_PASSWORD` | secret | pick a password for staging's Grafana login |
+
+Leave `DB_URL` **unset** — Laravel falls back to `DB_PASSWORD`/`DB_DATABASE`/`DB_USERNAME` above when it's empty (§5 explains why staging uses a local container instead).
+
+### 3.4 `production` Environment
+
+Settings → Environments → New environment → `production` → Configure → Deployment branches and tags → Selected branches and tags → Add rule → Tag → `*.*.*`.
+
+Same secrets/variables pattern:
+
+| Name | Kind | Value |
+|---|---|---|
+| `APP_KEY` | secret | generate per §3.5 — a **different** key from staging's, never shared |
+| `DB_URL` | secret | Supabase pooler connection string (§5 — not done yet, blocks a real production deploy until it is) |
+| `APP_URL` | variable | `https://app.mediscan.cloud` |
+| `AWS_URL` | variable | `https://cdn.mediscan.cloud` |
+| `VITE_REVERB_HOST` | variable | `app.mediscan.cloud` |
+| `APP_DEBUG` | variable | `false` |
+| `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY` | secret | self-issued, separate values from staging's |
+| `REVERB_APP_ID` | variable | self-issued, e.g. `2` (different from staging) |
+| `REVERB_APP_SECRET` | secret | self-issued, separate from staging's |
+| `VITE_REVERB_APP_KEY` | variable | self-issued, separate from staging's |
+| `VITE_REVERB_PORT` | variable | `443` |
+| `VITE_REVERB_SCHEME` | variable | `https` |
+| `FACE_MATCH_SHARED_SECRET` | secret | self-issued, separate from staging's |
+| `GRAFANA_ADMIN_PASSWORD` | secret | pick a password for production's Grafana login |
+
+`DB_PASSWORD`/`DB_DATABASE`/`DB_USERNAME` aren't needed here — production has no local Postgres container, and they're ignored once `DB_URL` is set.
+
+Why `staging`/`production` need separate values for `APP_KEY`, `RUSTFS_*`, `REVERB_APP_SECRET`, etc. even though some are "self-issued with no external account behind them": each environment runs its own independent set of containers (own RustFS, own Reverb, own Grafana). Nothing breaks technically if you reuse a value across both, but separate values mean a staging leak doesn't also expose production.
+
+### 3.5 Generating `APP_KEY`
+
+There's no running app to run `artisan` on yet at this point (no containers up, and you shouldn't reuse your local dev key). Generate one throwaway per environment, e.g. via Sail locally:
+
+```sh
+./vendor/bin/sail artisan key:generate --show
+```
+
+This just prints a `base64:...` key without writing it anywhere — run it twice (once per environment) and paste each result into that environment's `APP_KEY` secret. Do **not** reuse the key already in your local `.env`.
+
+---
+
+## 4. Resend (email)
+
+1. Create an account, add the `mediscan.cloud` domain.
+2. Add the DNS records Resend gives you, via Cloudflare (§1.2) — wait for propagation.
+3. Generate an API key → goes into the repository-level `RESEND_API_KEY` secret (§3.1).
+
+---
+
+## 5. Supabase (production database)
+
+**Not yet done** — this blocks a real production deploy until it is (§3.4's `DB_URL`).
+
+1. Create a project.
+2. Use the **Shared Pooler** connection string, not the direct one. As of 2026, Supabase's pooling has two tiers: the **Shared Pooler** (powered by **Supavisor**, Supabase's own PgBouncer-wire-compatible pooler) is free and available on every project including the free tier; the **Dedicated Pooler** (literally PgBouncer, a separate box) is Pro-plan-and-up only. Use the Shared Pooler connection string from the project's Connect dialog — `app`/`horizon`/`scheduler`/`reverb` are four separate long-running Postgres clients, and pooling avoids exhausting the free tier's direct-connection limit.
+3. Goes into the `DB_URL` secret in the `production` Environment (§3.4).
+
+Supabase's default daily backups (~7 day retention, free tier) cover the production DB reasonably. Staging's local Postgres container and RustFS object data in both environments have no off-VPS backup — worth a follow-up scheduled export (e.g. to Backblaze B2/Cloudflare R2) once things are otherwise stable.
+
+---
+
+## 6. Workflows
+
+Four GitHub Actions workflows, in `.github/workflows/`:
+
+| Workflow | Trigger | What it does |
+|---|---|---|
+| `lint.yml` | push/PR to `develop`/`main`/`master`/`workos` | static checks |
+| `tests.yml` | push/PR to same branches (also reusable via `workflow_call`) | test suite |
+| `deploy.yml` | push to `main` → staging; push tag `*.*.*` → production | build 7 images → GHCR, SSH-deploy, migrate, seed roles, health-check |
+| `provision.yml` | manual (`workflow_dispatch`) | one-time/on-demand VPS setup via Ansible |
+
+### Order of operations (fresh or reset VPS)
+
+For a first-time setup or VPS reset:
+
+1. **Push to GitHub first** — commit your local changes and push to `main`. All three workflow files (`.github/workflows/`) and the infrastructure code need to exist on GitHub before Actions can run them; until then, `provision.yml` and `deploy.yml` won't even appear in the **Actions** tab.
+2. **Run `provision.yml`** (§6.2) — manually trigger it via `workflow_dispatch` in Actions. This is the one-time VPS setup: creates the `mediscan` user, installs Docker, configures firewall, generates the origin cert, installs SSH keys. **This must complete first** — without it, the box has no app user, no Docker, and no SSH access beyond `root`, so `deploy.yml` will fail.
+3. **Push to `main` to deploy staging** (§6.1) — now that the VPS is ready, every push to `main` automatically builds and ships the app containers, runs migrations, seeds roles. Can be re-triggered as many times as needed after step 2, without re-running `provision.yml` again.
+4. **Tag for production** — push a semver tag like `v1.0.0` to trigger `deploy.yml` against the production Environment instead.
+
+**Note:** If you push to `main` before provisioning completes, `deploy.yml` will also auto-trigger but fail at the SSH/user-creation step (expected, not a bug). Let provisioning finish, then push again — the same code push will succeed the second time.
+
+### 6.1 Triggering a deploy
+
+Push to `main` → deploys staging. Tag a commit (`git tag v0.1.0 && git push origin v0.1.0`) → deploys production. Watch the run under the **Actions** tab; the `build` and `deploy` jobs show which Environment they resolved to. Needs §3.1, §3.3 (staging) and/or §3.4 (production) filled in first, and Settings → Actions → General → Workflow permissions → **Read and write permissions** (needed for `GITHUB_TOKEN` to push images to GHCR).
+
+### 6.2 Running `provision.yml` (Ansible)
+
+Automates §1.3-1.5 (DNS A-records, Cloudflare SSL settings, origin cert) and user/firewall/Docker setup on the VPS, in one run, for the one VPS that serves both environments — all four hostnames on one cert, the shared CI deploy key, your personal admin key. Needs §2.3 (bootstrap key) and §3.2 (`provisioning` Environment) done first.
+
+**Prerequisite: a fresh VPS.** `provision.yml` itself never touches the OS install or reinstalls anything — it only connects over SSH and configures whatever's already running (§2.3 explains why; running it repeatedly is safe and idempotent, see below). What it needs going in is root SSH access via the bootstrap key (§2.3) on a box that doesn't already have conflicting state. That's naturally true for:
+- **A brand-new VPS** — already fresh the moment you buy it, nothing to do here.
+- **An existing VPS you want to reset** — only in this case do you reinstall the OS first, from your provider's panel, pasting the bootstrap key's public half for `root` at reinstall time. **This wipes the box** — confirm there's nothing on it you need first (per §5, Supabase/production DB isn't wired up yet, so there shouldn't be live data — double-check `docker compose ps` and any volumes on the VPS first if in doubt). Reinstalling is a manual, destructive, one-off action in your provider's panel, not something `provision.yml` does or triggers — you'd only repeat it if you deliberately wanted to wipe the box again later.
+
+1. **Confirm the VPS is fresh** (via one of the two paths above), with the bootstrap key's public half already accepted as `root`'s authorized key.
+
+   If your provider's image already came with Docker, or already has the base utilities, you can skip either or both of `base`/`docker` at run time via the `skip_base`/`skip_docker` inputs below. **Check with `dpkg`, not by running the package name as a command** — several of these don't expose a binary matching their own package name (`ca-certificates` only installs cert files + `update-ca-certificates`; `gnupg` provides `gpg`, not `gnupg`; `unattended-upgrades`' binary is singular, `unattended-upgrade`) — so typing the name at a prompt gives a false "not found" even when it's installed:
+   ```sh
+   dpkg -s curl git ufw ca-certificates gnupg unattended-upgrades openssl docker-ce 2>&1 | grep -E "Package|not installed"
+   ```
+   Anything reported "installed ok" is safe to skip; anything "not installed" (or missing entirely) still needs that role to run. Neither skip is required either way — both roles check what's already installed and no-op cleanly, so running them against an already-set-up box is just a couple minutes slower, never wrong.
+   - **`skip_base`** — covers `curl`/`git`/`ufw`/`ca-certificates`/`gnupg`/`unattended-upgrades`/`openssl` together (one tag, all-or-nothing) — near-universal on almost any cloud image, Docker-branded or not, but confirm all seven with the command above rather than assuming.
+   - **`skip_docker`** — only relevant if the image specifically came with Docker preinstalled. Check for `docker-ce` by name, specifically — if the image instead has Ubuntu's own `docker.io` package, the `docker` role can't tell they're the same thing and would install `docker-ce` alongside it rather than skipping, so only set `skip_docker` once `dpkg -s docker-ce` itself reports installed.
+
+2. **Run the workflow**, on GitHub itself (not from your terminal) — safe to run as many times as needed, including repeatedly against the same already-provisioned box, since every role it runs is idempotent:
+   - Repo on github.com → **Actions** tab → left sidebar → **provision** (under "All workflows").
+   - **Run workflow** dropdown (top right) → branch `main` → fill in **host** (VPS IP) → leave **skip_base**/**skip_docker** unchecked unless step 1 applies → green **Run workflow** button.
+   - A new run appears within a few seconds (refresh if not) — click in to watch progress. Requires manual approval only if you've added a required reviewer to the `provisioning` Environment; otherwise starts immediately.
+   - Expected steps in order: checkout → resolve values → load bootstrap key → install Ansible → run playbook (the longest step) → configure Cloudflare SSL → point DNS. All green = it worked.
+   - If it fails on **"Run playbook"**: almost always the bootstrap key doesn't match what you pasted as `root`'s key when the box was created or reinstalled, or `known_hosts` couldn't reach the IP (VPS still booting). Re-running is safe either way — every Ansible role is idempotent (`roles/*/tasks/main.yml`), so a retry converges rather than redoing completed work.
+
+3. **Verify access**:
+   - As yourself: `ssh mediscan@<vps-ip>` using your personal key (§2.1) — confirms `ADMIN_SSH_PUBLIC_KEY` installed correctly.
+   - For CI: trigger a `deploy.yml` run and confirm its **"Load deploy SSH key"** step succeeds (§2.2) — confirms `DEPLOY_SSH_PUBLIC_KEY` installed correctly.
+   - The origin cert is already in place at `/etc/mediscan/tls/origin.crt`/`origin.key` — nothing to copy manually.
+
+4. **Deploy**: §6.1 — `SSH_HOST`/`SSH_USER`/`SSH_PRIVATE_KEY` (§3.1) still point at the same IP and user, unchanged.
+
+Re-running `provision.yml` later (e.g. to add a firewall rule, or rotate the admin/deploy keys) is safe for the same idempotency reason — it converges rather than reinstalling from scratch.
+
+---
+
+## 7. Notes for public repo
+
+The repo is currently private; if/when it goes public, run a one-time git-history secret scan first (e.g. `gitleaks detect` or `trufflehog` over the **full history**, not just the current tree) — going public exposes every past commit, not just HEAD. `infrastructure/.env`/`.env.production` are blank-value templates and should stay that way forever; real values only ever go into the GitHub secrets/variables above, never into a tracked file. After going public, verify GitHub secret scanning + push protection are enabled as an ongoing safety net.

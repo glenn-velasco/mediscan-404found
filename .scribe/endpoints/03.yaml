@@ -1,0 +1,151 @@
+name: Account
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: api/v1/email
+    metadata:
+      custom: []
+      groupName: Account
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      email:
+        custom: []
+        name: email
+        description: 'Must be a valid email address. Must not be greater than 255 characters.'
+        required: true
+        example: gbailey@example.net
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      email: gbailey@example.net
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Email updated. Please verify your new address.","data":{"id":1,"name":"Jane Doe","email":"new-email@example.com","email_verified_at":null,"is_active":true}}'
+        headers: []
+        description: 'Email updated'
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"No changes made.","data":{"id":1,"name":"Jane Doe","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true}}'
+        headers: []
+        description: 'No changes made'
+      -
+        custom: []
+        status: 422
+        content: '{"status":422,"message":"The email has already been taken.","errors":{"email":["The email has already been taken."]}}'
+        headers: []
+        description: 'Email already taken'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: api/v1/password
+    metadata:
+      custom: []
+      groupName: Account
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      current_password:
+        custom: []
+        name: current_password
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: ''
+        required: true
+        example: '|]|{+-'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      password_confirmation:
+        custom: []
+        name: password_confirmation
+        description: 'Must match password.'
+        required: true
+        example: Password123!
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      current_password: architecto
+      password: '|]|{+-'
+      password_confirmation: Password123!
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Password updated.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":422,"message":"The current password field is incorrect.","errors":{"current_password":["The current password field is incorrect."]}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

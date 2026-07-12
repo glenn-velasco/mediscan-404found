@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bd525f1eb3a5ae624b5a4cd603622c29",
+    "content-hash": "3c7ec6a7fc0e5584b242de8e5318d604",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -2344,6 +2344,86 @@
             "time": "2026-06-23T19:42:45+00:00"
         },
         {
+            "name": "laravel/horizon",
+            "version": "v5.47.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/horizon.git",
+                "reference": "a6ac142293ad02db4d7cccb961dd32f56ef1462d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/horizon/zipball/a6ac142293ad02db4d7cccb961dd32f56ef1462d",
+                "reference": "a6ac142293ad02db4d7cccb961dd32f56ef1462d",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-pcntl": "*",
+                "ext-posix": "*",
+                "illuminate/contracts": "^9.21|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/queue": "^9.21|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^9.21|^10.0|^11.0|^12.0|^13.0",
+                "laravel/sentinel": "^1.0",
+                "nesbot/carbon": "^2.17|^3.0",
+                "php": "^8.0",
+                "ramsey/uuid": "^4.0",
+                "symfony/console": "^6.0|^7.0|^8.0",
+                "symfony/error-handler": "^6.0|^7.0|^8.0",
+                "symfony/polyfill-php83": "^1.28",
+                "symfony/process": "^6.0|^7.0|^8.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.0",
+                "orchestra/testbench": "^7.56|^8.37|^9.16|^10.9|^11.0",
+                "phpstan/phpstan": "^1.10|^2.0",
+                "predis/predis": "^1.1|^2.0|^3.0"
+            },
+            "suggest": {
+                "ext-redis": "Required to use the Redis PHP driver.",
+                "predis/predis": "Required when not using the Redis PHP driver (^1.1|^2.0|^3.0)."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "Horizon": "Laravel\\Horizon\\Horizon"
+                    },
+                    "providers": [
+                        "Laravel\\Horizon\\HorizonServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-master": "6.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Horizon\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                }
+            ],
+            "description": "Dashboard and code-driven configuration for Laravel queues.",
+            "keywords": [
+                "laravel",
+                "queue"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel/horizon/issues",
+                "source": "https://github.com/laravel/horizon/tree/v5.47.2"
+            },
+            "time": "2026-06-03T15:11:37+00:00"
+        },
+        {
             "name": "laravel/octane",
             "version": "v2.17.5",
             "source": {
@@ -2700,6 +2780,62 @@
                 "source": "https://github.com/laravel/sanctum"
             },
             "time": "2026-04-30T11:46:25+00:00"
+        },
+        {
+            "name": "laravel/sentinel",
+            "version": "v1.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/sentinel.git",
+                "reference": "972d9885d9d14312a118e9565c4e6ecc5e751ea1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/sentinel/zipball/972d9885d9d14312a118e9565c4e6ecc5e751ea1",
+                "reference": "972d9885d9d14312a118e9565c4e6ecc5e751ea1",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "illuminate/container": "^8.37|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.27",
+                "orchestra/testbench": "^6.47.1|^7.56|^8.37|^9.16|^10.9|^11.0",
+                "phpstan/phpstan": "^2.1.33"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Laravel\\Sentinel\\SentinelServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Laravel\\Sentinel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Taylor Otwell",
+                    "email": "taylor@laravel.com"
+                },
+                {
+                    "name": "Mior Muhammad Zaki",
+                    "email": "mior@laravel.com"
+                }
+            ],
+            "support": {
+                "source": "https://github.com/laravel/sentinel/tree/v1.1.0"
+            },
+            "time": "2026-03-24T14:03:38+00:00"
         },
         {
             "name": "laravel/serializable-closure",
@@ -6114,6 +6250,132 @@
             "time": "2024-06-11T12:45:25+00:00"
         },
         {
+            "name": "resend/resend-laravel",
+            "version": "v1.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/resend/resend-laravel.git",
+                "reference": "6dd5f5ec607404068c5af067fd7f6ba4b659262b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/resend/resend-laravel/zipball/6dd5f5ec607404068c5af067fd7f6ba4b659262b",
+                "reference": "6dd5f5ec607404068c5af067fd7f6ba4b659262b",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
+                "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.1",
+                "resend/resend-php": "^1.0.0",
+                "symfony/mailer": "^6.2|^7.0|^8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.14",
+                "mockery/mockery": "^1.5",
+                "orchestra/testbench": "^8.17|^9.0|^10.8|^11.0",
+                "pestphp/pest": "^1.0|^2.0|^3.7|^4.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Resend\\Laravel\\ResendServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-main": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Resend\\Laravel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Resend and contributors",
+                    "homepage": "https://github.com/resend/resend-laravel/contributors"
+                }
+            ],
+            "description": "Resend for Laravel",
+            "homepage": "https://resend.com/",
+            "keywords": [
+                "api",
+                "client",
+                "laravel",
+                "php",
+                "resend",
+                "sdk"
+            ],
+            "support": {
+                "issues": "https://github.com/resend/resend-laravel/issues",
+                "source": "https://github.com/resend/resend-laravel/tree/v1.4.0"
+            },
+            "time": "2026-05-06T17:08:44+00:00"
+        },
+        {
+            "name": "resend/resend-php",
+            "version": "v1.5.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/resend/resend-php.git",
+                "reference": "303dd78648e36e7a5bfadb262e874898e279b66f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/resend/resend-php/zipball/303dd78648e36e7a5bfadb262e874898e279b66f",
+                "reference": "303dd78648e36e7a5bfadb262e874898e279b66f",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.5",
+                "php": "^8.1.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.13",
+                "mockery/mockery": "^1.6",
+                "pestphp/pest": "^1.0|^2.0|^3.0|^4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/Resend.php"
+                ],
+                "psr-4": {
+                    "Resend\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Resend and contributors",
+                    "homepage": "https://github.com/resend/resend-php/contributors"
+                }
+            ],
+            "description": "Resend PHP library.",
+            "homepage": "https://resend.com/",
+            "keywords": [
+                "api",
+                "client",
+                "php",
+                "resend",
+                "sdk"
+            ],
+            "support": {
+                "issues": "https://github.com/resend/resend-php/issues",
+                "source": "https://github.com/resend/resend-php/tree/v1.5.1"
+            },
+            "time": "2026-07-08T21:34:52+00:00"
+        },
+        {
             "name": "shalvah/upgrader",
             "version": "0.6.0",
             "source": {
@@ -8151,6 +8413,86 @@
                 }
             ],
             "time": "2026-04-10T16:19:22+00:00"
+        },
+        {
+            "name": "symfony/polyfill-php83",
+            "version": "v1.38.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-php83.git",
+                "reference": "796a26abb75ce49f3a84433cd81bf1009d73d5f8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-php83/zipball/796a26abb75ce49f3a84433cd81bf1009d73d5f8",
+                "reference": "796a26abb75ce49f3a84433cd81bf1009d73d5f8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "type": "library",
+            "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Php83\\": ""
+                },
+                "classmap": [
+                    "Resources/stubs"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill backporting some PHP 8.3+ features to lower PHP versions",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-php83/tree/v1.38.2"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-05-27T06:51:48+00:00"
         },
         {
             "name": "symfony/polyfill-php84",
@@ -11640,6 +11982,72 @@
             "time": "2026-03-29T15:46:14+00:00"
         },
         {
+            "name": "clue/stream-filter",
+            "version": "v1.7.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/clue/stream-filter.git",
+                "reference": "049509fef80032cb3f051595029ab75b49a3c2f7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/clue/stream-filter/zipball/049509fef80032cb3f051595029ab75b49a3c2f7",
+                "reference": "049509fef80032cb3f051595029ab75b49a3c2f7",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.6 || ^5.7 || ^4.8.36"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/functions_include.php"
+                ],
+                "psr-4": {
+                    "Clue\\StreamFilter\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christian Lück",
+                    "email": "christian@clue.engineering"
+                }
+            ],
+            "description": "A simple and modern approach to stream filtering in PHP",
+            "homepage": "https://github.com/clue/stream-filter",
+            "keywords": [
+                "bucket brigade",
+                "callback",
+                "filter",
+                "php_user_filter",
+                "stream",
+                "stream_filter_append",
+                "stream_filter_register"
+            ],
+            "support": {
+                "issues": "https://github.com/clue/stream-filter/issues",
+                "source": "https://github.com/clue/stream-filter/tree/v1.7.0"
+            },
+            "funding": [
+                {
+                    "url": "https://clue.engineering/support",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/clue",
+                    "type": "github"
+                }
+            ],
+            "time": "2023-12-20T15:40:13+00:00"
+        },
+        {
             "name": "composer/class-map-generator",
             "version": "1.7.3",
             "source": {
@@ -13433,6 +13841,251 @@
             "time": "2022-02-21T01:04:05+00:00"
         },
         {
+            "name": "php-http/client-common",
+            "version": "2.7.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-http/client-common.git",
+                "reference": "dcc6de29c90dd74faab55f71b79d89409c4bf0c1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-http/client-common/zipball/dcc6de29c90dd74faab55f71b79d89409c4bf0c1",
+                "reference": "dcc6de29c90dd74faab55f71b79d89409c4bf0c1",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 || ^8.0",
+                "php-http/httplug": "^2.0",
+                "php-http/message": "^1.6",
+                "psr/http-client": "^1.0",
+                "psr/http-factory": "^1.0",
+                "psr/http-message": "^1.0 || ^2.0",
+                "symfony/options-resolver": "~4.0.15 || ~4.1.9 || ^4.2.1 || ^5.0 || ^6.0 || ^7.0 || ^8.0",
+                "symfony/polyfill-php80": "^1.17"
+            },
+            "require-dev": {
+                "doctrine/instantiator": "^1.1",
+                "guzzlehttp/psr7": "^1.4",
+                "nyholm/psr7": "^1.2",
+                "phpunit/phpunit": "^7.5.20 || ^8.5.33 || ^9.6.7"
+            },
+            "suggest": {
+                "ext-json": "To detect JSON responses with the ContentTypePlugin",
+                "ext-libxml": "To detect XML responses with the ContentTypePlugin",
+                "php-http/cache-plugin": "PSR-6 Cache plugin",
+                "php-http/logger-plugin": "PSR-3 Logger plugin",
+                "php-http/stopwatch-plugin": "Symfony Stopwatch plugin"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Http\\Client\\Common\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Márk Sági-Kazár",
+                    "email": "mark.sagikazar@gmail.com"
+                }
+            ],
+            "description": "Common HTTP Client implementations and tools for HTTPlug",
+            "homepage": "http://httplug.io",
+            "keywords": [
+                "client",
+                "common",
+                "http",
+                "httplug"
+            ],
+            "support": {
+                "issues": "https://github.com/php-http/client-common/issues",
+                "source": "https://github.com/php-http/client-common/tree/2.7.3"
+            },
+            "time": "2025-11-29T19:12:34+00:00"
+        },
+        {
+            "name": "php-http/httplug",
+            "version": "2.4.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-http/httplug.git",
+                "reference": "5cad731844891a4c282f3f3e1b582c46839d22f4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-http/httplug/zipball/5cad731844891a4c282f3f3e1b582c46839d22f4",
+                "reference": "5cad731844891a4c282f3f3e1b582c46839d22f4",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 || ^8.0",
+                "php-http/promise": "^1.1",
+                "psr/http-client": "^1.0",
+                "psr/http-message": "^1.0 || ^2.0"
+            },
+            "require-dev": {
+                "friends-of-phpspec/phpspec-code-coverage": "^4.1 || ^5.0 || ^6.0",
+                "phpspec/phpspec": "^5.1 || ^6.0 || ^7.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Http\\Client\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Eric GELOEN",
+                    "email": "geloen.eric@gmail.com"
+                },
+                {
+                    "name": "Márk Sági-Kazár",
+                    "email": "mark.sagikazar@gmail.com",
+                    "homepage": "https://sagikazarmark.hu"
+                }
+            ],
+            "description": "HTTPlug, the HTTP client abstraction for PHP",
+            "homepage": "http://httplug.io",
+            "keywords": [
+                "client",
+                "http"
+            ],
+            "support": {
+                "issues": "https://github.com/php-http/httplug/issues",
+                "source": "https://github.com/php-http/httplug/tree/2.4.1"
+            },
+            "time": "2024-09-23T11:39:58+00:00"
+        },
+        {
+            "name": "php-http/message",
+            "version": "1.16.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-http/message.git",
+                "reference": "06dd5e8562f84e641bf929bfe699ee0f5ce8080a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-http/message/zipball/06dd5e8562f84e641bf929bfe699ee0f5ce8080a",
+                "reference": "06dd5e8562f84e641bf929bfe699ee0f5ce8080a",
+                "shasum": ""
+            },
+            "require": {
+                "clue/stream-filter": "^1.5",
+                "php": "^7.2 || ^8.0",
+                "psr/http-message": "^1.1 || ^2.0"
+            },
+            "provide": {
+                "php-http/message-factory-implementation": "1.0"
+            },
+            "require-dev": {
+                "ergebnis/composer-normalize": "^2.6",
+                "ext-zlib": "*",
+                "guzzlehttp/psr7": "^1.0 || ^2.0",
+                "laminas/laminas-diactoros": "^2.0 || ^3.0",
+                "php-http/message-factory": "^1.0.2",
+                "phpspec/phpspec": "^5.1 || ^6.3 || ^7.1",
+                "slim/slim": "^3.0"
+            },
+            "suggest": {
+                "ext-zlib": "Used with compressor/decompressor streams",
+                "guzzlehttp/psr7": "Used with Guzzle PSR-7 Factories",
+                "laminas/laminas-diactoros": "Used with Diactoros Factories",
+                "slim/slim": "Used with Slim Framework PSR-7 implementation"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/filters.php"
+                ],
+                "psr-4": {
+                    "Http\\Message\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Márk Sági-Kazár",
+                    "email": "mark.sagikazar@gmail.com"
+                }
+            ],
+            "description": "HTTP Message related tools",
+            "homepage": "http://php-http.org",
+            "keywords": [
+                "http",
+                "message",
+                "psr-7"
+            ],
+            "support": {
+                "issues": "https://github.com/php-http/message/issues",
+                "source": "https://github.com/php-http/message/tree/1.16.2"
+            },
+            "time": "2024-10-02T11:34:13+00:00"
+        },
+        {
+            "name": "php-http/promise",
+            "version": "1.3.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-http/promise.git",
+                "reference": "fc85b1fba37c169a69a07ef0d5a8075770cc1f83"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-http/promise/zipball/fc85b1fba37c169a69a07ef0d5a8075770cc1f83",
+                "reference": "fc85b1fba37c169a69a07ef0d5a8075770cc1f83",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 || ^8.0"
+            },
+            "require-dev": {
+                "friends-of-phpspec/phpspec-code-coverage": "^4.3.2 || ^6.3",
+                "phpspec/phpspec": "^5.1.2 || ^6.2 || ^7.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Http\\Promise\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Joel Wurtz",
+                    "email": "joel.wurtz@gmail.com"
+                },
+                {
+                    "name": "Márk Sági-Kazár",
+                    "email": "mark.sagikazar@gmail.com"
+                }
+            ],
+            "description": "Promise used for asynchronous HTTP requests",
+            "homepage": "http://httplug.io",
+            "keywords": [
+                "promise"
+            ],
+            "support": {
+                "issues": "https://github.com/php-http/promise/issues",
+                "source": "https://github.com/php-http/promise/tree/1.3.1"
+            },
+            "time": "2024-03-15T13:55:21+00:00"
+        },
+        {
             "name": "phpstan/phpstan",
             "version": "2.2.2",
             "dist": {
@@ -13930,6 +14583,69 @@
                 }
             ],
             "time": "2026-06-15T13:12:30+00:00"
+        },
+        {
+            "name": "recca0120/laravel-erd",
+            "version": "0.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/recca0120/laravel-erd.git",
+                "reference": "6d3c758634138bb60d96002ea37a6e246e220655"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/recca0120/laravel-erd/zipball/6d3c758634138bb60d96002ea37a6e246e220655",
+                "reference": "6d3c758634138bb60d96002ea37a6e246e220655",
+                "shasum": ""
+            },
+            "require": {
+                "ext-sqlite3": "*",
+                "illuminate/collections": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0|dev-master",
+                "illuminate/database": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "illuminate/filesystem": "^8.0|^9.0|^10.0|^11.0|^12.0|^13.0",
+                "nikic/php-parser": "^5.1.0",
+                "php-http/client-common": "^2.7"
+            },
+            "require-dev": {
+                "awobaz/compoships": "^2.3",
+                "doctrine/dbal": "^3.5|^4.4",
+                "guzzlehttp/guzzle": "^7.5",
+                "mockery/mockery": "^1.5",
+                "orchestra/testbench": "^6.25|^7.13|^8.0|^9.0|^10.0|^11.0",
+                "php-http/mock-client": "^1.6",
+                "phpunit/phpunit": "^9.5|^10.0|^11.0|^12.0",
+                "spatie/laravel-permission": "^5.7|^6.0|^7.2",
+                "spatie/phpunit-snapshot-assertions": "^4.2|^5.1.6"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Recca0120\\LaravelErd\\LaravelErdServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Recca0120\\LaravelErd\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "recca0120",
+                    "email": "recca0120@gmail.com"
+                }
+            ],
+            "description": "Laravel ERD automatically generates Entity-Relationship Diagrams from your Laravel models and displays them using Vuerd.",
+            "support": {
+                "issues": "https://github.com/recca0120/laravel-erd/issues",
+                "source": "https://github.com/recca0120/laravel-erd/tree/0.6.0"
+            },
+            "time": "2026-03-05T20:38:21+00:00"
         },
         {
             "name": "revolt/event-loop",
@@ -14963,6 +15679,77 @@
                 }
             ],
             "time": "2024-10-20T05:08:20+00:00"
+        },
+        {
+            "name": "symfony/options-resolver",
+            "version": "v8.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/options-resolver.git",
+                "reference": "88f9c561f678a02d54b897014049fa839e33ff82"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/options-resolver/zipball/88f9c561f678a02d54b897014049fa839e33ff82",
+                "reference": "88f9c561f678a02d54b897014049fa839e33ff82",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.4.1",
+                "symfony/deprecation-contracts": "^2.5|^3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\OptionsResolver\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Provides an improved replacement for the array_replace PHP function",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "config",
+                "configuration",
+                "options"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/options-resolver/tree/v8.1.0"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-05-29T05:06:50+00:00"
         },
         {
             "name": "ta-tikoma/phpunit-architecture-test",

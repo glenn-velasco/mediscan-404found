@@ -1,0 +1,32 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Upgrade all packages
+  apt:
+    upgrade: dist
+
+- name: Install baseline packages
+  apt:
+    name:
+      - curl
+      - git
+      - ufw
+      - ca-certificates
+      - gnupg
+      - unattended-upgrades
+      - openssl
+    state: present
+
+- name: Set timezone to UTC
+  community.general.timezone:
+    name: UTC
+
+- name: Enable unattended-upgrades
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";

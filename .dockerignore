@@ -1,0 +1,46 @@
+.git
+node_modules
+vendor
+
+# Test artifacts and runtime-generated files - never need to be in the
+# build context (some, like storage/framework/testing/**, can carry
+# permissions that break Docker's context transfer entirely). Mirrors the
+# exact pattern each directory's own nested .gitignore already uses
+# (exclude contents, keep the directory itself present via its
+# .gitignore) - Laravel's view/session compilers expect these directories
+# to exist even when empty; excluding them wholesale breaks that.
+storage/framework/testing/*
+!storage/framework/testing/.gitignore
+storage/framework/cache/*
+!storage/framework/cache/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+storage/logs/*
+!storage/logs/.gitignore
+storage/*.key
+tests/Browser/Screenshots
+
+.env
+.env.*
+!.env.example
+
+public/build
+public/hot
+public/storage
+public/vendor/scribe
+
+# Regenerated fresh by `composer install --no-dev` + `package:discover` in
+# the build stage - a locally-present copy (gitignored, from a full dev
+# install e.g. via Sail) would reference dev-only providers like
+# Laravel\Pail\PailServiceProvider that --no-dev doesn't install, and
+# Laravel would try to boot from that stale manifest before discovery
+# gets a chance to regenerate it.
+bootstrap/cache/packages.php
+bootstrap/cache/services.php
+
+.scribe/endpoints.cache
+
+.phpunit.cache
+.phpunit.result.cache

@@ -1,0 +1,126 @@
+name: provision
+
+on:
+  workflow_dispatch:
+    inputs:
+      host:
+        description: "VPS IP address or hostname"
+        required: true
+      skip_base:
+        description: "Skip base packages (curl/git/ufw/etc.) - almost any provider image already has these"
+        type: boolean
+        default: false
+      skip_docker:
+        description: "Skip Docker install - check this only if the image already has Docker (not just the base packages)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    environment: provisioning
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            infrastructure/provision
+          sparse-checkout-cone-mode: false
+
+      - name: Resolve values
+        # One VPS serves both staging and production - see
+        # docs/DEPLOYMENT_SETUP.md. Provision for both in a single run:
+        # the one shared CI deploy key (docs/DEPLOYMENT_SETUP.md §2.2 - same key deploys both
+        # environments), your personal key for manual access (root login
+        # gets disabled and the deploy key's private half only lives in
+        # GitHub Secrets), and a cert/DNS covering all four app/cdn hostnames.
+        id: vars
+        run: |
+          echo "deploy_ssh_public_keys<<EOF" >> "$GITHUB_OUTPUT"
+          jq -cn --arg key "${{ vars.DEPLOY_SSH_PUBLIC_KEY }}" '[$key]' >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo "admin_ssh_public_keys<<EOF" >> "$GITHUB_OUTPUT"
+          jq -cn --arg key "${{ vars.ADMIN_SSH_PUBLIC_KEY }}" '[$key]' >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          echo 'tls_domains=["app.mediscan.cloud","staging.app.mediscan.cloud","cdn.mediscan.cloud","cdn.staging.app.mediscan.cloud"]' >> "$GITHUB_OUTPUT"
+
+      - name: Load bootstrap SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PROVISION_SSH_PRIVATE_KEY }}
+
+      - name: Set up Python + Ansible
+        run: |
+          pip install --user ansible
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install Ansible collections
+        working-directory: infrastructure/provision
+        run: ansible-galaxy collection install -r requirements.yml
+
+      - name: Run playbook
+        working-directory: infrastructure/provision
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ inputs.host }}" >> ~/.ssh/known_hosts
+
+          skip_tags=""
+          [ "${{ inputs.skip_base }}" = "true" ] && skip_tags="base"
+          if [ "${{ inputs.skip_docker }}" = "true" ]; then
+            skip_tags="${skip_tags:+$skip_tags,}docker"
+          fi
+          skip_args=()
+          [ -n "$skip_tags" ] && skip_args=(--skip-tags "$skip_tags")
+
+          ansible-playbook playbook.yml \
+            -i "${{ inputs.host }}," \
+            -u root \
+            -e "deploy_ssh_public_keys=${{ steps.vars.outputs.deploy_ssh_public_keys }}" \
+            -e "admin_ssh_public_keys=${{ steps.vars.outputs.admin_ssh_public_keys }}" \
+            -e "cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -e "tls_domains=${{ steps.vars.outputs.tls_domains }}" \
+            -e "deploy_user_sudo=true" \
+            "${skip_args[@]}"
+
+      - name: Configure Cloudflare zone SSL settings
+        run: |
+          set -e
+          curl -sf -X PATCH \
+            "https://api.cloudflare.com/client/v4/zones/${{ vars.CLOUDFLARE_ZONE_ID }}/settings/ssl" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"value":"strict"}'
+          curl -sf -X PATCH \
+            "https://api.cloudflare.com/client/v4/zones/${{ vars.CLOUDFLARE_ZONE_ID }}/settings/always_use_https" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"value":"on"}'
+          # Certificate Transparency Monitoring is deliberately not automated
+          # here - no confirmed simple zone-setting endpoint for it like the
+          # two above; leave it as a one-time manual dashboard toggle.
+
+      - name: Point DNS at this VPS (Cloudflare API - upsert by record name)
+        run: |
+          set -e
+          for name in app.mediscan.cloud staging.app.mediscan.cloud cdn.mediscan.cloud cdn.staging.app.mediscan.cloud; do
+            existing_id=$(curl -sf -X GET \
+              "https://api.cloudflare.com/client/v4/zones/${{ vars.CLOUDFLARE_ZONE_ID }}/dns_records?type=A&name=${name}" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" | jq -r '.result[0].id // empty')
+
+            if [ -n "$existing_id" ]; then
+              method="PUT"
+              url="https://api.cloudflare.com/client/v4/zones/${{ vars.CLOUDFLARE_ZONE_ID }}/dns_records/${existing_id}"
+            else
+              method="POST"
+              url="https://api.cloudflare.com/client/v4/zones/${{ vars.CLOUDFLARE_ZONE_ID }}/dns_records"
+            fi
+
+            curl -sf -X "$method" "$url" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data "{\"type\":\"A\",\"name\":\"${name}\",\"content\":\"${{ inputs.host }}\",\"proxied\":true,\"ttl\":1}"
+          done

@@ -1,0 +1,215 @@
+# Deployed by .github/workflows/deploy.yml via SSH - this file and the
+# .env sitting next to it on the VPS (~/mediscan/staging/) are the only
+# two non-image artifacts deploy ever writes there. Image tags and secrets
+# come entirely from .env, generated fresh on every deploy from the
+# "staging" GitHub Environment - never hardcoded here.
+#
+# Only real difference from docker-compose.production.yml: a local Postgres
+# container (production uses Supabase via DB_URL instead).
+
+name: mediscan-staging
+
+services:
+  app:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-app:${IMAGE_TAG}
+    restart: unless-stopped
+    mem_limit: 1g
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+  horizon:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-app:${IMAGE_TAG}
+    command: php artisan horizon
+    restart: unless-stopped
+    mem_limit: 512m
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+  scheduler:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-app:${IMAGE_TAG}
+    command: php artisan schedule:work
+    restart: unless-stopped
+    mem_limit: 256m
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
+  reverb:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-app:${IMAGE_TAG}
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    restart: unless-stopped
+    mem_limit: 512m
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks: [internal]
+
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    mem_limit: 1g
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    networks: [internal]
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - redis_data:/data
+    networks: [internal]
+
+  rustfs-permissions:
+    image: busybox
+    command: chown -R 10001:10001 /data/rustfs
+    volumes:
+      - rustfs_data:/data/rustfs
+    networks: [internal]
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      RUSTFS_VOLUMES: /data/rustfs
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "false"
+      RUSTFS_ACCESS_KEY: ${AWS_ACCESS_KEY_ID}
+      RUSTFS_SECRET_KEY: ${AWS_SECRET_ACCESS_KEY}
+    depends_on:
+      rustfs-permissions:
+        condition: service_completed_successfully
+    volumes:
+      - rustfs_data:/data/rustfs
+    networks: [internal]
+
+  face-match:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-face-match:${IMAGE_TAG}
+    restart: unless-stopped
+    mem_limit: 1g
+    environment:
+      FACE_MATCH_SHARED_SECRET: ${FACE_MATCH_SHARED_SECRET}
+    networks: [internal]
+
+  nginx:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-nginx:${IMAGE_TAG}
+    restart: unless-stopped
+    mem_limit: 256m
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/mediscan/tls:/etc/nginx/tls:ro
+    depends_on:
+      - app
+      - reverb
+      - rustfs
+    networks: [public, internal]
+
+  prometheus:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-prometheus:${IMAGE_TAG}
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=14d
+    restart: unless-stopped
+    mem_limit: 512m
+    volumes:
+      - prometheus_data:/prometheus
+    networks: [internal]
+
+  grafana:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-grafana:${IMAGE_TAG}
+    restart: unless-stopped
+    mem_limit: 256m
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SERVER_ROOT_URL: http://localhost:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks: [internal] # not publicly exposed - reach it via an SSH tunnel
+
+  loki:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-loki:${IMAGE_TAG}
+    restart: unless-stopped
+    mem_limit: 512m
+    volumes:
+      - loki_data:/loki
+    networks: [internal]
+
+  promtail:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-promtail:${IMAGE_TAG}
+    restart: unless-stopped
+    mem_limit: 128m
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [internal]
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    restart: unless-stopped
+    mem_limit: 64m
+    command:
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks: [internal]
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    restart: unless-stopped
+    mem_limit: 256m
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+    networks: [internal]
+
+networks:
+  public:
+  internal:
+
+volumes:
+  postgres_staging_data:
+  redis_data:
+  rustfs_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:

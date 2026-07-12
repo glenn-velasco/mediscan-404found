@@ -1,0 +1,35 @@
+# Opt-in inner-loop overlay: bind-mounts source over the built image so PHP
+# changes apply without a rebuild, and enables Octane's file watcher.
+# Frontend HMR still runs on the host as usual (`pnpm run dev`), not in
+# Docker - Vite's dev server isn't part of the shipped image at all.
+#
+# Usage: docker compose -f infrastructure/docker-compose.dev.yml \
+#          -f infrastructure/docker-compose.dev.override.yml up
+
+services:
+  app:
+    command: php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000 --watch
+    volumes:
+      - ../app:/app/app
+      - ../routes:/app/routes
+      - ../config:/app/config
+      - ../resources:/app/resources
+      - ../database:/app/database
+
+  horizon:
+    volumes:
+      - ../app:/app/app
+      - ../routes:/app/routes
+      - ../config:/app/config
+
+  scheduler:
+    volumes:
+      - ../app:/app/app
+      - ../routes:/app/routes
+      - ../config:/app/config
+
+  reverb:
+    volumes:
+      - ../app:/app/app
+      - ../routes:/app/routes
+      - ../config:/app/config

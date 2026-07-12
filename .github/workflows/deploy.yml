@@ -1,0 +1,186 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    tags: ['*.*.*']
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.vars.outputs.image_tag }}
+      environment: ${{ steps.vars.outputs.environment }}
+    steps:
+      - id: vars
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            echo "image_tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            echo "environment=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "image_tag=sha-$(echo "${{ github.sha }}" | cut -c1-7)" >> "$GITHUB_OUTPUT"
+            echo "environment=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+  test:
+    uses: ./.github/workflows/tests.yml
+
+  lint:
+    uses: ./.github/workflows/lint.yml
+
+  build:
+    needs: [prep, test, lint]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.prep.outputs.environment }}
+    strategy:
+      matrix:
+        image:
+          - { name: app, context: ., dockerfile: infrastructure/docker/app/Dockerfile }
+          - { name: nginx, context: infrastructure/docker/nginx, dockerfile: infrastructure/docker/nginx/Dockerfile }
+          - { name: face-match, context: docker/face-match, dockerfile: docker/face-match/Dockerfile }
+          - { name: prometheus, context: infrastructure/docker/prometheus, dockerfile: infrastructure/docker/prometheus/Dockerfile }
+          - { name: grafana, context: infrastructure/docker/grafana, dockerfile: infrastructure/docker/grafana/Dockerfile }
+          - { name: promtail, context: infrastructure/docker/promtail, dockerfile: infrastructure/docker/promtail/Dockerfile }
+          - { name: loki, context: infrastructure/docker/loki, dockerfile: infrastructure/docker/loki/Dockerfile }
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.image.context }}
+          file: ${{ matrix.image.dockerfile }}
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/mediscan-${{ matrix.image.name }}:${{ needs.prep.outputs.image_tag }}
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image.name }}
+          build-args: |
+            VITE_REVERB_HOST=${{ vars.VITE_REVERB_HOST }}
+            VITE_REVERB_APP_KEY=${{ vars.VITE_REVERB_APP_KEY }}
+            VITE_REVERB_PORT=${{ vars.VITE_REVERB_PORT }}
+            VITE_REVERB_SCHEME=${{ vars.VITE_REVERB_SCHEME }}
+
+  deploy:
+    needs: [prep, build]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.prep.outputs.environment }}
+    env:
+      IMAGE_TAG: ${{ needs.prep.outputs.image_tag }}
+      ENV_NAME: ${{ needs.prep.outputs.environment }}
+      # Relative to the SSH user's home dir, not /opt - the mediscan user
+      # isn't root and doesn't have write access there.
+      REMOTE_DIR: mediscan/${{ needs.prep.outputs.environment }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            infrastructure/docker-compose.staging.yml
+            infrastructure/docker-compose.production.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Load deploy SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Ship the compose file for this environment
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p $REMOTE_DIR" \
+            && ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cat > $REMOTE_DIR/docker-compose.yml" \
+              < infrastructure/docker-compose.$ENV_NAME.yml
+
+      - name: Generate and ship .env
+        run: |
+          cat > /tmp/deploy.env <<EOF
+          GHCR_OWNER=${{ github.repository_owner }}
+          IMAGE_TAG=${IMAGE_TAG}
+          APP_NAME=${{ vars.APP_NAME }}
+          APP_ENV=${ENV_NAME}
+          APP_DEBUG=${{ vars.APP_DEBUG }}
+          APP_URL=${{ vars.APP_URL }}
+          APP_KEY=${{ secrets.APP_KEY }}
+          LOG_CHANNEL=stderr
+          DB_CONNECTION=pgsql
+          DB_URL=${{ secrets.DB_URL }}
+          DB_DATABASE=${{ vars.DB_DATABASE }}
+          DB_USERNAME=${{ vars.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          SESSION_DRIVER=redis
+          CACHE_STORE=redis
+          QUEUE_CONNECTION=redis
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          BROADCAST_CONNECTION=reverb
+          FILESYSTEM_DISK=s3
+          AWS_ACCESS_KEY_ID=${{ secrets.RUSTFS_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY=${{ secrets.RUSTFS_SECRET_KEY }}
+          AWS_DEFAULT_REGION=${{ vars.AWS_DEFAULT_REGION }}
+          AWS_BUCKET=${{ vars.AWS_BUCKET }}
+          AWS_URL=${{ vars.AWS_URL }}
+          AWS_ENDPOINT=http://rustfs:9000
+          AWS_USE_PATH_STYLE_ENDPOINT=true
+          REVERB_APP_ID=${{ vars.REVERB_APP_ID }}
+          REVERB_APP_KEY=${{ vars.VITE_REVERB_APP_KEY }}
+          REVERB_APP_SECRET=${{ secrets.REVERB_APP_SECRET }}
+          REVERB_HOST=${{ vars.VITE_REVERB_HOST }}
+          REVERB_PORT=${{ vars.VITE_REVERB_PORT }}
+          REVERB_SCHEME=${{ vars.VITE_REVERB_SCHEME }}
+          REVERB_BROADCAST_HOST=reverb
+          FACE_MATCH_BASE_URL=http://face-match:8500
+          FACE_MATCH_SHARED_SECRET=${{ secrets.FACE_MATCH_SHARED_SECRET }}
+          KYC_FACE_MATCH_HARD_FLOOR=0.4
+          MAIL_MAILER=resend
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          RUSTFS_ACCESS_KEY=${{ secrets.RUSTFS_ACCESS_KEY }}
+          RUSTFS_SECRET_KEY=${{ secrets.RUSTFS_SECRET_KEY }}
+          GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          EOF
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cat > $REMOTE_DIR/.env" < /tmp/deploy.env
+          rm -f /tmp/deploy.env
+
+      - name: Pull images
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd $REMOTE_DIR && echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin && docker compose pull"
+
+      - name: Run migrations and seed roles/permissions
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd $REMOTE_DIR && docker compose run --rm app php artisan migrate --force"
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd $REMOTE_DIR && docker compose run --rm app php artisan db:seed --class=RoleAndPermissionSeeder --force"
+
+      - name: Start the stack
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd $REMOTE_DIR && docker compose up -d --remove-orphans"
+
+      - name: Health check
+        run: |
+          for i in $(seq 1 30); do
+            if ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "curl -sf http://127.0.0.1/up" > /dev/null 2>&1; then
+              echo "Healthy."
+              exit 0
+            fi
+            echo "Waiting for app to become healthy... ($i/30)"
+            sleep 5
+          done
+          echo "Health check failed." >&2
+          exit 1
+
+      - name: Prune old images
+        if: always()
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "docker image prune -f --filter until=72h"
