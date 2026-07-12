@@ -78,10 +78,14 @@ jobs:
           skip_args=()
           [ -n "$skip_tags" ] && skip_args=(--skip-tags "$skip_tags")
 
+          vars_file="$RUNNER_TEMP/extra-vars.json"
+          echo "Extra vars file: $vars_file"
+          cat "$vars_file"
+
           ansible-playbook playbook.yml \
             -i "${{ inputs.host }}," \
             -u root \
-            -e "@$RUNNER_TEMP/extra-vars.json" \
+            -e "@$vars_file" \
             "${skip_args[@]}"
 
       - name: Configure Cloudflare zone SSL settings
