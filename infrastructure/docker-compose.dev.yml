@@ -95,7 +95,7 @@ services:
       timeout: 5s
       retries: 10
     volumes:
-      - postgres_dev_data:/var/lib/postgresql/data
+      - postgres_dev_data:/var/lib/postgresql
     networks: [mediscan-dev]
 
   redis:

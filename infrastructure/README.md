@@ -27,16 +27,39 @@ infrastructure/
 
 **Don't run both at once** - they duplicate the same backing services (Postgres/Redis/RustFS/etc.) and will fight over container names and ports. Sail's Mailpit dashboard is already on `8025`; this stack's is deliberately mapped to `8026` to avoid that one collision, but the rest (5432, 6379, 9000/9001, 8080, 8500) do overlap with Sail's forwarded ports, so stop Sail first (`./vendor/bin/sail down`) before bringing this one up:
 
-```sh
-cp infrastructure/.env.dev.example infrastructure/.env.dev
-php artisan key:generate --show   # paste into .env.dev's APP_KEY
+1. Copy the env template and fill in an app key:
 
-openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj "/CN=localhost" \
-  -keyout infrastructure/docker/nginx/dev-tls/origin.key \
-  -out infrastructure/docker/nginx/dev-tls/origin.crt
+   ```sh
+   cp infrastructure/.env.dev.example infrastructure/.env.dev
+   php artisan key:generate --show   # paste the output into .env.dev's APP_KEY
+   ```
 
-docker compose -f infrastructure/docker-compose.dev.yml up --build
-```
+2. Generate a local self-signed TLS cert (browser will warn, that's expected):
+
+   ```sh
+   openssl req -x509 -newkey rsa:2048 -nodes -days 365 -subj "/CN=localhost" \
+     -keyout infrastructure/docker/nginx/dev-tls/origin.key \
+     -out infrastructure/docker/nginx/dev-tls/origin.crt
+   ```
+
+3. Build and start the stack in the background:
+
+   ```sh
+   cd infrastructure
+   docker compose -f docker-compose.dev.yml -f docker-compose.dev.override.yml up -d --build
+   ```
+
+4. Confirm everything came up healthy:
+
+   ```sh
+   docker compose -f docker-compose.dev.yml -f docker-compose.dev.override.yml ps
+   ```
+
+5. If a service isn't healthy (e.g. `postgres`), check its logs:
+
+   ```sh
+   docker compose -f docker-compose.dev.yml -f docker-compose.dev.override.yml logs <service> --tail=100
+   ```
 
 App: `https://localhost:8443` (self-signed cert, browser will warn). Mailpit: `http://localhost:8026`. Add `-f infrastructure/docker-compose.dev.override.yml` to bind-mount source over the built image for PHP changes without a rebuild - still not a Sail replacement, just makes this stack less painful on the rare occasion you're using it for more than a one-off build check.
 
