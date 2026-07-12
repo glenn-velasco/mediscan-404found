@@ -89,16 +89,26 @@ jobs:
       - name: Configure Cloudflare zone SSL settings
         run: |
           set -e
-          curl -sf -X PATCH \
-            "https://api.cloudflare.com/client/v4/zones/${{ vars.CLOUDFLARE_ZONE_ID }}/settings/ssl" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            --data '{"value":"strict"}'
-          curl -sf -X PATCH \
-            "https://api.cloudflare.com/client/v4/zones/${{ vars.CLOUDFLARE_ZONE_ID }}/settings/always_use_https" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            --data '{"value":"on"}'
+
+          patch_setting() {
+            local setting="$1" data="$2"
+            local response status body
+            response=$(curl -s -w '\n%{http_code}' -X PATCH \
+              "https://api.cloudflare.com/client/v4/zones/${{ vars.CLOUDFLARE_ZONE_ID }}/settings/${setting}" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data "$data")
+            status="${response##*$'\n'}"
+            body="${response%$'\n'*}"
+            echo "PATCH ${setting} -> HTTP ${status}"
+            if [ "$status" -lt 200 ] || [ "$status" -ge 300 ]; then
+              echo "$body"
+              exit 1
+            fi
+          }
+
+          patch_setting ssl '{"value":"strict"}'
+          patch_setting always_use_https '{"value":"on"}'
           # Certificate Transparency Monitoring is deliberately not automated
           # here - no confirmed simple zone-setting endpoint for it like the
           # two above; leave it as a one-time manual dashboard toggle.
