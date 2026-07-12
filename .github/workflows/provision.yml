@@ -81,7 +81,7 @@ jobs:
           ansible-playbook playbook.yml \
             -i "${{ inputs.host }}," \
             -u root \
-            -e "@${RUNNER_TEMP}/extra-vars.json" \
+            -e "@$RUNNER_TEMP/extra-vars.json" \
             "${skip_args[@]}"
 
       - name: Configure Cloudflare zone SSL settings
