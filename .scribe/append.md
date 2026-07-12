@@ -66,8 +66,8 @@ The origin uses a **Cloudflare Origin CA certificate** (ECC), not Let's
 Encrypt/certbot. It's created manually in the Cloudflare dashboard
 (SSL/TLS → Origin Server), covers all six app subdomains (or a wildcard),
 and is placed on the VPS at `/etc/mediscan/tls/origin.{crt,key}` — bind-mounted
-read-only into the `nginx` container (see `app.conf`/`cdn.conf`/`monitor.conf` in
-`infrastructure/docker/nginx/conf.d/`). Cloudflare SSL/TLS mode is **Full
+read-only into the `nginx` container (see `app.conf.template`/`cdn.conf.template`/`monitor.conf.template` in
+`infrastructure/docker/nginx/templates/`). Cloudflare SSL/TLS mode is **Full
 (Strict)**, so Cloudflare validates this cert against its own CA before
 proxying.
 
@@ -172,7 +172,7 @@ git push origin 1.0.0
 
 RustFS (S3-compatible) is proxied through Nginx at the `cdn.*` subdomains,
 read-only (`limit_except GET HEAD { deny all; }` in
-`infrastructure/docker/nginx/conf.d/cdn.conf`) — the app writes to RustFS
+`infrastructure/docker/nginx/templates/cdn.conf.template`) — the app writes to RustFS
 directly over the internal network (`AWS_ENDPOINT=http://rustfs:9000`), never
 through the public CDN path. `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` and
 RustFS's own access/secret keys are the same values, sourced from the
@@ -192,7 +192,7 @@ node-exporter + cAdvisor (metrics), Grafana (dashboards for both).
 
 Grafana is reverse-proxied by Nginx at `https://monitor.mediscan.cloud`
 (production) / `https://monitorstaging.mediscan.cloud` (staging) — see
-`infrastructure/docker/nginx/conf.d/monitor.conf`. Log in with
+`infrastructure/docker/nginx/templates/monitor.conf.template`. Log in with
 `admin` / `$GRAFANA_ADMIN_PASSWORD`.
 
 Query logs in Grafana **Explore** with the Loki datasource:

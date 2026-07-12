@@ -124,6 +124,10 @@ services:
     image: ghcr.io/${GHCR_OWNER}/mediscan-nginx:${IMAGE_TAG}
     restart: unless-stopped
     mem_limit: 256m
+    environment:
+      NGINX_APP_HOST: app.mediscan.cloud
+      NGINX_CDN_HOST: cdn.mediscan.cloud
+      NGINX_MONITOR_HOST: monitor.mediscan.cloud
     ports:
       - "80:80"
       - "443:443"

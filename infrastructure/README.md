@@ -78,4 +78,4 @@ The live VPS was originally set up manually (see `docs/DEPLOYMENT_SETUP.md` for 
 
 ## Observability
 
-Grafana is reverse-proxied at `https://monitor.mediscan.cloud` (production) / `https://monitorstaging.mediscan.cloud` (staging) via `infrastructure/docker/nginx/conf.d/monitor.conf` - log in with `admin` / the environment's `GRAFANA_ADMIN_PASSWORD`. Two dashboards are provisioned out of the box: *Host & Containers* and *nginx & App Logs*.
+Grafana is reverse-proxied at `https://monitor.mediscan.cloud` (production) / `https://monitorstaging.mediscan.cloud` (staging) via `infrastructure/docker/nginx/templates/monitor.conf.template` - log in with `admin` / the environment's `GRAFANA_ADMIN_PASSWORD`. Two dashboards are provisioned out of the box: *Host & Containers* and *nginx & App Logs*.

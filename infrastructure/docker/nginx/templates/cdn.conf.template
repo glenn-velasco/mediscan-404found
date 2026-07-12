@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name cdn.mediscan.cloud cdnstaging.mediscan.cloud;
+    server_name ${NGINX_CDN_HOST};
 
     location / {
         return 301 https://$host$request_uri;
@@ -10,7 +10,7 @@ server {
 server {
     listen 443 ssl;
     http2 on;
-    server_name cdn.mediscan.cloud cdnstaging.mediscan.cloud;
+    server_name ${NGINX_CDN_HOST};
 
     ssl_certificate     /etc/nginx/tls/origin.crt;
     ssl_certificate_key /etc/nginx/tls/origin.key;

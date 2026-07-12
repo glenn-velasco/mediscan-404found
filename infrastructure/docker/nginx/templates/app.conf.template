@@ -1,6 +1,6 @@
 server {
     listen 80;
-    server_name app.mediscan.cloud staging.mediscan.cloud;
+    server_name ${NGINX_APP_HOST};
 
     location /nginx-health {
         access_log off;
@@ -15,7 +15,7 @@ server {
 server {
     listen 443 ssl;
     http2 on;
-    server_name app.mediscan.cloud staging.mediscan.cloud;
+    server_name ${NGINX_APP_HOST};
 
     ssl_certificate     /etc/nginx/tls/origin.crt;
     ssl_certificate_key /etc/nginx/tls/origin.key;

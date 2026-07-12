@@ -64,6 +64,14 @@ services:
   nginx:
     build:
       context: docker/nginx
+    environment:
+      # Only NGINX_APP_HOST is actually reachable in dev (https://localhost:8443
+      # per infrastructure/README.md) - the cdn/monitor hostnames just need
+      # distinct non-empty values so envsubst has something to substitute
+      # and nginx doesn't warn about duplicate server_names.
+      NGINX_APP_HOST: localhost
+      NGINX_CDN_HOST: cdn.localhost
+      NGINX_MONITOR_HOST: monitor.localhost
     ports:
       - "8000:80"
       - "8443:443"

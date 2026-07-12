@@ -37,14 +37,14 @@ The VPS serves the app subdomains, each an **A record → the VPS IP, proxied** 
 |---|---|---|---|
 | A | `app` | `app.mediscan.cloud` | done |
 | A | `staging` | `staging.mediscan.cloud` | done |
-| A | `cdn` | `cdn.mediscan.cloud` | **still needed** - RustFS/CDN reverse proxy (`infrastructure/docker/nginx/conf.d/cdn.conf`) won't be reachable without this |
+| A | `cdn` | `cdn.mediscan.cloud` | **still needed** - RustFS/CDN reverse proxy (`infrastructure/docker/nginx/templates/cdn.conf.template`) won't be reachable without this |
 | A | `cdnstaging` | `cdnstaging.mediscan.cloud` | **still needed**, same reason |
-| A | `monitor` | `monitor.mediscan.cloud` | **still needed** - Grafana reverse proxy (`infrastructure/docker/nginx/conf.d/monitor.conf`) won't be reachable without this |
+| A | `monitor` | `monitor.mediscan.cloud` | **still needed** - Grafana reverse proxy (`infrastructure/docker/nginx/templates/monitor.conf.template`) won't be reachable without this |
 | A | `monitorstaging` | `monitorstaging.mediscan.cloud` | **still needed**, same reason |
 
 Hostnames are kept flat (one level under `mediscan.cloud`, not nested like `cdn.staging.app.mediscan.cloud`) so they're covered by Cloudflare's free Universal SSL / origin cert wildcard without needing Advanced Certificate Manager.
 
-**Whenever a hostname is added, renamed, or removed** (here, in `infrastructure/docker/nginx/conf.d/*.conf`, and in the `tls_domains`/DNS-record lists in `.github/workflows/provision.yml`), re-run `provision.yml` (§6.2) afterward — it's what actually creates/updates the Cloudflare A record *and* reissues the origin cert to cover the new hostname list. Editing the nginx conf files alone does nothing on its own; Nginx will just fail TLS for a hostname that isn't on the cert yet.
+**Whenever a hostname is added, renamed, or removed** (here, in the `NGINX_APP_HOST`/`NGINX_CDN_HOST`/`NGINX_MONITOR_HOST` env vars in `docker-compose.{staging,production}.yml`'s `nginx` service, and in the `tls_domains`/DNS-record lists in `.github/workflows/provision.yml`), re-run `provision.yml` (§6.2) afterward — it's what actually creates/updates the Cloudflare A record *and* reissues the origin cert to cover the new hostname list. Changing those env vars alone does nothing to Cloudflare; Nginx will just fail TLS for a hostname that isn't on the cert yet.
 
 Don't flip these to proxied (orange cloud) until the VPS is actually serving valid HTTPS on those hostnames — see §1.4-1.5 first. If you're provisioning via Ansible (§6.2), the workflow's "Point DNS at this VPS" step does this for all six automatically on every run, upserting by record name.
 
@@ -68,7 +68,7 @@ If you're provisioning via Ansible (§6.2), the workflow's "Configure Cloudflare
 
 Cloudflare dashboard → SSL/TLS → Origin Server → Create Certificate:
 - Key type: **ECC**.
-- Hostnames: needs to cover **all six** app subdomains (`app.mediscan.cloud`, `staging.mediscan.cloud`, `cdn.mediscan.cloud`, `cdnstaging.mediscan.cloud`, `monitor.mediscan.cloud`, `monitorstaging.mediscan.cloud`) or a wildcard (`*.mediscan.cloud` + `mediscan.cloud`) — `nginx`'s `app.conf`/`cdn.conf`/`monitor.conf` (`infrastructure/docker/nginx/conf.d/`) serve all six `server_name`s off the one cert file.
+- Hostnames: needs to cover **all six** app subdomains (`app.mediscan.cloud`, `staging.mediscan.cloud`, `cdn.mediscan.cloud`, `cdnstaging.mediscan.cloud`, `monitor.mediscan.cloud`, `monitorstaging.mediscan.cloud`) or a wildcard (`*.mediscan.cloud` + `mediscan.cloud`) — the one `nginx` image (`infrastructure/docker/nginx/templates/*.conf.template`) is shared by both stacks, each rendering only its own 3 hostnames into `server_name` at container start (via `NGINX_APP_HOST`/`NGINX_CDN_HOST`/`NGINX_MONITOR_HOST`), but the cert itself still needs to cover all six since either stack could end up serving from this VPS.
 - Validity: **30 days** if matching a monthly billing cycle — **this means the cert needs manual renewal every 30 days, or the site goes down.** Put a recurring reminder on this; there's no auto-renewal wired up on this path.
 - Save the certificate and key as `yourdomain.pem` / `yourdomain.key`.
 
