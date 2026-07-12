@@ -13,6 +13,17 @@
     create_home: true
     append: true
 
+- name: Allow passwordless sudo for the deploy user
+  # The account is key-only (no password set), so `sudo` can never collect
+  # one - without this, `--become` (needed to re-run this playbook after
+  # root login is disabled below) fails with "Missing sudo password".
+  copy:
+    dest: "/etc/sudoers.d/{{ deploy_user }}"
+    content: "{{ deploy_user }} ALL=(ALL) NOPASSWD:ALL\n"
+    mode: "0440"
+    validate: "visudo -cf %s"
+  when: deploy_user_sudo
+
 - name: Install the deploy SSH public key(s)
   # A list so one VPS hosting both staging and production (the current
   # topology - see docs/DEPLOYMENT_SETUP.md) can accept deploys from both
