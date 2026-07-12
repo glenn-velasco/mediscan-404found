@@ -121,6 +121,7 @@ jobs:
           LOG_CHANNEL=stderr
           DB_CONNECTION=pgsql
           DB_URL=${{ secrets.DB_URL }}
+          DB_HOST=postgres
           DB_DATABASE=${{ vars.DB_DATABASE }}
           DB_USERNAME=${{ vars.DB_USERNAME }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
