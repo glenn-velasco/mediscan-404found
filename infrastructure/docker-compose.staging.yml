@@ -240,15 +240,7 @@ services:
 
 networks:
   public:
-  # Pinned (not auto-assigned) so bootstrap/app.php can trust this exact
-  # range as a proxy - nginx is the only thing that can ever reach `app`
-  # directly (never on the `public` network), so trusting this subnet is
-  # equivalent to trusting nginx. Must not overlap docker-compose.production.yml's
-  # range, since staging and production run on the same VPS.
   internal:
-    ipam:
-      config:
-        - subnet: 10.89.0.0/24
 
 volumes:
   postgres_staging_data:

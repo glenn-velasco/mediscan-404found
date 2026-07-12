@@ -34,28 +34,24 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Pairs with nginx's real_ip_header CF-Connecting-IP
-        // (infrastructure/docker/nginx/nginx.conf) - trusts Cloudflare's
-        // published edge ranges so $request->ip() reflects the real client.
+        // Trust all direct connections as proxies. `app` (and
+        // horizon/reverb/scheduler) are never on the `public` Docker
+        // network (infrastructure/docker-compose.staging.yml /
+        // .production.yml) - nginx is the only thing that can ever
+        // connect to them directly, so "trust whoever connects directly"
+        // is equivalent to "trust nginx", without needing to know nginx's
+        // exact (and Docker-assigned, not fixed) IP. This also means
+        // nginx's forwarded CF-Connecting-IP-derived X-Forwarded-For
+        // (infrastructure/docker/nginx/nginx.conf's real_ip_header) is
+        // honored, so $request->ip() reflects the real client.
         //
-        // Also trusts the `internal` Docker network's pinned subnets
-        // (infrastructure/docker-compose.staging.yml / .production.yml) -
-        // nginx (not Cloudflare) is the proxy Laravel actually sees, since
-        // `app`/horizon/reverb/scheduler only ever sit on that network.
-        // Without this, X-Forwarded-Proto from nginx is ignored, Laravel
-        // thinks every request is plain HTTP, and any redirect it issues
-        // uses an http:// Location - which browsers block as mixed content
-        // when followed by an Inertia `<Link>` (fetch), even though a full
-        // page load tolerates it via nginx's own http->https bounce.
-        $middleware->trustProxies(at: [
-            '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22',
-            '141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20',
-            '197.234.240.0/22', '198.41.128.0/17', '162.158.0.0/15', '104.16.0.0/13',
-            '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
-            '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32',
-            '2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32',
-            '10.89.0.0/24', '10.89.1.0/24',
-        ]);
+        // Without trusting this hop, X-Forwarded-Proto from nginx is
+        // ignored, Laravel thinks every request is plain HTTP, and any
+        // redirect it issues uses an http:// Location - which browsers
+        // block as mixed content when followed by an Inertia `<Link>`
+        // (fetch), even though a full page load tolerates it via nginx's
+        // own http->https bounce.
+        $middleware->trustProxies(at: '*');
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
