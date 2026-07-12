@@ -1,0 +1,68 @@
+---
+# Auto-issues a Cloudflare Origin CA certificate instead of a manual
+# dashboard paste. Idempotent: skips CSR generation and the API call
+# entirely if a certificate already exists from a previous run.
+
+- name: Ensure TLS directory exists
+  file:
+    path: "{{ tls_cert_dir }}"
+    state: directory
+    mode: '0700'
+
+- name: Check whether an origin certificate already exists
+  stat:
+    path: "{{ tls_cert_dir }}/origin.crt"
+  register: origin_cert_stat
+
+- name: Generate private key + CSR (private key never leaves this box)
+  command: >
+    openssl req -new -newkey rsa:2048 -nodes
+    -keyout {{ tls_cert_dir }}/origin.key
+    -out /tmp/mediscan-origin.csr
+    -subj "/CN={{ tls_domains[0] }}"
+  args:
+    creates: "{{ tls_cert_dir }}/origin.key"
+  when: not origin_cert_stat.stat.exists
+
+- name: Read the generated CSR
+  slurp:
+    src: /tmp/mediscan-origin.csr
+  register: origin_csr_b64
+  when: not origin_cert_stat.stat.exists
+
+- name: Request a Cloudflare Origin CA certificate
+  uri:
+    url: https://api.cloudflare.com/client/v4/certificates
+    method: POST
+    headers:
+      Authorization: "Bearer {{ cloudflare_api_token }}"
+      Content-Type: application/json
+    body_format: json
+    body:
+      hostnames: "{{ tls_domains }}"
+      request_type: origin-rsa
+      requested_validity: 5475
+      csr: "{{ origin_csr_b64.content | b64decode }}"
+    status_code: 200
+  register: origin_cert_response
+  when: not origin_cert_stat.stat.exists
+
+- name: Write the issued origin certificate
+  copy:
+    content: "{{ origin_cert_response.json.result.certificate }}"
+    dest: "{{ tls_cert_dir }}/origin.crt"
+    mode: '0600'
+  when: not origin_cert_stat.stat.exists
+
+- name: Set ownership/permissions on the TLS directory
+  file:
+    path: "{{ tls_cert_dir }}"
+    owner: root
+    group: root
+    mode: '0700'
+    recurse: true
+
+- name: Remove the temporary CSR file
+  file:
+    path: /tmp/mediscan-origin.csr
+    state: absent

@@ -1,0 +1,20 @@
+# Non-secret defaults. Secrets (deploy_ssh_public_keys, cloudflare_api_token,
+# tls_domains for the target environment) are passed as -e extra-vars by
+# .github/workflows/provision.yml from the "provisioning" GitHub Environment -
+# never stored here.
+
+deploy_user: mediscan
+deploy_user_sudo: false
+
+# No admin keys by default - root login is disabled once this role runs, so
+# without at least one of these, manual SSH access is gone until the next
+# provisioning run. Always pass at least your own public key as an extra-var.
+admin_ssh_public_keys: []
+
+firewall_allowed_tcp_ports:
+  - 22
+  - 80
+  - 443
+firewall_cloudflare_only: false
+
+tls_cert_dir: /etc/mediscan/tls

@@ -1,0 +1,50 @@
+---
+- name: Set ufw default policies
+  community.general.ufw:
+    direction: "{{ item.direction }}"
+    policy: "{{ item.policy }}"
+  loop:
+    - { direction: incoming, policy: deny }
+    - { direction: outgoing, policy: allow }
+
+- name: Allow SSH/HTTP/HTTPS from anywhere (default - not Cloudflare-only)
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ firewall_allowed_tcp_ports }}"
+  when: not firewall_cloudflare_only
+
+- name: Always allow SSH from anywhere, even in Cloudflare-only mode
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+  when: firewall_cloudflare_only
+
+- name: Fetch current Cloudflare IPv4 ranges
+  uri:
+    url: https://www.cloudflare.com/ips-v4
+    return_content: true
+  register: cloudflare_ipv4
+  when: firewall_cloudflare_only
+
+- name: Fetch current Cloudflare IPv6 ranges
+  uri:
+    url: https://www.cloudflare.com/ips-v6
+    return_content: true
+  register: cloudflare_ipv6
+  when: firewall_cloudflare_only
+
+- name: Allow 80/443 only from Cloudflare's published ranges
+  community.general.ufw:
+    rule: allow
+    port: "80,443"
+    proto: tcp
+    src: "{{ item }}"
+  loop: "{{ (cloudflare_ipv4.content.split('\n') + cloudflare_ipv6.content.split('\n')) | select('match', '.+') | list }}"
+  when: firewall_cloudflare_only
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled

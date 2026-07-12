@@ -1,0 +1,39 @@
+---
+# Run via .github/workflows/provision.yml (workflow_dispatch), never on a
+# routine push - see infrastructure/README.md and docs/DEPLOYMENT_SETUP.md.
+#
+# One VPS serves both staging and production (current topology), so a
+# single run provisions for both: all four app/cdn hostnames go on the one
+# origin cert nginx serves, and the shared CI deploy key goes on the
+# mediscan user - alongside your own personal key, since root login gets
+# disabled and the CI key's private half only lives in GitHub Secrets.
+#
+# Required extra-vars (passed by the workflow, sourced from the
+# "provisioning" GitHub Environment - never committed):
+#   deploy_ssh_public_keys   - list, the shared CI deploy key from docs/DEPLOYMENT_SETUP.md §2.2
+#   admin_ssh_public_keys    - list, your personal key(s) for manual SSH access
+#   cloudflare_api_token     - Cloudflare API Token with DNS:Edit and SSL and Certificates:Edit permissions
+#   tls_domains              - list, all hostnames the one cert must cover
+#
+# Example:
+#   ansible-playbook playbook.yml -i "<ip>," -u root \
+#     --private-key ~/.ssh/mediscan_bootstrap \
+#     -e deploy_ssh_public_keys='["ssh-ed25519 AAAA...deploy"]' \
+#     -e admin_ssh_public_keys='["ssh-ed25519 AAAA...you"]' \
+#     -e cloudflare_api_token="..." \
+#     -e tls_domains='["app.mediscan.cloud","staging.app.mediscan.cloud","cdn.mediscan.cloud","cdn.staging.app.mediscan.cloud"]'
+
+- name: Provision a MediSCAN VPS
+  hosts: all
+  become: true
+  roles:
+    # base/docker are tagged separately so either can be skipped independently
+    # (--skip-tags base and/or --skip-tags docker) - base's packages
+    # (curl/git/ufw/etc.) are near-universal on any provider image, while
+    # docker is its own question (does this specific image have Docker).
+    # See the provision.yml workflow's "skip_base"/"skip_docker" inputs.
+    - { role: base, tags: [base] }
+    - { role: docker, tags: [docker] }
+    - users
+    - firewall
+    - tls

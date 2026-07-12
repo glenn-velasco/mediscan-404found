@@ -1,0 +1,56 @@
+---
+- name: Create deploy group
+  group:
+    name: "{{ deploy_user }}"
+    state: present
+
+- name: Create non-root deploy user
+  user:
+    name: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    groups: "{{ 'docker,sudo' if deploy_user_sudo else 'docker' }}"
+    shell: /bin/bash
+    create_home: true
+    append: true
+
+- name: Install the deploy SSH public key(s)
+  # A list so one VPS hosting both staging and production (the current
+  # topology - see docs/DEPLOYMENT_SETUP.md) can accept deploys from both
+  # environments' CI keys. Pass a single-item list if this box only ever
+  # serves one environment.
+  authorized_key:
+    user: "{{ deploy_user }}"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ deploy_ssh_public_keys }}"
+
+- name: Install personal admin SSH public key(s)
+  # Root login gets disabled below, and the deploy key above is CI-only
+  # (its private half lives in GitHub Secrets, not on anyone's laptop) -
+  # without this, there'd be no way left to manually SSH in to debug the
+  # box. Pass your own public key(s) (e.g. the one from §3) here.
+  authorized_key:
+    user: "{{ deploy_user }}"
+    key: "{{ item }}"
+    state: present
+  loop: "{{ admin_ssh_public_keys }}"
+
+# Hardening runs AFTER the keys above are installed and only once this task
+# itself confirms the file is in place - order within this file is the
+# safeguard against locking ourselves out (never disable password/root
+# login before the key that replaces them is verifiably on disk).
+- name: Verify the deploy user's authorized_keys was written
+  stat:
+    path: "/home/{{ deploy_user }}/.ssh/authorized_keys"
+  register: authorized_keys_stat
+  failed_when: not authorized_keys_stat.stat.exists
+
+- name: Harden sshd - key-only auth, no root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin no' }
+    - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' }
+  notify: restart sshd
