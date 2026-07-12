@@ -78,10 +78,10 @@ jobs:
           ansible-playbook playbook.yml \
             -i "${{ inputs.host }}," \
             -u root \
-            -e "deploy_ssh_public_keys=${{ steps.vars.outputs.deploy_ssh_public_keys }}" \
-            -e "admin_ssh_public_keys=${{ steps.vars.outputs.admin_ssh_public_keys }}" \
+            -e "deploy_ssh_public_keys='${{ steps.vars.outputs.deploy_ssh_public_keys }}'" \
+            -e "admin_ssh_public_keys='${{ steps.vars.outputs.admin_ssh_public_keys }}'" \
             -e "cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            -e "tls_domains=${{ steps.vars.outputs.tls_domains }}" \
+            -e "tls_domains='${{ steps.vars.outputs.tls_domains }}'" \
             -e "deploy_user_sudo=true" \
             "${skip_args[@]}"
 
