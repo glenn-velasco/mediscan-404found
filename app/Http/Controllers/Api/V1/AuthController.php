@@ -42,18 +42,18 @@ class AuthController extends Controller
         ]);
     }
 
-     /**
-      * @unauthenticated
-      *
-      * @bodyParam device_name string required Name of the device requesting a token. Example: iPhone 15
-      * @bodyParam name string required Full name. Example: Jane Doe
-      * @bodyParam email string required The user's email address. Example: jane.doe@example.com
-      * @bodyParam password string required The account password. Example: Password123!
-      * @bodyParam password_confirmation string required Must match password. Example: Password123!
-      *
-      * @response 201 {"status":201,"message":"Registered.","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"name":"Jane Doe","email":"jane.doe@example.com","email_verified_at":null,"is_active":true}}}
-      * @response 422 {"status":422,"message":"The email field is required.","errors":{"email":["The email field is required."]}}
-      */
+    /**
+     * @unauthenticated
+     *
+     * @bodyParam device_name string required Name of the device requesting a token. Example: iPhone 15
+     * @bodyParam name string required Full name. Example: Jane Doe
+     * @bodyParam email string required The user's email address. Example: jane.doe@example.com
+     * @bodyParam password string required The account password. Example: Password123!
+     * @bodyParam password_confirmation string required Must match password. Example: Password123!
+     *
+     * @response 201 {"status":201,"message":"Registered.","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"name":"Jane Doe","email":"jane.doe@example.com","email_verified_at":null,"is_active":true}}}
+     * @response 422 {"status":422,"message":"The email field is required.","errors":{"email":["The email field is required."]}}
+     */
     public function register(Request $request): JsonResponse
     {
         $request->validate(['device_name' => ['required', 'string']]);

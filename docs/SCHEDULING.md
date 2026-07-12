@@ -7,7 +7,7 @@ Recurring maintenance commands are registered in `routes/console.php` via the `S
 The schedule only fires if something invokes it:
 
 - **Local development**: `php artisan schedule:work` (runs the scheduler in the foreground, ticking every minute). Note that `composer run dev` does **not** start it — start it in a separate terminal if you need scheduled commands to fire locally.
-- **Production**: a single cron entry that runs `php artisan schedule:run` every minute, per the [Laravel scheduler docs](https://laravel.com/docs/scheduling#running-the-scheduler).
+- **Staging/production (containerized)**: the `scheduler` service (`infrastructure/docker-compose.{staging,production}.yml`) runs `php artisan schedule:work` as its own long-running process from the application image, supervised by Docker's `restart: unless-stopped` — no host crontab involved. Chosen over a host `cron` entry calling `schedule:run` because it needs zero extra OS-level dependency inside the image and avoids container-vs-host timezone mismatches.
 
 Every command below can also be run manually at any time (`php artisan <command>`).
 

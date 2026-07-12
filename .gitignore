@@ -6,7 +6,7 @@
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
-/.scribe
+/.scribe/endpoints.cache
 /resources/views/scribe
 /public/vendor/scribe
 /storage/*.key
@@ -38,3 +38,9 @@ _ide_helper_models.php
 frankenphp
 frankenphp-worker.php
 __pycache__
+
+/infrastructure/.env.dev
+/infrastructure/.env.staging
+/infrastructure/.env.production.local
+/infrastructure/docker/nginx/dev-tls/*.crt
+/infrastructure/docker/nginx/dev-tls/*.key
