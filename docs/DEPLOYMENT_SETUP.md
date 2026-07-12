@@ -232,6 +232,7 @@ Then fill in its own secrets/variables (its own **Environment secrets**/**Enviro
 | `AWS_URL` | variable | `https://cdnstaging.mediscan.cloud` |
 | `VITE_REVERB_HOST` | variable | `staging.mediscan.cloud` |
 | `APP_DEBUG` | variable | `true` |
+| `MAIL_FROM_ADDRESS` | variable | `noreply@mediscan.cloud` — must be on the `mediscan.cloud` domain verified with Resend (§4), or Resend rejects the send |
 | `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY` | secret | self-issued — pick any values (e.g. `openssl rand -hex 20` twice), staging's RustFS container just needs to agree with itself |
 | `REVERB_APP_ID` | variable | self-issued, e.g. `1` |
 | `REVERB_APP_SECRET` | secret | self-issued, e.g. `openssl rand -hex 32` |
@@ -257,6 +258,7 @@ Same secrets/variables pattern:
 | `AWS_URL` | variable | `https://cdn.mediscan.cloud` |
 | `VITE_REVERB_HOST` | variable | `app.mediscan.cloud` |
 | `APP_DEBUG` | variable | `false` |
+| `MAIL_FROM_ADDRESS` | variable | `noreply@mediscan.cloud` — same address as staging is fine, since both share the one verified Resend domain (§4) |
 | `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY` | secret | self-issued, separate values from staging's |
 | `REVERB_APP_ID` | variable | self-issued, e.g. `2` (different from staging) |
 | `REVERB_APP_SECRET` | secret | self-issued, separate from staging's |
@@ -287,6 +289,7 @@ This just prints a `base64:...` key without writing it anywhere — run it twice
 1. Create an account, add the `mediscan.cloud` domain.
 2. Add the DNS records Resend gives you, via Cloudflare (§1.2) — wait for propagation.
 3. Generate an API key → goes into the repository-level `RESEND_API_KEY` secret (§3.1).
+4. Set `MAIL_FROM_ADDRESS` (e.g. `noreply@mediscan.cloud`) in both the `staging` and `production` Environment variables (§3.3/§3.4) — Laravel otherwise falls back to its framework default of `hello@example.com` (`config/mail.php`), which Resend rejects since that domain isn't verified on the account.
 
 ---
 

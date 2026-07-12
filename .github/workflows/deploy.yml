@@ -150,6 +150,7 @@ jobs:
           FACE_MATCH_SHARED_SECRET=${{ secrets.FACE_MATCH_SHARED_SECRET }}
           KYC_FACE_MATCH_HARD_FLOOR=0.4
           MAIL_MAILER=resend
+          MAIL_FROM_ADDRESS=${{ vars.MAIL_FROM_ADDRESS }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
           RUSTFS_ACCESS_KEY=${{ secrets.RUSTFS_ACCESS_KEY }}
           RUSTFS_SECRET_KEY=${{ secrets.RUSTFS_SECRET_KEY }}

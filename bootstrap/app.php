@@ -37,6 +37,16 @@ return Application::configure(basePath: dirname(__DIR__))
         // Pairs with nginx's real_ip_header CF-Connecting-IP
         // (infrastructure/docker/nginx/nginx.conf) - trusts Cloudflare's
         // published edge ranges so $request->ip() reflects the real client.
+        //
+        // Also trusts the `internal` Docker network's pinned subnets
+        // (infrastructure/docker-compose.staging.yml / .production.yml) -
+        // nginx (not Cloudflare) is the proxy Laravel actually sees, since
+        // `app`/horizon/reverb/scheduler only ever sit on that network.
+        // Without this, X-Forwarded-Proto from nginx is ignored, Laravel
+        // thinks every request is plain HTTP, and any redirect it issues
+        // uses an http:// Location - which browsers block as mixed content
+        // when followed by an Inertia `<Link>` (fetch), even though a full
+        // page load tolerates it via nginx's own http->https bounce.
         $middleware->trustProxies(at: [
             '173.245.48.0/20', '103.21.244.0/22', '103.22.200.0/22', '103.31.4.0/22',
             '141.101.64.0/18', '108.162.192.0/18', '190.93.240.0/20', '188.114.96.0/20',
@@ -44,6 +54,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '104.24.0.0/14', '172.64.0.0/13', '131.0.72.0/22',
             '2400:cb00::/32', '2606:4700::/32', '2803:f800::/32', '2405:b500::/32',
             '2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32',
+            '10.89.0.0/24', '10.89.1.0/24',
         ]);
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);

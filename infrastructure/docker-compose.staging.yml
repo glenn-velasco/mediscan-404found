@@ -114,6 +114,14 @@ services:
       - redis_data:/data
     networks: [internal]
 
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    restart: unless-stopped
+    mem_limit: 64m
+    environment:
+      REDIS_ADDR: redis:6379
+    networks: [internal]
+
   rustfs-permissions:
     image: busybox
     command: chown -R 10001:10001 /data/rustfs
@@ -232,7 +240,15 @@ services:
 
 networks:
   public:
+  # Pinned (not auto-assigned) so bootstrap/app.php can trust this exact
+  # range as a proxy - nginx is the only thing that can ever reach `app`
+  # directly (never on the `public` network), so trusting this subnet is
+  # equivalent to trusting nginx. Must not overlap docker-compose.production.yml's
+  # range, since staging and production run on the same VPS.
   internal:
+    ipam:
+      config:
+        - subnet: 10.89.0.0/24
 
 volumes:
   postgres_staging_data:

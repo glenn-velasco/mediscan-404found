@@ -1,0 +1,94 @@
+{
+  "title": "Redis & Mail Health",
+  "uid": "mediscan-redis-mail-health",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Redis up",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "refId": "A", "expr": "redis_up" }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Redis connected clients",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "refId": "A", "expr": "redis_connected_clients" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Redis memory used vs max",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "redis_memory_used_bytes", "legendFormat": "used" },
+        { "refId": "B", "expr": "redis_memory_max_bytes", "legendFormat": "max" }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Redis uptime",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        { "refId": "A", "expr": "redis_uptime_in_seconds" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Redis connection errors (app / horizon / reverb / scheduler)",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service=~\"app|horizon|reverb|scheduler\"} |~ \"(?i)(getaddrinfo|redis.*went away)\" [5m]))"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Resend / mail errors",
+      "type": "timeseries",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({service=~\"app|horizon\"} |~ \"(?i)(resend api|not authorized to send emails)\" [5m]))"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Redis & mail error logs",
+      "type": "logs",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "{service=~\"app|horizon|reverb|scheduler\"} |~ \"(?i)(getaddrinfo|redis.*went away|resend api|not authorized to send emails)\""
+        }
+      ]
+    }
+  ]
+}
