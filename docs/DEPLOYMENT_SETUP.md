@@ -199,17 +199,18 @@ Only needed once you're actually setting up or resetting the VPS via Ansible (§
 
 **Create it**: Settings → Environments → New environment → name it exactly `provisioning` (must match `environment: provisioning` in `.github/workflows/provision.yml`) → Configure environment. Its own page has separate **Environment secrets** → **Add secret** and **Environment variables** → **Add variable** buttons — not the same buttons as §3.1.
 
-**Its 5 entries** (2 secrets, 3 variables):
+**Its entries** (2 required secrets + 1 optional, 3 variables):
 
 | Name | Kind | Where the value comes from |
 |---|---|---|
-| `PROVISION_SSH_PRIVATE_KEY` | secret | private half of the bootstrap key (§2.3) — `cat ~/.ssh/mediscan_bootstrap`, paste the whole output including `-----BEGIN...`/`-----END...` |
+| `PROVISION_SSH_PRIVATE_KEY` | secret | private half of the bootstrap key (§2.3) — `cat ~/.ssh/mediscan_bootstrap`, paste the whole output including `-----BEGIN...`/`-----END...`. Only works for the *first* run against a given box — see `ADMIN_SSH_PRIVATE_KEY` below for re-runs |
+| `ADMIN_SSH_PRIVATE_KEY` | secret, optional | private half of your personal key (§2.1) — the same key `ADMIN_SSH_PUBLIC_KEY` below is the public half of. The bootstrap key only authenticates as `root`, and the `users` role permanently disables root SSH login on every run, so `provision.yml` can only connect once per box unless this is set. With it, the workflow auto-detects that root login is closed and falls back to connecting as the sudo-capable `mediscan` user instead — needed to re-run the playbook later (e.g. to reissue the TLS cert after adding a hostname). Leave unset if you'd rather always re-run the playbook by hand from your own machine as `mediscan` — see §6.2 |
 | `CLOUDFLARE_API_TOKEN` | secret | select `mediscan.cloud` zone → **API Tokens** → **Create Token** → name it `CLOUDFLARE_API_TOKEN` → **Edit policy** → **Specified Domains** → search "SSL and Certificates" → check **Edit** → search "dns" → check **Edit** on both **DNS** and **Zone DNS Settings** → search "zone settings" → check **Edit** on **Zone Settings** (needed for the "Configure Cloudflare zone SSL settings" workflow step, which PATCHes `/settings/ssl` and `/settings/always_use_https` — without this permission Cloudflare returns a 403 "Unauthorized to access requested resource") → **Review token** → **Create token** → copy the token value (shown once) |
 | `CLOUDFLARE_ZONE_ID` | variable | Cloudflare dashboard → select the `mediscan.cloud` zone → right sidebar of **Overview** → **Zone ID** |
 | `DEPLOY_SSH_PUBLIC_KEY` | variable | public half of the CI deploy key (§2.2) — same key `SSH_PRIVATE_KEY` (§3.1) is the private half of, reused so the box trusts the exact key it's deployed with |
 | `ADMIN_SSH_PUBLIC_KEY` | variable | public half of your personal key (§2.1) |
 
-When done, the `provisioning` Environment's page lists 2 secrets and 3 variables. This Environment and its entries stay permanently configured — it only runs on manual `workflow_dispatch` (never on a push), and you may need it again for a future VPS reset or reprovision run.
+When done, the `provisioning` Environment's page lists 2-3 secrets and 3 variables (3 secrets if you added `ADMIN_SSH_PRIVATE_KEY`). This Environment and its entries stay permanently configured — it only runs on manual `workflow_dispatch` (never on a push), and you may need it again for a future VPS reset or reprovision run.
 
 ### 3.3 `staging` Environment
 
@@ -325,9 +326,9 @@ Push to `main` → deploys staging. Tag a commit (`git tag v0.1.0 && git push or
 
 ### 6.2 Running `provision.yml` (Ansible)
 
-Automates §1.3-1.5 (DNS A-records, Cloudflare SSL settings, origin cert) and user/firewall/Docker setup on the VPS, in one run, for the one VPS that serves both environments — all four hostnames on one cert, the shared CI deploy key, your personal admin key. Needs §2.3 (bootstrap key) and §3.2 (`provisioning` Environment) done first.
+Automates §1.3-1.5 (DNS A-records, Cloudflare SSL settings, origin cert) and user/firewall/Docker setup on the VPS, in one run, for the one VPS that serves both environments — all six hostnames on one cert, the shared CI deploy key, your personal admin key. Needs §2.3 (bootstrap key) and §3.2 (`provisioning` Environment) done first.
 
-**Prerequisite: a fresh VPS.** `provision.yml` itself never touches the OS install or reinstalls anything — it only connects over SSH and configures whatever's already running (§2.3 explains why; running it repeatedly is safe and idempotent, see below). What it needs going in is root SSH access via the bootstrap key (§2.3) on a box that doesn't already have conflicting state. That's naturally true for:
+**Prerequisite: a fresh VPS for the first run.** `provision.yml` itself never touches the OS install or reinstalls anything — it only connects over SSH and configures whatever's already running. What the *first* run needs going in is root SSH access via the bootstrap key (§2.3) on a box that doesn't already have conflicting state. That's naturally true for:
 - **A brand-new VPS** — already fresh the moment you buy it, nothing to do here.
 - **An existing VPS you want to reset** — only in this case do you reinstall the OS first, from your provider's panel, pasting the bootstrap key's public half for `root` at reinstall time. **This wipes the box** — confirm there's nothing on it you need first (per §5, Supabase/production DB isn't wired up yet, so there shouldn't be live data — double-check `docker compose ps` and any volumes on the VPS first if in doubt). Reinstalling is a manual, destructive, one-off action in your provider's panel, not something `provision.yml` does or triggers — you'd only repeat it if you deliberately wanted to wipe the box again later.
 - **A new or additional VPS** — reuse the same bootstrap keypair from §2.3 (`mediscan_bootstrap.pub`); it isn't tied to any particular box. Paste its public half into the new VPS's root SSH key field at creation time, the same way you would for a reinstall, and point `provision.yml`'s `host` input at the new IP. No need to generate a new bootstrap keypair — the existing `PROVISION_SSH_PRIVATE_KEY` secret still matches it.
@@ -346,8 +347,9 @@ Automates §1.3-1.5 (DNS A-records, Cloudflare SSL settings, origin cert) and us
    - Repo on github.com → **Actions** tab → left sidebar → **provision** (under "All workflows").
    - **Run workflow** dropdown (top right) → branch `main` → fill in **host** (VPS IP) → leave **skip_base**/**skip_docker** unchecked unless step 1 applies → green **Run workflow** button.
    - A new run appears within a few seconds (refresh if not) — click in to watch progress. Requires manual approval only if you've added a required reviewer to the `provisioning` Environment; otherwise starts immediately.
-   - Expected steps in order: checkout → resolve values → load bootstrap key → install Ansible → run playbook (the longest step) → configure Cloudflare SSL → point DNS. All green = it worked.
-   - If it fails on **"Run playbook"**: almost always the bootstrap key doesn't match what you pasted as `root`'s key when the box was created or reinstalled, or `known_hosts` couldn't reach the IP (VPS still booting). Re-running is safe either way — every Ansible role is idempotent (`roles/*/tasks/main.yml`), so a retry converges rather than redoing completed work.
+   - Expected steps in order: checkout → resolve values → load SSH key(s) → install Ansible → run playbook (the longest step) → configure Cloudflare SSL → point DNS. All green = it worked.
+   - The "Run playbook" step first probes whether `root@<host>` still accepts the bootstrap key; if so it connects as `root` (first run on a fresh box — this is also what does the actual hardening). If root login is already closed (any box that's completed a successful run before), it falls back to connecting as `mediscan` with sudo — which only works if you've set the optional `ADMIN_SSH_PRIVATE_KEY` secret (§3.2). Without that secret, a re-run against an already-hardened box fails at this step with `Permission denied (publickey,password)` — in that case, re-run the playbook by hand instead (see the command in the note below).
+   - If it fails on **"Run playbook"** on what should be a *first* run: almost always the bootstrap key doesn't match what you pasted as `root`'s key when the box was created or reinstalled, or `known_hosts` couldn't reach the IP (VPS still booting).
 
 3. **Verify access**:
    - As yourself: `ssh mediscan@<vps-ip>` using your personal key (§2.1) — confirms `ADMIN_SSH_PUBLIC_KEY` installed correctly.
@@ -356,7 +358,19 @@ Automates §1.3-1.5 (DNS A-records, Cloudflare SSL settings, origin cert) and us
 
 4. **Deploy**: §6.1 — `SSH_HOST`/`SSH_USER`/`SSH_PRIVATE_KEY` (§3.1) still point at the same IP and user, unchanged.
 
-Re-running `provision.yml` later (e.g. to add a firewall rule, or rotate the admin/deploy keys) is safe for the same idempotency reason — it converges rather than reinstalling from scratch.
+Every Ansible role is idempotent (`roles/*/tasks/main.yml`), so re-running `provision.yml` later (e.g. to add a firewall rule, rotate keys, or reissue the TLS cert for a new hostname) converges rather than redoing or reinstalling completed work — it's the *connecting* part that changes after the first run (see the `root`-vs-`mediscan` note in step 2 above), not the playbook's safety to rerun.
+
+If you didn't set `ADMIN_SSH_PRIVATE_KEY` and need to rerun against an already-hardened box, do it from your own machine as `mediscan` instead of via the workflow:
+```sh
+cd infrastructure/provision
+ansible-playbook playbook.yml -i "<vps-ip>," -u mediscan --become \
+  --private-key ~/.ssh/<your-personal-key> \
+  -e deploy_ssh_public_keys='["<deploy pubkey>"]' \
+  -e admin_ssh_public_keys='["<your pubkey>"]' \
+  -e cloudflare_api_token="<token>" \
+  -e tls_domains='["app.mediscan.cloud","staging.mediscan.cloud","cdn.mediscan.cloud","cdnstaging.mediscan.cloud","monitor.mediscan.cloud","monitorstaging.mediscan.cloud"]' \
+  -e deploy_user_sudo=true
+```
 
 ---
 

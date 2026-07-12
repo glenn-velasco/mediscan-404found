@@ -52,10 +52,22 @@ jobs:
               deploy_user_sudo: $deploy_sudo
             }' > /tmp/mediscan-provision/extra-vars.json
 
-      - name: Load bootstrap SSH key
+      - name: Load SSH key(s)
+        # The bootstrap key only authenticates as root, and root login gets
+        # permanently disabled by the users role's first successful run
+        # (infrastructure/provision/roles/users/tasks/main.yml) - so it only
+        # ever works once, on a genuinely fresh VPS. ADMIN_SSH_PRIVATE_KEY
+        # (optional) is the private half of ADMIN_SSH_PUBLIC_KEY below,
+        # which the users role installs on the sudo-capable `mediscan`
+        # user - loading it here lets re-runs against an already-hardened
+        # box (e.g. just to reissue the TLS cert for new hostnames) connect
+        # as `mediscan` with sudo instead of root. Leave it unset if you'd
+        # rather always re-run by hand from your own machine as `mediscan`.
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ secrets.PROVISION_SSH_PRIVATE_KEY }}
+          ssh-private-key: |
+            ${{ secrets.PROVISION_SSH_PRIVATE_KEY }}
+            ${{ secrets.ADMIN_SSH_PRIVATE_KEY }}
 
       - name: Set up Python + Ansible
         run: |
@@ -80,9 +92,24 @@ jobs:
           skip_args=()
           [ -n "$skip_tags" ] && skip_args=(--skip-tags "$skip_tags")
 
+          # First run on a fresh box: root login still works, connect as
+          # root (the users role hasn't hardened sshd yet). Re-run on an
+          # already-provisioned box: root login is disabled, fall back to
+          # the sudo-capable `mediscan` user (requires ADMIN_SSH_PRIVATE_KEY
+          # to have been loaded above).
+          if ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@"${{ inputs.host }}" true 2>/dev/null; then
+            connect_user=root
+            become_args=()
+          else
+            connect_user=mediscan
+            become_args=(--become)
+          fi
+          echo "Connecting as $connect_user"
+
           ansible-playbook playbook.yml \
             -i "${{ inputs.host }}," \
-            -u root \
+            -u "$connect_user" \
+            "${become_args[@]}" \
             -e @/tmp/mediscan-provision/extra-vars.json \
             "${skip_args[@]}"
 
