@@ -130,10 +130,10 @@ services:
     mem_limit: 256m
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-      GF_SERVER_ROOT_URL: http://localhost:3000
+      GF_SERVER_ROOT_URL: https://monitor.mediscan.cloud
     volumes:
       - grafana_data:/var/lib/grafana
-    networks: [internal] # not publicly exposed - reach it via an SSH tunnel
+    networks: [internal] # exposed via nginx at monitor.mediscan.cloud
 
   loki:
     image: ghcr.io/${GHCR_OWNER}/mediscan-loki:${IMAGE_TAG}

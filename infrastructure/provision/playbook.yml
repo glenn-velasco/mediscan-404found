@@ -3,8 +3,8 @@
 # routine push - see infrastructure/README.md and docs/DEPLOYMENT_SETUP.md.
 #
 # One VPS serves both staging and production (current topology), so a
-# single run provisions for both: all four app/cdn hostnames go on the one
-# origin cert nginx serves, and the shared CI deploy key goes on the
+# single run provisions for both: all six app/cdn/monitor hostnames go on
+# the one origin cert nginx serves, and the shared CI deploy key goes on the
 # mediscan user - alongside your own personal key, since root login gets
 # disabled and the CI key's private half only lives in GitHub Secrets.
 #
@@ -21,7 +21,7 @@
 #     -e deploy_ssh_public_keys='["ssh-ed25519 AAAA...deploy"]' \
 #     -e admin_ssh_public_keys='["ssh-ed25519 AAAA...you"]' \
 #     -e cloudflare_api_token="..." \
-#     -e tls_domains='["app.mediscan.cloud","staging.app.mediscan.cloud","cdn.mediscan.cloud","cdn.staging.app.mediscan.cloud"]'
+#     -e tls_domains='["app.mediscan.cloud","staging.mediscan.cloud","cdn.mediscan.cloud","cdnstaging.mediscan.cloud","monitor.mediscan.cloud","monitorstaging.mediscan.cloud"]'
 
 - name: Provision a MediSCAN VPS
   hosts: all

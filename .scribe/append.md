@@ -12,8 +12,8 @@ source of truth.
                          Cloudflare (TLS + edge cache)
                                 │
                         app.mediscan.cloud
-                     staging.app.mediscan.cloud
-                       cdn.*, cdn.staging.app.*
+                       staging.mediscan.cloud
+                    cdn.*, cdnstaging.*, monitor.*
                                 │ :443 (Origin CA cert, Full Strict)
                     ┌───────────┴────────────┐
                     │  Nginx (port 80 → 301, │
@@ -49,7 +49,7 @@ of PHP, Octane serves HTTP directly and Nginx reverse-proxies to it.
 | **rustfs** / **rustfs-permissions** | S3-compatible object storage; `rustfs-permissions` is a one-shot `chown` init container | 9000 | |
 | **postgres** | PostgreSQL 18 | 5432 | **Staging only** — production uses Supabase via `DB_URL` |
 | **prometheus** | Metrics scraping (14d retention) | — | |
-| **grafana** | Dashboards (Loki + Prometheus datasources) | 3000 | **Not publicly exposed** — `internal` network only, reach via SSH tunnel |
+| **grafana** | Dashboards (Loki + Prometheus datasources) | 3000 | Reverse-proxied publicly at `monitor.*` via Nginx |
 | **loki** | Log storage | 3100 | |
 | **promtail** | Docker log scraper → Loki | — | Reads `/var/run/docker.sock` |
 | **node-exporter** | Host metrics | — | |
@@ -64,9 +64,9 @@ and GitHub Environment secrets are used, not the images themselves.
 
 The origin uses a **Cloudflare Origin CA certificate** (ECC), not Let's
 Encrypt/certbot. It's created manually in the Cloudflare dashboard
-(SSL/TLS → Origin Server), covers all four app subdomains (or a wildcard),
+(SSL/TLS → Origin Server), covers all six app subdomains (or a wildcard),
 and is placed on the VPS at `/etc/mediscan/tls/origin.{crt,key}` — bind-mounted
-read-only into the `nginx` container (see `app.conf`/`cdn.conf` in
+read-only into the `nginx` container (see `app.conf`/`cdn.conf`/`monitor.conf` in
 `infrastructure/docker/nginx/conf.d/`). Cloudflare SSL/TLS mode is **Full
 (Strict)**, so Cloudflare validates this cert against its own CA before
 proxying.
@@ -82,12 +82,16 @@ but isn't wired into the current manual VPS.
 | Domain | Environment | Status |
 |---|---|---|
 | `app.mediscan.cloud` | Production | Live |
-| `staging.app.mediscan.cloud` | Staging | Live |
+| `staging.mediscan.cloud` | Staging | Live |
 | `cdn.mediscan.cloud` | Production object storage | **DNS record still needed** |
-| `cdn.staging.app.mediscan.cloud` | Staging object storage | **DNS record still needed** |
+| `cdnstaging.mediscan.cloud` | Staging object storage | **DNS record still needed** |
+| `monitor.mediscan.cloud` | Production Grafana | **DNS record still needed** |
+| `monitorstaging.mediscan.cloud` | Staging Grafana | **DNS record still needed** |
 
 All are A records → the VPS IP, proxied (orange cloud) through Cloudflare.
-Grafana has **no public domain** — see Monitoring below.
+Hostnames are kept flat (one level under `mediscan.cloud`) so the origin
+cert / Cloudflare's free Universal SSL covers them without a wildcard on a
+nested subdomain.
 
 ## CI/CD Pipeline
 
@@ -186,14 +190,10 @@ Browser → cdn.mediscan.cloud/<bucket>/abc.jpg
 Self-hosted observability stack: Loki + Promtail (logs), Prometheus +
 node-exporter + cAdvisor (metrics), Grafana (dashboards for both).
 
-**Grafana is not publicly exposed** — it's on the `internal` Docker network
-only (`docker-compose.production.yml`: `grafana: networks: [internal] # not
-publicly exposed - reach it via an SSH tunnel`). To access it:
-
-```bash
-ssh -L 3000:localhost:3000 mediscan@<vps-ip>
-# then open http://localhost:3000 — login: admin / $GRAFANA_ADMIN_PASSWORD
-```
+Grafana is reverse-proxied by Nginx at `https://monitor.mediscan.cloud`
+(production) / `https://monitorstaging.mediscan.cloud` (staging) — see
+`infrastructure/docker/nginx/conf.d/monitor.conf`. Log in with
+`admin` / `$GRAFANA_ADMIN_PASSWORD`.
 
 Query logs in Grafana **Explore** with the Loki datasource:
 

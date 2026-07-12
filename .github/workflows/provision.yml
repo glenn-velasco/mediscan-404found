@@ -48,7 +48,7 @@ jobs:
               deploy_ssh_public_keys: [$deploy_key],
               admin_ssh_public_keys: [$admin_key],
               cloudflare_api_token: $cf_token,
-              tls_domains: ["app.mediscan.cloud","staging.app.mediscan.cloud","cdn.mediscan.cloud","cdn.staging.app.mediscan.cloud"],
+              tls_domains: ["app.mediscan.cloud","staging.mediscan.cloud","cdn.mediscan.cloud","cdnstaging.mediscan.cloud","monitor.mediscan.cloud","monitorstaging.mediscan.cloud"],
               deploy_user_sudo: $deploy_sudo
             }' > /tmp/mediscan-provision/extra-vars.json
 
@@ -116,7 +116,7 @@ jobs:
       - name: Point DNS at this VPS (Cloudflare API - upsert by record name)
         run: |
           set -e
-          for name in app.mediscan.cloud staging.app.mediscan.cloud cdn.mediscan.cloud cdn.staging.app.mediscan.cloud; do
+          for name in app.mediscan.cloud staging.mediscan.cloud cdn.mediscan.cloud cdnstaging.mediscan.cloud monitor.mediscan.cloud monitorstaging.mediscan.cloud; do
             existing_id=$(curl -sf -X GET \
               "https://api.cloudflare.com/client/v4/zones/${{ vars.CLOUDFLARE_ZONE_ID }}/dns_records?type=A&name=${name}" \
               -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \

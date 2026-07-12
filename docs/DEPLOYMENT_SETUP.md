@@ -36,11 +36,15 @@ The VPS serves the app subdomains, each an **A record → the VPS IP, proxied** 
 | Type | Name | Result | Status |
 |---|---|---|---|
 | A | `app` | `app.mediscan.cloud` | done |
-| A | `staging.app` | `staging.app.mediscan.cloud` | done |
+| A | `staging` | `staging.mediscan.cloud` | done |
 | A | `cdn` | `cdn.mediscan.cloud` | **still needed** - RustFS/CDN reverse proxy (`infrastructure/docker/nginx/conf.d/cdn.conf`) won't be reachable without this |
-| A | `cdn.staging.app` | `cdn.staging.app.mediscan.cloud` | **still needed**, same reason |
+| A | `cdnstaging` | `cdnstaging.mediscan.cloud` | **still needed**, same reason |
+| A | `monitor` | `monitor.mediscan.cloud` | **still needed** - Grafana reverse proxy (`infrastructure/docker/nginx/conf.d/monitor.conf`) won't be reachable without this |
+| A | `monitorstaging` | `monitorstaging.mediscan.cloud` | **still needed**, same reason |
 
-Don't flip these to proxied (orange cloud) until the VPS is actually serving valid HTTPS on those hostnames — see §1.4-1.5 first. If you're provisioning via Ansible (§6.2), the workflow's "Point DNS at this VPS" step does this for all four automatically on every run, upserting by record name.
+Hostnames are kept flat (one level under `mediscan.cloud`, not nested like `cdn.staging.app.mediscan.cloud`) so they're covered by Cloudflare's free Universal SSL / origin cert wildcard without needing Advanced Certificate Manager.
+
+Don't flip these to proxied (orange cloud) until the VPS is actually serving valid HTTPS on those hostnames — see §1.4-1.5 first. If you're provisioning via Ansible (§6.2), the workflow's "Point DNS at this VPS" step does this for all six automatically on every run, upserting by record name.
 
 ### 1.4 SSL/TLS — Cloudflare edge settings
 
@@ -55,14 +59,14 @@ If you're provisioning via Ansible (§6.2), the workflow's "Configure Cloudflare
 
 ### 1.5 SSL/TLS — origin certificate (CSR / origin server)
 
-**Ansible does this end-to-end** (§6.2) — skip straight to that section if you're using it. The `tls` role calls Cloudflare's Origin CA API itself, generates the private key + CSR *on the VPS* (the private key never leaves it), requests a cert covering all four hostnames in one shot, and writes it straight to `/etc/mediscan/tls/origin.crt`/`origin.key`. Issued for 15 years, so no renewal reminder needed.
+**Ansible does this end-to-end** (§6.2) — skip straight to that section if you're using it. The `tls` role calls Cloudflare's Origin CA API itself, generates the private key + CSR *on the VPS* (the private key never leaves it), requests a cert covering all six hostnames in one shot, and writes it straight to `/etc/mediscan/tls/origin.crt`/`origin.key`. Issued for 15 years, so no renewal reminder needed.
 
 <details>
 <summary>Manual way (historical — only relevant if you're not using Ansible)</summary>
 
 Cloudflare dashboard → SSL/TLS → Origin Server → Create Certificate:
 - Key type: **ECC**.
-- Hostnames: needs to cover **all four** app subdomains (`app.mediscan.cloud`, `staging.app.mediscan.cloud`, `cdn.mediscan.cloud`, `cdn.staging.app.mediscan.cloud`) or a wildcard (`*.mediscan.cloud` + `mediscan.cloud`) — `nginx`'s `app.conf`/`cdn.conf` (`infrastructure/docker/nginx/conf.d/`) serve all four `server_name`s off the one cert file.
+- Hostnames: needs to cover **all six** app subdomains (`app.mediscan.cloud`, `staging.mediscan.cloud`, `cdn.mediscan.cloud`, `cdnstaging.mediscan.cloud`, `monitor.mediscan.cloud`, `monitorstaging.mediscan.cloud`) or a wildcard (`*.mediscan.cloud` + `mediscan.cloud`) — `nginx`'s `app.conf`/`cdn.conf`/`monitor.conf` (`infrastructure/docker/nginx/conf.d/`) serve all six `server_name`s off the one cert file.
 - Validity: **30 days** if matching a monthly billing cycle — **this means the cert needs manual renewal every 30 days, or the site goes down.** Put a recurring reminder on this; there's no auto-renewal wired up on this path.
 - Save the certificate and key as `yourdomain.pem` / `yourdomain.key`.
 
@@ -219,9 +223,9 @@ Then fill in its own secrets/variables (its own **Environment secrets**/**Enviro
 | `DB_PASSWORD` | secret | pick a password for staging's own local Postgres container, e.g. `openssl rand -hex 20` — the container gets created fresh from this value, so any password you choose becomes correct |
 | `DB_DATABASE` | variable | `mediscan` |
 | `DB_USERNAME` | variable | `mediscan` |
-| `APP_URL` | variable | `https://staging.app.mediscan.cloud` |
-| `AWS_URL` | variable | `https://cdn.staging.app.mediscan.cloud` |
-| `VITE_REVERB_HOST` | variable | `staging.app.mediscan.cloud` |
+| `APP_URL` | variable | `https://staging.mediscan.cloud` |
+| `AWS_URL` | variable | `https://cdnstaging.mediscan.cloud` |
+| `VITE_REVERB_HOST` | variable | `staging.mediscan.cloud` |
 | `APP_DEBUG` | variable | `true` |
 | `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY` | secret | self-issued — pick any values (e.g. `openssl rand -hex 20` twice), staging's RustFS container just needs to agree with itself |
 | `REVERB_APP_ID` | variable | self-issued, e.g. `1` |
@@ -232,7 +236,7 @@ Then fill in its own secrets/variables (its own **Environment secrets**/**Enviro
 | `FACE_MATCH_SHARED_SECRET` | secret | self-issued, e.g. `openssl rand -hex 32` — only needs to match between `app` and `face-match` *within* staging, nowhere else |
 | `GRAFANA_ADMIN_PASSWORD` | secret | pick a password for staging's Grafana login |
 
-Leave `DB_URL` **unset** — Laravel falls back to `DB_PASSWORD`/`DB_DATABASE`/`DB_USERNAME` above when it's empty (§5 explains why staging uses a local container instead).
+Leave `DB_URL` **unset** — Laravel falls back to `DB_PASSWORD`/`DB_DATABASE`/`DB_USERNAME` above when it's empty (§5 explains why staging uses a local container instead). `DB_HOST` doesn't need an entry here — the deploy workflow hardcodes it to `postgres` (the compose service name) in the shipped `.env`.
 
 ### 3.4 `production` Environment
 
