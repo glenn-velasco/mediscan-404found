@@ -1,5 +1,5 @@
 {
-  "title": "nginx & App Logs",
+  "title": "nginx & App Logs (deprecated — use Services)",
   "uid": "mediscan-nginx-app-logs",
   "schemaVersion": 39,
   "version": 1,
@@ -10,56 +10,14 @@
   "panels": [
     {
       "id": 1,
-      "title": "nginx request volume",
-      "type": "timeseries",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(count_over_time({service=\"nginx\"} [1m]))"
-        }
-      ]
-    },
-    {
-      "id": 2,
-      "title": "nginx 5xx rate",
-      "type": "timeseries",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(count_over_time({service=\"nginx\"} |~ \" 5[0-9]{2} \" [1m]))"
-        }
-      ]
-    },
-    {
-      "id": 3,
-      "title": "Error log volume by service",
-      "type": "timeseries",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum by (service) (count_over_time({project=~\".+\"} |~ \"(?i)error\" [5m]))",
-          "legendFormat": "{{service}}"
-        }
-      ]
-    },
-    {
-      "id": 4,
-      "title": "app / horizon / scheduler / reverb logs",
-      "type": "logs",
-      "datasource": { "type": "loki", "uid": "loki" },
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 16 },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "{service=~\"app|horizon|scheduler|reverb\"}"
-        }
-      ]
+      "title": "This dashboard is deprecated — use 'Services' instead",
+      "type": "text",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 0 },
+      "options": {
+        "content": "# Dashboard moved\n\nAll metrics and logs have been moved to the **Services** dashboard with per-service rows (app, horizon, scheduler, nginx, reverb).\n\nThis dashboard is kept for reference and will be removed in a future update.",
+        "mode": "markdown"
+      }
     }
   ]
 }

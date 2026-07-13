@@ -1,0 +1,49 @@
+groups:
+  - name: mediscan
+    interval: 30s
+
+    rules:
+      - alert: AppDown
+        expr: up{job="app"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "App container is down"
+          description: "The app service has been unreachable for 5 minutes."
+
+      - alert: NodeExporterDown
+        expr: up{job="node-exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node exporter is down"
+          description: "The node-exporter has been unreachable for 5 minutes."
+
+      - alert: RedisExporterDown
+        expr: up{job="redis-exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis exporter is down"
+          description: "The redis-exporter has been unreachable for 5 minutes."
+
+      - alert: HostHighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host memory usage > 85%"
+          description: "Host memory usage is at {{ $value }}%."
+
+      - alert: HostDiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host disk space low (< 15%)"
+          description: "Host disk is at {{ $value }}% available."

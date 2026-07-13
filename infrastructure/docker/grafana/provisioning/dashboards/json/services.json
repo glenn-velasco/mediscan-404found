@@ -1,0 +1,301 @@
+{
+  "title": "Services",
+  "uid": "mediscan-services",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": { "from": "now-6h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "row",
+      "title": "App",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "panels": [
+        {
+          "id": 2,
+          "title": "HTTP request rate",
+          "type": "timeseries",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 6, "w": 12, "x": 0, "y": 1 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(count_over_time({service=\"app\"} [1m]))",
+              "legendFormat": "requests"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Error rate",
+          "type": "timeseries",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 6, "w": 12, "x": 12, "y": 1 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(count_over_time({service=\"app\"} |~ \"(?i)error|exception\" [1m]))",
+              "legendFormat": "errors"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Users total",
+          "type": "stat",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 4, "w": 6, "x": 0, "y": 7 },
+          "targets": [
+            { "refId": "A", "expr": "users_total" }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Jobs per minute",
+          "type": "stat",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 4, "w": 6, "x": 6, "y": 7 },
+          "targets": [
+            { "refId": "A", "expr": "horizon_jobs_per_minute" }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Container CPU",
+          "type": "timeseries",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 4, "w": 6, "x": 12, "y": 7 },
+          "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\".*mediscan.*app.*\"}[5m])) * 100",
+              "legendFormat": "{{name}}"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Container memory",
+          "type": "timeseries",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 4, "w": 6, "x": 18, "y": 7 },
+          "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (name) (container_memory_usage_bytes{name=~\".*mediscan.*app.*\"})",
+              "legendFormat": "{{name}}"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "App logs",
+          "type": "logs",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 11 },
+          "targets": [
+            { "refId": "A", "expr": "{service=\"app\"}" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "row",
+      "title": "Horizon",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 19 },
+      "panels": [
+        {
+          "id": 10,
+          "title": "Jobs per minute",
+          "type": "timeseries",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 6, "w": 8, "x": 0, "y": 1 },
+          "targets": [
+            { "refId": "A", "expr": "horizon_jobs_per_minute", "legendFormat": "jobs/min" }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "Failed recent jobs",
+          "type": "timeseries",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 6, "w": 8, "x": 8, "y": 1 },
+          "targets": [
+            { "refId": "A", "expr": "horizon_failed_recent_jobs", "legendFormat": "failed" }
+          ]
+        },
+        {
+          "id": 12,
+          "title": "Current workload",
+          "type": "timeseries",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 6, "w": 8, "x": 16, "y": 1 },
+          "targets": [
+            { "refId": "A", "expr": "horizon_current_workload", "legendFormat": "workload" }
+          ]
+        },
+        {
+          "id": 13,
+          "title": "Horizon error logs",
+          "type": "logs",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 7 },
+          "targets": [
+            { "refId": "A", "expr": "{service=\"horizon\"} |~ \"(?i)error|exception\"" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "row",
+      "title": "Scheduler",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+      "panels": [
+        {
+          "id": 15,
+          "title": "Error rate",
+          "type": "timeseries",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 6, "w": 12, "x": 0, "y": 1 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(count_over_time({service=\"scheduler\"} |~ \"(?i)error|exception\" [5m]))",
+              "legendFormat": "errors"
+            }
+          ]
+        },
+        {
+          "id": 16,
+          "title": "Container memory",
+          "type": "timeseries",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 6, "w": 12, "x": 12, "y": 1 },
+          "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (name) (container_memory_usage_bytes{name=~\".*mediscan.*scheduler.*\"})",
+              "legendFormat": "{{name}}"
+            }
+          ]
+        },
+        {
+          "id": 17,
+          "title": "Scheduler logs",
+          "type": "logs",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 7 },
+          "targets": [
+            { "refId": "A", "expr": "{service=\"scheduler\"}" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "type": "row",
+      "title": "nginx",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 33 },
+      "panels": [
+        {
+          "id": 19,
+          "title": "Request volume",
+          "type": "timeseries",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 6, "w": 12, "x": 0, "y": 1 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(count_over_time({service=\"nginx\"} [1m]))",
+              "legendFormat": "requests"
+            }
+          ]
+        },
+        {
+          "id": 20,
+          "title": "5xx rate",
+          "type": "timeseries",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 6, "w": 12, "x": 12, "y": 1 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(count_over_time({service=\"nginx\"} |~ \" 5[0-9]{2} \" [1m]))",
+              "legendFormat": "5xx"
+            }
+          ]
+        },
+        {
+          "id": 21,
+          "title": "nginx logs",
+          "type": "logs",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 7 },
+          "targets": [
+            { "refId": "A", "expr": "{service=\"nginx\"}" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "type": "row",
+      "title": "Reverb",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 },
+      "panels": [
+        {
+          "id": 23,
+          "title": "Error rate",
+          "type": "timeseries",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 6, "w": 12, "x": 0, "y": 1 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(count_over_time({service=\"reverb\"} |~ \"(?i)error|exception\" [5m]))",
+              "legendFormat": "errors"
+            }
+          ]
+        },
+        {
+          "id": 24,
+          "title": "Container memory",
+          "type": "timeseries",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 6, "w": 12, "x": 12, "y": 1 },
+          "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (name) (container_memory_usage_bytes{name=~\".*mediscan.*reverb.*\"})",
+              "legendFormat": "{{name}}"
+            }
+          ]
+        },
+        {
+          "id": 25,
+          "title": "Reverb logs",
+          "type": "logs",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 7 },
+          "targets": [
+            { "refId": "A", "expr": "{service=\"reverb\"}" }
+          ]
+        }
+      ]
+    }
+  ]
+}

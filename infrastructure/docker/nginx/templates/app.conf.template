@@ -69,6 +69,11 @@ server {
         add_header Cache-Control "public, max-age=3600, must-revalidate";
     }
 
+    location ^~ /prometheus {
+        access_log off;
+        return 404;
+    }
+
     location ~* ^/(favicon\.ico|favicon\.svg|apple-touch-icon\.png|robots\.txt|sitemap\.xml)$ {
         set $app_upstream app:8000;
         proxy_pass http://$app_upstream;

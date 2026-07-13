@@ -176,6 +176,17 @@ services:
       - rustfs
     networks: [public, internal]
 
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    restart: unless-stopped
+    mem_limit: 64m
+    environment:
+      DATA_SOURCE_NAME: postgresql://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_DATABASE}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [internal]
+
   prometheus:
     image: ghcr.io/${GHCR_OWNER}/mediscan-prometheus:${IMAGE_TAG}
     command:
