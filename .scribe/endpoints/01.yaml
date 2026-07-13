@@ -27,16 +27,16 @@ endpoints:
       email:
         custom: []
         name: email
-        description: 'Must be a valid email address. Must not be greater than 255 characters.'
+        description: "The user's email address."
         required: true
-        example: gbailey@example.net
+        example: jane.doe@example.com
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      email: gbailey@example.net
+      email: jane.doe@example.com
     fileParameters: []
     responses:
       -
@@ -82,34 +82,34 @@ endpoints:
       token:
         custom: []
         name: token
-        description: ''
+        description: 'The password reset token from the email.'
         required: true
-        example: architecto
+        example: abc123def456
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
         deprecated: false
       email:
         custom: []
         name: email
-        description: 'Must be a valid email address. Must not be greater than 255 characters.'
+        description: "The user's email address."
         required: true
-        example: zbailey@example.net
+        example: jane.doe@example.com
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
         deprecated: false
       password:
         custom: []
         name: password
-        description: ''
+        description: 'The new password.'
         required: true
-        example: '|]|{+-'
+        example: NewPassword123!
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
         deprecated: false
       password_confirmation:
@@ -117,17 +117,17 @@ endpoints:
         name: password_confirmation
         description: 'Must match password.'
         required: true
-        example: Password123!
+        example: NewPassword123!
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      token: architecto
-      email: zbailey@example.net
-      password: '|]|{+-'
-      password_confirmation: Password123!
+      token: abc123def456
+      email: jane.doe@example.com
+      password: NewPassword123!
+      password_confirmation: NewPassword123!
     fileParameters: []
     responses:
       -

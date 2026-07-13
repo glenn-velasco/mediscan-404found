@@ -132,7 +132,7 @@ endpoints:
       -
         custom: []
         status: 201
-        content: '{"status":201,"message":"Envelope submitted.","data":{"id":1,"sender_id":2,"recipient_id":3,"envelope_type":"allergy_verification","status":"pending","expires_at":"2026-10-08T00:00:00.000000Z","created_at":"2026-01-01T00:00:00.000000Z"}}'
+        content: '{"status":201,"message":"Envelope submitted.","data":{"id":1,"sender_id":2,"recipient_id":3,"envelope_type":"allergy_verification","ciphertext":"<base64-encoded-sealed-box-ciphertext>","status":"pending","expires_at":"2026-10-08T00:00:00.000000Z","acknowledged_at":null,"created_at":"2026-01-01T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -

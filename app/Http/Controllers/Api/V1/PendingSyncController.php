@@ -23,7 +23,7 @@ class PendingSyncController extends Controller
      * The mobile app calls this on startup or when triggered by a broadcast notification.
      * Envelopes are ordered by creation time (oldest first) for consistent application order.
      *
-     * @response 200 {"status":200,"message":"Success","data":[{"id":1,"sender_id":2,"envelope_type":"allergy_verification","created_at":"2026-01-01T00:00:00.000000Z"}]}
+     * @response 200 {"status":200,"message":"Success","data":{"envelopes":[{"id":1,"sender_id":2,"recipient_id":1,"envelope_type":"allergy_verification","ciphertext":"<base64-encoded-sealed-box-ciphertext>","status":"pending","expires_at":"2026-10-08T00:00:00.000000Z","acknowledged_at":null,"created_at":"2026-01-01T00:00:00.000000Z"}]}}
      * @response 403 {"status":403,"message":"Your account has been deactivated.","errors":null}
      */
     public function index(Request $request): JsonResponse

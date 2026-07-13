@@ -48,7 +48,7 @@ class ProfessionalSyncController extends Controller
      * @bodyParam ciphertext string required Base64-encoded sealed-box ciphertext. Example: abc123def456...
      * @bodyParam envelope_type string required Type/category of the payload. One of: allergy_verification, transfusion_witness, general_note. Example: allergy_verification
      *
-     * @response 201 {"status":201,"message":"Envelope submitted.","data":{"id":1,"sender_id":2,"recipient_id":3,"envelope_type":"allergy_verification","status":"pending","expires_at":"2026-10-08T00:00:00.000000Z","created_at":"2026-01-01T00:00:00.000000Z"}}
+     * @response 201 {"status":201,"message":"Envelope submitted.","data":{"id":1,"sender_id":2,"recipient_id":3,"envelope_type":"allergy_verification","ciphertext":"<base64-encoded-sealed-box-ciphertext>","status":"pending","expires_at":"2026-10-08T00:00:00.000000Z","acknowledged_at":null,"created_at":"2026-01-01T00:00:00.000000Z"}}
      * @response 422 {"status":422,"message":"The ciphertext field is required.","errors":{"ciphertext":["The ciphertext field is required."]}}
      */
     public function submitEnvelope(SubmitSyncEnvelopeRequest $request, User $patient): JsonResponse

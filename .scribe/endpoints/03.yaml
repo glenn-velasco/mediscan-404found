@@ -28,28 +28,28 @@ endpoints:
       email:
         custom: []
         name: email
-        description: 'Must be a valid email address. Must not be greater than 255 characters.'
+        description: 'The new email address.'
         required: true
-        example: gbailey@example.net
+        example: new-email@example.com
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      email: gbailey@example.net
+      email: new-email@example.com
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Email updated. Please verify your new address.","data":{"id":1,"name":"Jane Doe","email":"new-email@example.com","email_verified_at":null,"is_active":true}}'
+        content: '{"status":200,"message":"Email updated. Please verify your new address.","data":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","phone_country_code":"PH","email":"new-email@example.com","email_verified_at":null,"is_active":true,"roles":["User"],"permissions":[]}}'
         headers: []
         description: 'Email updated'
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"No changes made.","data":{"id":1,"name":"Jane Doe","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true}}'
+        content: '{"status":200,"message":"No changes made.","data":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","phone_country_code":"PH","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true,"roles":["User"],"permissions":[]}}'
         headers: []
         description: 'No changes made'
       -
@@ -77,8 +77,8 @@ endpoints:
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: ''
-      description: ''
+      title: "Update the authenticated user's password."
+      description: 'Revokes all other access tokens after the change.'
       authenticated: true
       deprecated: false
     headers:
@@ -93,23 +93,23 @@ endpoints:
       current_password:
         custom: []
         name: current_password
-        description: ''
+        description: "The user's current password."
         required: true
-        example: architecto
+        example: OldPassword123!
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
         deprecated: false
       password:
         custom: []
         name: password
-        description: ''
+        description: 'The new password.'
         required: true
-        example: '|]|{+-'
+        example: NewPassword123!
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
         deprecated: false
       password_confirmation:
@@ -117,16 +117,16 @@ endpoints:
         name: password_confirmation
         description: 'Must match password.'
         required: true
-        example: Password123!
+        example: NewPassword123!
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      current_password: architecto
-      password: '|]|{+-'
-      password_confirmation: Password123!
+      current_password: OldPassword123!
+      password: NewPassword123!
+      password_confirmation: NewPassword123!
     fileParameters: []
     responses:
       -

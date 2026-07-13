@@ -12,8 +12,10 @@ endpoints:
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: ''
-      description: ''
+      title: 'Send an email verification notification.'
+      description: |-
+        Dispatches a verification email to the authenticated user's current
+        email address. No-op if the address is already verified.
       authenticated: true
       deprecated: false
     headers:

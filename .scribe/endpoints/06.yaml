@@ -73,6 +73,12 @@ endpoints:
         content: '{"status":201,"message":"Logged.","data":null}'
         headers: []
         description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":422,"message":"The action field is required.","errors":{"action":["The action field is required."]}}'
+        headers: []
+        description: ''
     responseFields: []
     auth:
       - headers

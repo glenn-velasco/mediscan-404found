@@ -27,7 +27,7 @@ class DeviceKeyController extends Controller
      * @bodyParam public_key string required Base64-encoded sodium sealed-box public key (44 chars for 32-byte key). Example: 1234567890abcdefghijklmnopqrstuvwxyzABCDEF12
      * @bodyParam label string Device name/label (e.g., iPhone 15, Samsung Galaxy). Example: iPhone 15
      *
-     * @response 201 {"status":201,"message":"Success","data":{"id":1,"user_id":1,"public_key":"1234567890abcdefghijklmnopqrstuvwxyzABCDEF12","label":"iPhone 15","is_active":true,"registered_at":"2026-01-01T00:00:00.000000Z"}}
+     * @response 201 {"status":201,"message":"Device key registered.","data":{"id":1,"user_id":1,"public_key":"1234567890abcdefghijklmnopqrstuvwxyzABCDEF12","label":"iPhone 15","is_active":true,"registered_at":"2026-01-01T00:00:00.000000Z","revoked_at":null}}
      * @response 422 {"status":422,"message":"The public_key field must be 44 characters.","errors":{"public_key":["The public_key field must be 44 characters."]}}
      */
     public function store(RegisterDeviceKeyRequest $request): JsonResponse

@@ -26,6 +26,7 @@ class EmergencyQrEventController extends Controller
      * @bodyParam context string The scanning context (e.g. viewer, professional_submit). Example: professional_submit
      *
      * @response 201 {"status":201,"message":"Logged.","data":null}
+     * @response 422 {"status":422,"message":"The action field is required.","errors":{"action":["The action field is required."]}}
      */
     public function store(LogEmergencyQrEventRequest $request, AuditLogger $auditLogger): JsonResponse
     {
