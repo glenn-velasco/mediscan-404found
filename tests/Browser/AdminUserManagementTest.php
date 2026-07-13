@@ -3,6 +3,7 @@
 use App\Enums\Role;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
+use Inertia\ResponseFactory;
 
 beforeEach(function () {
     $this->seed(RoleAndPermissionSeeder::class);
@@ -89,8 +90,8 @@ it('admin can change a user\'s role from the detail page, and access flips accor
 
     // The Inertia form submission from Save role may have left shared data
     // behind. Flushing it ensures the next visit starts clean.
-    if (app()->resolved(\Inertia\ResponseFactory::class)) {
-        app(\Inertia\ResponseFactory::class)->flushShared();
+    if (app()->resolved(ResponseFactory::class)) {
+        app(ResponseFactory::class)->flushShared();
     }
 
     // Real second-actor check: a fresh page logged in as the target user now
