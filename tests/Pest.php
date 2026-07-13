@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,7 +17,11 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature', 'Unit', 'Browser');
+    ->in('Feature', 'Unit');
+
+pest()->extend(TestCase::class)
+    ->use(DatabaseTruncation::class)
+    ->in('Browser');
 
 pest()->browser()->timeout(10_000);
 

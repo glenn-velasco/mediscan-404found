@@ -26,7 +26,6 @@ class UpdateUserRequest extends FormRequest
 
         return [
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($userId)],
-            'username' => ['sometimes', ...$this->usernameRules($userId)],
             'first_name' => ['sometimes', ...$this->firstNameRules()],
             'middle_name' => $this->middleNameRules(),
             'last_name' => ['sometimes', ...$this->lastNameRules()],
@@ -35,6 +34,7 @@ class UpdateUserRequest extends FormRequest
             'gender' => ['sometimes', ...$this->genderRules()],
             'address' => $this->addressRules(),
             'phone_number' => $this->phoneNumberRules(),
+            'phone_country_code' => $this->phoneCountryCodeRules(),
         ];
     }
 }

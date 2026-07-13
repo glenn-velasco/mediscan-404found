@@ -2,7 +2,6 @@ import type { Permission, Role } from '@/types';
 
 export type User = {
     id: number;
-    username: string | null;
     first_name: string | null;
     middle_name: string | null;
     last_name: string | null;

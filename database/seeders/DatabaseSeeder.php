@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => 'test@example.com'],
             [
-                'username' => 'test.admin',
                 'first_name' => 'Test',
                 'last_name' => 'Admin',
                 'dob' => '1990-01-15',

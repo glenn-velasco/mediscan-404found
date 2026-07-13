@@ -21,7 +21,6 @@ class ProfileValidationRulesHarness
 function validProfileData(): array
 {
     return [
-        'username' => 'juandelacruz',
         'first_name' => 'Juan',
         'middle_name' => 'Santos',
         'last_name' => 'Delacruz',
@@ -135,31 +134,8 @@ it('accepts a valid international phone number', function () {
     expect($validator->fails())->toBeFalse();
 });
 
-it('rejects a duplicate username with no ignored id', function () {
-    $existing = User::factory()->create(['username' => 'takenname']);
-
-    $validator = Validator::make(
-        array_merge(validProfileData(), ['username' => 'takenname']),
-        (new ProfileValidationRulesHarness)->rules(),
-    );
-
-    expect($validator->fails())->toBeTrue();
-});
-
-it('accepts a duplicate username when the ignored id matches', function () {
-    $existing = User::factory()->create(['username' => 'takenname']);
-
-    $validator = Validator::make(
-        array_merge(validProfileData(), ['username' => 'takenname']),
-        (new ProfileValidationRulesHarness)->rules($existing->id),
-    );
-
-    expect($validator->fails())->toBeFalse();
-});
-
 it('validates UpdateUserRequest sometimes-fields correctly when omitted vs present-but-invalid', function () {
     $target = User::factory()->create(['email' => 'target@example.com']);
-    $otherUser = User::factory()->create(['username' => 'already-taken']);
 
     $bindFakeRoute = function (UpdateUserRequest $request) use ($target) {
         $request->setRouteResolver(fn () => new class($target)
@@ -180,13 +156,4 @@ it('validates UpdateUserRequest sometimes-fields correctly when omitted vs prese
 
     $validator = Validator::make($requestWithOmittedFields->all(), $requestWithOmittedFields->rules());
     expect($validator->fails())->toBeFalse();
-
-    $requestWithInvalidUsername = UpdateUserRequest::create('/admin/users/'.$target->id, 'PATCH', [
-        'email' => 'target-changed@example.com',
-        'username' => 'already-taken',
-    ]);
-    $bindFakeRoute($requestWithInvalidUsername);
-
-    $validator = Validator::make($requestWithInvalidUsername->all(), $requestWithInvalidUsername->rules());
-    expect($validator->fails())->toBeTrue();
 });

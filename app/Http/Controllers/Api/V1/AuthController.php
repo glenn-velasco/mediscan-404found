@@ -24,7 +24,7 @@ class AuthController extends Controller
     /**
      * @unauthenticated
      *
-     * @response 200 {"status":200,"message":"Success","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"name":"Jane Doe","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true}}}
+     * @response 200 {"status":200,"message":"Success","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true,"roles":["User"],"permissions":[]}}}
      * @response status=422 scenario="Invalid credentials" {"status":422,"message":"These credentials do not match our records.","errors":{"email":["These credentials do not match our records."]}}
      * @response status=422 scenario="Account deactivated" {"status":422,"message":"Your account has been deactivated.","errors":{"email":["Your account has been deactivated."]}}
      */
@@ -46,12 +46,20 @@ class AuthController extends Controller
      * @unauthenticated
      *
      * @bodyParam device_name string required Name of the device requesting a token. Example: iPhone 15
-     * @bodyParam name string required Full name. Example: Jane Doe
+     * @bodyParam first_name string required Example: Jane
+     * @bodyParam middle_name string Example: Marie
+     * @bodyParam last_name string required Example: Doe
+     * @bodyParam suffix string Example: Jr.
+     * @bodyParam dob string required Date of birth in YYYY-MM-DD format. Example: 1990-01-15
+     * @bodyParam gender string required Must be one of: male, female. Example: female
+     * @bodyParam address string required Example: 123 Main St
+     * @bodyParam phone_number string required Valid international phone number. Example: +639171234567
+     * @bodyParam phone_country_code string required The ISO 3166-1 alpha-2 country code for the phone number. Example: PH
      * @bodyParam email string required The user's email address. Example: jane.doe@example.com
      * @bodyParam password string required The account password. Example: Password123!
      * @bodyParam password_confirmation string required Must match password. Example: Password123!
      *
-     * @response 201 {"status":201,"message":"Registered.","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"name":"Jane Doe","email":"jane.doe@example.com","email_verified_at":null,"is_active":true}}}
+     * @response 201 {"status":201,"message":"Registered.","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","email":"jane.doe@example.com","email_verified_at":null,"is_active":true,"roles":["User"],"permissions":[]}}}
      * @response 422 {"status":422,"message":"The email field is required.","errors":{"email":["The email field is required."]}}
      */
     public function register(Request $request): JsonResponse
@@ -88,7 +96,7 @@ class AuthController extends Controller
     }
 
     /**
-     * @response 200 {"status":200,"message":"Success","data":{"user":{"id":1,"name":"Jane Doe","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true}}
+     * @response 200 {"status":200,"message":"Success","data":{"user":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true,"roles":["User"],"permissions":[]}}
      * @response 403 {"status":403,"message":"Your account has been deactivated.","errors":null}
      */
     public function me(Request $request): JsonResponse

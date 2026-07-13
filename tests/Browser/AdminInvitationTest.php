@@ -56,7 +56,6 @@ it('guest can accept an admin invitation and create an account', function () {
     ]);
 
     $page = visit(route('invitation.accept', $invitation->token))
-        ->type('username', 'new.admin')
         ->type('first_name', 'New')
         ->type('middle_name', 'Middleton')
         ->type('last_name', 'Admin')
@@ -65,9 +64,17 @@ it('guest can accept an admin invitation and create an account', function () {
 
     selectRadixOption($page, '#gender', 'Male');
 
-    $page->type('address', '123 Main St')
-        ->type('phone_number', '+639171234567')
-        ->type('password', 'password')
+    $page->type('street', '123 Main St')
+        ->type('unit', 'Apt 4B')
+        ->type('city', 'Manila')
+        ->type('province', 'Metro Manila')
+        ->type('postal_code', '1000');
+
+    selectRadixOption($page, '#country', 'Philippines');
+    selectRadixOption($page, '#registration_country', 'Philippines (+63)');
+    $page->type('registration_phone', '9171234567');
+
+    $page->type('password', 'password')
         ->type('password_confirmation', 'password')
         ->press('Create account')
         ->assertNoJavascriptErrors();
@@ -76,8 +83,7 @@ it('guest can accept an admin invitation and create an account', function () {
     expect($newUser->hasRole(Role::Admin->value))->toBeTrue()
         ->and($newUser->middle_name)->toBe('Middleton')
         ->and($newUser->suffix)->toBe('Jr.')
-        ->and($newUser->address)->toBe('123 Main St')
-        ->and($newUser->phone_number)->toBe('+639171234567');
+        ->and($newUser->address)->toBe('123 Main St, Apt 4B, Manila, Metro Manila, 1000, PH');
 });
 
 it('gender select only offers Male and Female', function () {
@@ -124,38 +130,6 @@ it('shows a validation error and does not create an account when required fields
     $this->assertDatabaseMissing('users', ['email' => 'blank-fields@example.com']);
 });
 
-it('rejects a duplicate username through the accept invitation form', function () {
-    $this->seed(RoleAndPermissionSeeder::class);
-    User::factory()->create(['username' => 'taken.username']);
-
-    $inviter = User::factory()->create();
-    $inviter->assignRole(Role::Admin->value);
-
-    $invitation = UserInvitation::create([
-        'email' => 'dup-username@example.com',
-        'token' => Str::random(64),
-        'invited_by' => $inviter->id,
-        'expires_at' => now()->addDays(3),
-    ]);
-
-    $page = visit(route('invitation.accept', $invitation->token))
-        ->type('username', 'taken.username')
-        ->type('first_name', 'New')
-        ->type('last_name', 'Admin')
-        ->type('dob', '1990-01-15');
-
-    selectRadixOption($page, '#gender', 'Male');
-
-    $page->type('password', 'password')
-        ->type('password_confirmation', 'password')
-        ->press('Create account')
-        ->assertPathIs('/invite/'.$invitation->token)
-        ->assertNoJavascriptErrors();
-
-    $this->assertGuest();
-    $this->assertDatabaseMissing('users', ['email' => 'dup-username@example.com']);
-});
-
 it('rejects a future dob through the accept invitation form', function () {
     $this->seed(RoleAndPermissionSeeder::class);
 
@@ -170,12 +144,17 @@ it('rejects a future dob through the accept invitation form', function () {
     ]);
 
     $page = visit(route('invitation.accept', $invitation->token))
-        ->type('username', 'future.dob')
         ->type('first_name', 'New')
         ->type('last_name', 'Admin')
+        ->type('street', '123 St')
+        ->type('unit', 'Unit 1')
+        ->type('city', 'City')
+        ->type('province', 'Province')
+        ->type('postal_code', '1000')
         ->type('dob', now()->addDay()->toDateString());
 
     selectRadixOption($page, '#gender', 'Male');
+    selectRadixOption($page, '#country', 'Philippines');
 
     $page->type('password', 'password')
         ->type('password_confirmation', 'password')
@@ -201,15 +180,20 @@ it('rejects an oversized suffix and a malformed phone number through the accept 
     ]);
 
     $page = visit(route('invitation.accept', $invitation->token))
-        ->type('username', 'oversized.fields')
         ->type('first_name', 'New')
         ->type('last_name', 'Admin')
+        ->type('street', '123 St')
+        ->type('unit', 'Unit 1')
+        ->type('city', 'City')
+        ->type('province', 'Province')
+        ->type('postal_code', '1000')
         ->type('suffix', str_repeat('a', 51))
         ->type('dob', '1990-01-15');
 
     selectRadixOption($page, '#gender', 'Male');
+    selectRadixOption($page, '#country', 'Philippines');
 
-    $page->type('phone_number', 'not-a-phone-number')
+    $page->type('registration_phone', 'not-a-phone-number')
         ->type('password', 'password')
         ->type('password_confirmation', 'password')
         ->press('Create account')

@@ -9,13 +9,6 @@ it('matches by email', function () {
     expect(User::query()->search('find-me')->pluck('id'))->toEqual(collect([$user->id]));
 });
 
-it('matches by username', function () {
-    $user = User::factory()->create(['username' => 'find-me-user']);
-    User::factory()->create(['username' => 'someone-else']);
-
-    expect(User::query()->search('find-me-user')->pluck('id'))->toEqual(collect([$user->id]));
-});
-
 it('matches by first name', function () {
     $user = User::factory()->create(['first_name' => 'Uniquefirstname']);
     User::factory()->create(['first_name' => 'Someoneelse']);
@@ -63,7 +56,6 @@ it('returns nothing for an unrelated term', function () {
         'first_name' => 'Juan',
         'last_name' => 'Delacruz',
         'email' => 'juan@example.com',
-        'username' => 'juandelacruz',
     ]);
 
     expect(User::query()->search('completely-unrelated-zzz')->count())->toBe(0);

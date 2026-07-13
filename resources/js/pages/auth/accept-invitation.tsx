@@ -1,5 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import { countries } from '@/components/phone-input';
 import { RegistrationFormFields } from '@/components/registration-form-fields';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -16,8 +17,7 @@ export default function AcceptInvitation({
     token,
     passwordRules,
 }: AcceptInvitationProps) {
-    const { data, setData, post, processing, errors } = useForm({
-        username: '',
+    const form = useForm({
         first_name: '',
         middle_name: '',
         last_name: '',
@@ -26,13 +26,40 @@ export default function AcceptInvitation({
         gender: '',
         address: '',
         phone_number: '',
+        phone_country_code: '',
+        street: '',
+        unit: '',
+        city: '',
+        province: '',
+        postal_code: '',
+        country: '',
         password: '',
         password_confirmation: '',
     });
 
     function submit(e: FormEvent) {
         e.preventDefault();
-        post(invitation.store(token).url);
+
+        const country = countries.find(
+            (c) => c.code === form.data.phone_country_code,
+        );
+
+        form.transform((data) => ({
+            ...data,
+            phone_number: data.phone_number
+                ? `${country?.callingCode ?? ''} ${data.phone_number}`.trim()
+                : '',
+            address: [
+                data.street,
+                data.unit,
+                data.city,
+                data.province,
+                data.postal_code,
+                data.country,
+            ].join(', '),
+        }));
+
+        form.post(invitation.store(token).url);
     }
 
     return (
@@ -40,15 +67,19 @@ export default function AcceptInvitation({
             <Head title="Accept Invitation" />
             <form onSubmit={submit} className="flex flex-col gap-4">
                 <RegistrationFormFields
-                    data={data}
-                    setData={setData}
-                    errors={errors}
+                    data={form.data}
+                    setData={form.setData}
+                    errors={form.errors}
                     email={email}
                     passwordRules={passwordRules}
                 />
 
-                <Button type="submit" className="w-full" disabled={processing}>
-                    {processing && <Spinner />}
+                <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={form.processing}
+                >
+                    {form.processing && <Spinner />}
                     Create account
                 </Button>
             </form>

@@ -120,11 +120,13 @@ it('logs invitation lifecycle: create, resend, delete, accept', function () {
     $this->post(route('logout'));
 
     $this->post(route('invitation.store', $token), [
-        'username' => 'juan.delacruz',
         'first_name' => 'Juan',
         'last_name' => 'dela Cruz',
         'dob' => '1990-01-15',
         'gender' => 'male',
+        'address' => '123 Main St',
+        'phone_number' => '+639171234567',
+        'phone_country_code' => 'PH',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);

@@ -257,16 +257,6 @@ it('admin can search users by email', function () {
         ->assertInertia(fn (Assert $page) => $page->where('users.total', 1));
 });
 
-it('admin can search users by username', function () {
-    User::factory()->create(['username' => 'find-me-username']);
-    User::factory()->create(['username' => 'someone-else']);
-
-    $this->actingAs(($this->admin)())
-        ->get(route('admin.users.index', ['search' => 'find-me-username']))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('users.total', 1));
-});
-
 it('admin can search users by first, middle, and last name', function () {
     foreach (['first_name', 'middle_name', 'last_name'] as $field) {
         User::query()->delete();
@@ -310,7 +300,7 @@ it('admin list response includes correct fullname and age values', function () {
     ]);
 
     $this->actingAs(($this->admin)())
-        ->get(route('admin.users.index', ['search' => $target->username]))
+        ->get(route('admin.users.index', ['search' => $target->first_name]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('users.data.0.fullname', 'Juan Santos Delacruz Jr.')

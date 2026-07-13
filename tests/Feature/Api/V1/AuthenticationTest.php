@@ -8,15 +8,15 @@ use Laravel\Sanctum\Sanctum;
 beforeEach(function () {
     $this->validPayload = function (array $overrides = []): array {
         return array_merge([
-            'username' => 'juan.delacruz',
             'first_name' => 'Juan',
             'middle_name' => null,
             'last_name' => 'dela Cruz',
             'suffix' => null,
             'dob' => '1990-01-15',
             'gender' => 'male',
-            'address' => null,
-            'phone_number' => null,
+            'address' => '123 Main St',
+            'phone_number' => '+639171234567',
+            'phone_country_code' => 'PH',
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
@@ -121,15 +121,6 @@ it('registration token name matches the submitted device_name', function () {
     expect($user->tokens()->first()->name)->toBe('my-iphone');
 });
 
-it('registration rejects a duplicate username', function () {
-    $this->seed(RoleAndPermissionSeeder::class);
-    User::factory()->create(['username' => 'juan.delacruz']);
-
-    $this->postJson('/api/v1/register', ($this->validPayload)())
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors('username');
-});
-
 it('registration rejects an invalid gender', function () {
     $this->seed(RoleAndPermissionSeeder::class);
 
@@ -174,12 +165,12 @@ it('register response and me endpoint expose the full user resource shape', func
         'suffix' => 'Jr.',
         'address' => '123 Main St',
         'phone_number' => '+639171234567',
+        'phone_country_code' => 'PH',
     ]));
 
     $response->assertCreated()
         ->assertJson(['data' => [
             'user' => [
-                'username' => 'juan.delacruz',
                 'first_name' => 'Juan',
                 'middle_name' => 'Santos',
                 'last_name' => 'dela Cruz',

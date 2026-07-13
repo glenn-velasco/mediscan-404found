@@ -14,7 +14,6 @@ class UserBuilder extends Builder
     {
         return $this->where(function ($q) use ($term) {
             $q->where('users.email', 'ilike', "%{$term}%")
-                ->orWhere('users.username', 'ilike', "%{$term}%")
                 ->orWhere('users.first_name', 'ilike', "%{$term}%")
                 ->orWhere('users.middle_name', 'ilike', "%{$term}%")
                 ->orWhere('users.last_name', 'ilike', "%{$term}%")

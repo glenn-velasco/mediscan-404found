@@ -69,7 +69,6 @@ class UserRepository extends BaseRepository
 
         return [
             'id' => $user->id,
-            'username' => $user->username,
             'fullname' => $user->fullname,
             'age' => $user->age,
             'email' => $user->email,

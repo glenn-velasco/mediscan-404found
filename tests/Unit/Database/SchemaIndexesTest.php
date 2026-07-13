@@ -4,14 +4,10 @@ use Illuminate\Support\Facades\Schema;
 
 it('has the new profile-field columns on users and no more name column', function () {
     expect(Schema::hasColumns('users', [
-        'username', 'first_name', 'middle_name', 'last_name', 'suffix',
+        'first_name', 'middle_name', 'last_name', 'suffix',
         'dob', 'gender', 'address', 'phone_number',
     ]))->toBeTrue()
         ->and(Schema::hasColumn('users', 'name'))->toBeFalse();
-});
-
-it('has a unique index on users.username', function () {
-    expect(Schema::hasIndex('users', ['username'], 'unique'))->toBeTrue();
 });
 
 it('has an index on users.deactivated_at', function () {

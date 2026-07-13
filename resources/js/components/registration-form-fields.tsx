@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
+import { AddressInput } from '@/components/address-input';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
+import { PhoneInput } from '@/components/phone-input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,11 +14,9 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
 import { genderOptions } from '@/types/gender';
 
 export interface RegistrationFormData {
-    username: string;
     first_name: string;
     middle_name: string;
     last_name: string;
@@ -25,6 +25,13 @@ export interface RegistrationFormData {
     gender: string;
     address: string;
     phone_number: string;
+    phone_country_code: string;
+    street: string;
+    unit: string;
+    city: string;
+    province: string;
+    postal_code: string;
+    country: string;
     password: string;
     password_confirmation: string;
 }
@@ -67,20 +74,6 @@ export function RegistrationFormFields({
             <CardContent className="grid grid-cols-2 items-start gap-x-4 gap-y-4 pt-6">
                 {/* Account */}
                 <SectionHeading>Account</SectionHeading>
-
-                <div className="grid gap-1.5">
-                    <Label htmlFor="username">
-                        Username <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                        id="username"
-                        value={data.username}
-                        onChange={(e) => setData('username', e.target.value)}
-                        autoComplete="username"
-                        autoFocus={editable}
-                    />
-                    <InputError message={errors.username} />
-                </div>
 
                 <div className="grid gap-1.5">
                     <Label htmlFor="email">
@@ -201,34 +194,26 @@ export function RegistrationFormFields({
                     <InputError message={errors.gender} />
                 </div>
 
-                <div className="grid gap-1.5">
-                    <Label htmlFor="phone_number">Phone number</Label>
-                    <Input
-                        id="phone_number"
-                        type="tel"
-                        value={data.phone_number}
-                        onChange={(e) =>
-                            setData('phone_number', e.target.value)
-                        }
-                        autoComplete="tel"
-                    />
-                    <InputError message={errors.phone_number} />
-                </div>
-
-                <div className="col-span-2 grid gap-1.5">
-                    <Label htmlFor="address">Address</Label>
-                    <Textarea
-                        id="address"
-                        value={data.address}
-                        onChange={(e) => setData('address', e.target.value)}
-                        autoComplete="street-address"
-                    />
-                    <InputError message={errors.address} />
-                </div>
-
                 <div className="col-span-2">
-                    <Separator />
+                    <PhoneInput
+                        idPrefix="registration"
+                        countryValue={data.phone_country_code}
+                        phoneValue={data.phone_number}
+                        onCountryChange={(v) =>
+                            setData('phone_country_code', v)
+                        }
+                        onPhoneChange={(v) => setData('phone_number', v)}
+                        countryError={errors.phone_number}
+                        phoneError={errors.phone_number}
+                    />
                 </div>
+
+                <AddressInput
+                    data={data}
+                    setData={setData}
+                    errors={errors}
+                    addressError={errors.address}
+                />
 
                 <div className="grid gap-1.5">
                     <Label htmlFor="password">

@@ -30,15 +30,15 @@ beforeEach(function () {
     ], $overrides);
 
     $this->acceptPayload = fn (array $overrides = []): array => array_merge([
-        'username' => 'juan.delacruz',
         'first_name' => 'Juan',
         'middle_name' => null,
         'last_name' => 'dela Cruz',
         'suffix' => null,
         'dob' => '1990-01-15',
         'gender' => 'male',
-        'address' => null,
-        'phone_number' => null,
+        'address' => '123 Main St',
+        'phone_number' => '+639171234567',
+        'phone_country_code' => 'PH',
         'password' => 'password',
         'password_confirmation' => 'password',
     ], $overrides);
@@ -345,23 +345,6 @@ it('cannot accept invitation with mismatched passwords', function () {
     $this->assertGuest();
 });
 
-it('cannot accept invitation with a duplicate username', function () {
-    User::factory()->create(['username' => 'juan.delacruz']);
-
-    $token = Str::random(64);
-    UserInvitation::create([
-        'email' => 'invited@example.com',
-        'token' => $token,
-        'invited_by' => ($this->admin)()->id,
-        'expires_at' => now()->addDays(3),
-    ]);
-
-    $this->post(route('invitation.store', $token), ($this->acceptPayload)())
-        ->assertSessionHasErrors('username');
-
-    $this->assertGuest();
-});
-
 it('cannot accept invitation with an invalid gender', function () {
     $token = Str::random(64);
     UserInvitation::create([
@@ -445,13 +428,13 @@ it('accepts invitation with every optional field filled and persists them', func
 
     $this->assertDatabaseHas('users', [
         'email' => 'invited@example.com',
-        'username' => 'juan.delacruz',
         'first_name' => 'Juan',
         'middle_name' => 'Santos',
         'last_name' => 'dela Cruz',
         'suffix' => 'Jr.',
         'address' => '123 Main St',
         'phone_number' => '+639171234567',
+        'phone_country_code' => 'PH',
     ]);
 });
 

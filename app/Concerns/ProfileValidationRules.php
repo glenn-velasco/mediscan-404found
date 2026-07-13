@@ -19,7 +19,6 @@ trait ProfileValidationRules
     protected function profileRules(?int $userId = null): array
     {
         return [
-            'username' => $this->usernameRules($userId),
             'first_name' => $this->firstNameRules(),
             'middle_name' => $this->middleNameRules(),
             'last_name' => $this->lastNameRules(),
@@ -28,24 +27,8 @@ trait ProfileValidationRules
             'gender' => $this->genderRules(),
             'address' => $this->addressRules(),
             'phone_number' => $this->phoneNumberRules(),
+            'phone_country_code' => $this->phoneCountryCodeRules(),
             'email' => $this->emailRules($userId),
-        ];
-    }
-
-    /**
-     * Get the validation rules used to validate usernames.
-     *
-     * @return array<int, ValidationRule|array<mixed>|string>
-     */
-    protected function usernameRules(?int $userId = null): array
-    {
-        return [
-            'required',
-            'string',
-            'max:255',
-            $userId === null
-                ? Rule::unique(User::class)
-                : Rule::unique(User::class)->ignore($userId),
         ];
     }
 
@@ -111,6 +94,14 @@ trait ProfileValidationRules
     protected function phoneNumberRules(): array
     {
         return ['nullable', 'string', (new Phone)->international()];
+    }
+
+    /**
+     * @return array<int, ValidationRule|array<mixed>|string>
+     */
+    protected function phoneCountryCodeRules(): array
+    {
+        return ['nullable', 'string', 'max:5'];
     }
 
     /**

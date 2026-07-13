@@ -8,12 +8,11 @@ beforeEach(function () {
     $this->seed(RoleAndPermissionSeeder::class);
 });
 
-it('list shows fullname, username, and email', function () {
+it('list shows fullname and email', function () {
     $admin = User::factory()->create();
     $admin->assignRole(Role::Admin->value);
 
     $target = User::factory()->create([
-        'username' => 'juan.delacruz',
         'first_name' => 'Juan',
         'middle_name' => 'Santos',
         'last_name' => 'Delacruz',
@@ -26,7 +25,6 @@ it('list shows fullname, username, and email', function () {
 
     visit(route('admin.users.index'))
         ->assertSee('Juan Santos Delacruz')
-        ->assertSee('juan.delacruz')
         ->assertSee('juan@example.com')
         ->assertNoJavascriptErrors();
 });
@@ -45,7 +43,7 @@ it('search box filters the user list', function () {
 
     visit(route('admin.users.index'))
         ->assertSee('Someoneelse')
-        ->type('input[placeholder="Search by name, username, or email…"]', 'Findmeuniquename')
+        ->type('input[placeholder="Search by name or email…"]', 'Findmeuniquename')
         ->assertSee('Findmeuniquename')
         ->assertDontSee('Someoneelse')
         ->assertNoJavascriptErrors();
@@ -88,6 +86,12 @@ it('admin can change a user\'s role from the detail page, and access flips accor
         ->assertNoJavascriptErrors();
 
     expect($target->fresh()->hasRole(Role::Admin->value))->toBeTrue();
+
+    // The Inertia form submission from Save role may have left shared data
+    // behind. Flushing it ensures the next visit starts clean.
+    if (app()->resolved(\Inertia\ResponseFactory::class)) {
+        app(\Inertia\ResponseFactory::class)->flushShared();
+    }
 
     // Real second-actor check: a fresh page logged in as the target user now
     // has access to the admin-gated dashboard it was forbidden from before.

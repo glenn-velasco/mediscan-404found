@@ -26,7 +26,6 @@ use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
- * @property string|null $username
  * @property string|null $first_name
  * @property string|null $middle_name
  * @property string|null $last_name
@@ -35,6 +34,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Gender|null $gender
  * @property string|null $address
  * @property string|null $phone_number
+ * @property string|null $phone_country_code
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property Carbon|null $deactivated_at
@@ -47,7 +47,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['username', 'first_name', 'middle_name', 'last_name', 'suffix', 'dob', 'gender', 'address', 'phone_number', 'email', 'password'])]
+#[Fillable(['first_name', 'middle_name', 'last_name', 'suffix', 'dob', 'gender', 'address', 'phone_number', 'phone_country_code', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 #[Appends(['avatar', 'fullname', 'age'])]
 #[UseEloquentBuilder(UserBuilder::class)]

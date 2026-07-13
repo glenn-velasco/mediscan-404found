@@ -35,12 +35,100 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      name:
+      first_name:
         custom: []
-        name: name
-        description: 'Full name.'
+        name: first_name
+        description: ''
         required: true
-        example: 'Jane Doe'
+        example: Jane
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      middle_name:
+        custom: []
+        name: middle_name
+        description: ''
+        required: false
+        example: Marie
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      last_name:
+        custom: []
+        name: last_name
+        description: ''
+        required: true
+        example: Doe
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      suffix:
+        custom: []
+        name: suffix
+        description: ''
+        required: false
+        example: Jr.
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      dob:
+        custom: []
+        name: dob
+        description: 'Date of birth in YYYY-MM-DD format.'
+        required: true
+        example: '1990-01-15'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      gender:
+        custom: []
+        name: gender
+        description: 'Must be one of: male, female.'
+        required: true
+        example: female
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      address:
+        custom: []
+        name: address
+        description: ''
+        required: true
+        example: '123 Main St'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone_number:
+        custom: []
+        name: phone_number
+        description: 'Valid international phone number.'
+        required: true
+        example: '+639171234567'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone_country_code:
+        custom: []
+        name: phone_country_code
+        description: 'The ISO 3166-1 alpha-2 country code for the phone number.'
+        required: true
+        example: PH
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -81,7 +169,15 @@ endpoints:
         deprecated: false
     cleanBodyParameters:
       device_name: 'iPhone 15'
-      name: 'Jane Doe'
+      first_name: Jane
+      middle_name: Marie
+      last_name: Doe
+      suffix: Jr.
+      dob: '1990-01-15'
+      gender: female
+      address: '123 Main St'
+      phone_number: '+639171234567'
+      phone_country_code: PH
       email: jane.doe@example.com
       password: Password123!
       password_confirmation: Password123!
@@ -90,7 +186,7 @@ endpoints:
       -
         custom: []
         status: 201
-        content: '{"status":201,"message":"Registered.","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"name":"Jane Doe","email":"jane.doe@example.com","email_verified_at":null,"is_active":true}}}'
+        content: '{"status":201,"message":"Registered.","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","email":"jane.doe@example.com","email_verified_at":null,"is_active":true,"roles":["User"],"permissions":[]}}}'
         headers: []
         description: ''
       -
@@ -169,7 +265,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"name":"Jane Doe","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true}}}'
+        content: '{"status":200,"message":"Success","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true,"roles":["User"],"permissions":[]}}}'
         headers: []
         description: ''
       -
@@ -272,7 +368,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":{"user":{"id":1,"name":"Jane Doe","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true}}}'
+        content: '{"status":200,"message":"Success","data":{"user":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true,"roles":["User"],"permissions":[]}}'
         headers: []
         description: ''
       -

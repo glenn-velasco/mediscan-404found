@@ -25,8 +25,8 @@ class ProfessionalApplicationRepository extends BaseRepository
     public function paginate(int $perPage, array $filters = []): LengthAwarePaginator
     {
         $query = $this->model->newQuery()->with([
-            'user:id,username,first_name,middle_name,last_name,suffix,email',
-            'reviewer:id,username,first_name,middle_name,last_name,suffix',
+            'user:id,first_name,middle_name,last_name,suffix,email',
+            'reviewer:id,first_name,middle_name,last_name,suffix',
         ]);
 
         $status = $filters['status'] ?? null;

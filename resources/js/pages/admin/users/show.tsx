@@ -15,7 +15,6 @@ import { roleOptions } from '@/types';
 
 interface UserDetail {
     id: number;
-    username: string | null;
     fullname: string;
     age: number | null;
     email: string;
@@ -54,9 +53,6 @@ export default function UserShow({ user }: Props) {
                         <div className="flex items-center justify-between px-6 py-4">
                             <div className="space-y-1">
                                 <p className="font-medium">{user.fullname}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    @{user.username ?? '—'}
-                                </p>
                                 <p className="text-sm text-muted-foreground">
                                     {user.email}
                                 </p>

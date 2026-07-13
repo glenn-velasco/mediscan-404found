@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
+use Propaganistas\LaravelPhone\Rules\Phone;
 
 class CreateNewUser implements CreatesNewUsers
 {
@@ -21,12 +22,14 @@ class CreateNewUser implements CreatesNewUsers
     {
         Validator::make($input, [
             ...$this->profileRules(),
+            'address' => ['required', 'string', 'max:1000'],
+            'phone_number' => ['required', 'string', (new Phone)->international()],
+            'phone_country_code' => ['required', 'string', 'max:5'],
             'password' => $this->passwordRules(),
         ])->validate();
 
         return DB::transaction(function () use ($input) {
             $user = User::create([
-                'username' => $input['username'],
                 'first_name' => $input['first_name'],
                 'middle_name' => $input['middle_name'] ?? null,
                 'last_name' => $input['last_name'],
@@ -35,6 +38,7 @@ class CreateNewUser implements CreatesNewUsers
                 'gender' => $input['gender'],
                 'address' => $input['address'] ?? null,
                 'phone_number' => $input['phone_number'] ?? null,
+                'phone_country_code' => $input['phone_country_code'] ?? null,
                 'email' => $input['email'],
                 'password' => $input['password'],
             ]);

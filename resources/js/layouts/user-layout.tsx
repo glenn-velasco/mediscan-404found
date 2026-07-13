@@ -118,15 +118,6 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
                                         )}
                                         <DropdownMenuItem asChild>
                                             <Link
-                                                href={dashboard()}
-                                                className="cursor-pointer"
-                                            >
-                                                <LayoutGrid className="mr-2 h-4 w-4" />
-                                                Dashboard
-                                            </Link>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem asChild>
-                                            <Link
                                                 href={professionalApplication.show()}
                                                 className="cursor-pointer"
                                             >

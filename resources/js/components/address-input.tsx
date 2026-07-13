@@ -27,9 +27,15 @@ interface AddressInputProps {
         value: AddressFormData[K],
     ) => void;
     errors: Partial<Record<string, string>>;
+    addressError?: string;
 }
 
-export function AddressInput({ data, setData, errors }: AddressInputProps) {
+export function AddressInput({
+    data,
+    setData,
+    errors,
+    addressError,
+}: AddressInputProps) {
     return (
         <>
             <div className="col-span-2">
@@ -42,6 +48,12 @@ export function AddressInput({ data, setData, errors }: AddressInputProps) {
                 </p>
                 <Separator className="mt-2" />
             </div>
+
+            {addressError && (
+                <div className="col-span-2">
+                    <InputError message={addressError} />
+                </div>
+            )}
 
             <div className="grid gap-1.5">
                 <Label htmlFor="street">
