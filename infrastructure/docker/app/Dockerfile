@@ -63,6 +63,7 @@ COPY --from=build --chown=appuser:appuser /app/public/build ./public/build
 COPY --from=build --chown=appuser:appuser /app/bootstrap/cache ./bootstrap/cache
 COPY --from=build --chown=appuser:appuser /app/storage/app/private/scribe ./storage/app/private/scribe
 COPY --from=build --chown=appuser:appuser /app/public/vendor/scribe ./public/vendor/scribe
+COPY --from=build --chown=appuser:appuser /app/resources/views/scribe ./resources/views/scribe
 COPY --chown=appuser:appuser . .
 
 RUN rm -rf node_modules \
