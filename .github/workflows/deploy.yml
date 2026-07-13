@@ -142,9 +142,9 @@ jobs:
           REVERB_APP_ID=${{ vars.REVERB_APP_ID }}
           REVERB_APP_KEY=${{ vars.VITE_REVERB_APP_KEY }}
           REVERB_APP_SECRET=${{ secrets.REVERB_APP_SECRET }}
-          REVERB_HOST=${{ vars.VITE_REVERB_HOST }}
-          REVERB_PORT=${{ vars.VITE_REVERB_PORT }}
-          REVERB_SCHEME=${{ vars.VITE_REVERB_SCHEME }}
+          REVERB_HOST=reverb
+          REVERB_PORT=8080
+          REVERB_SCHEME=http
           REVERB_BROADCAST_HOST=reverb
           FACE_MATCH_BASE_URL=http://face-match:8500
           FACE_MATCH_SHARED_SECRET=${{ secrets.FACE_MATCH_SHARED_SECRET }}

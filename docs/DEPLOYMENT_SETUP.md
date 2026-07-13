@@ -244,6 +244,8 @@ Then fill in its own secrets/variables (its own **Environment secrets**/**Enviro
 
 Leave `DB_URL` **unset** — Laravel falls back to `DB_PASSWORD`/`DB_DATABASE`/`DB_USERNAME` above when it's empty (§5 explains why staging uses a local container instead). `DB_HOST` doesn't need an entry here — the deploy workflow hardcodes it to `postgres` (the compose service name) in the shipped `.env`.
 
+`REVERB_HOST`/`REVERB_PORT`/`REVERB_SCHEME` don't need entries here either — those are the **server-side** broadcaster's connection settings (`config/broadcasting.php`), and `deploy.yml` hardcodes them to `reverb`/`8080`/`http` (the Reverb container's internal address on the Docker network, no TLS). Don't confuse these with `VITE_REVERB_HOST`/`VITE_REVERB_PORT`/`VITE_REVERB_SCHEME` above, which are for the **browser-facing** Echo client and correctly point at the public `https://` hostname through nginx — reusing the `VITE_REVERB_*` values for the server-side vars was a past bug (server tried to reach `https://reverb:443`, which doesn't exist inside the network, instead of `http://reverb:8080`).
+
 ### 3.4 `production` Environment
 
 Settings → Environments → New environment → `production` → Configure → Deployment branches and tags → Selected branches and tags → Add rule → Tag → `*.*.*`.
@@ -269,6 +271,8 @@ Same secrets/variables pattern:
 | `GRAFANA_ADMIN_PASSWORD` | secret | pick a password for production's Grafana login |
 
 `DB_PASSWORD`/`DB_DATABASE`/`DB_USERNAME` aren't needed here — production has no local Postgres container, and they're ignored once `DB_URL` is set.
+
+As in §3.3, `REVERB_HOST`/`REVERB_PORT`/`REVERB_SCHEME` don't need entries — `deploy.yml` hardcodes the server-side broadcaster to the internal `reverb:8080` container address (plain `http`), separate from the `VITE_REVERB_*` vars above which drive the public-facing Echo client.
 
 Why `staging`/`production` need separate values for `APP_KEY`, `RUSTFS_*`, `REVERB_APP_SECRET`, etc. even though some are "self-issued with no external account behind them": each environment runs its own independent set of containers (own RustFS, own Reverb, own Grafana). Nothing breaks technically if you reuse a value across both, but separate values mean a staging leak doesn't also expose production.
 
