@@ -7,7 +7,7 @@ return [
     'middleware' => [],
     'binary' => [
         'erd-go' => env('LARAVEL_ERD_GO', base_path('bin/erd-go')),
-        'dot' => env('LARAVEL_ERD_DOT', '/usr/bin/dot'),
+        'dot' => env('LARAVEL_ERD_DOT', base_path('bin/dot')),
     ],
     /*
     |--------------------------------------------------------------------------

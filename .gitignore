@@ -38,6 +38,7 @@ _ide_helper_models.php
 frankenphp
 frankenphp-worker.php
 __pycache__
+/bin
 
 /infrastructure/.env.dev
 /infrastructure/.env.staging
