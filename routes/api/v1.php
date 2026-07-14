@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PendingSyncController;
 use App\Http\Controllers\Api\V1\ProfessionalApplicationController;
 use App\Http\Controllers\Api\V1\ProfessionalSyncController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -20,6 +22,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1');
 
     Route::middleware(['auth:sanctum', 'api.active'])->group(function () {
+        Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
 

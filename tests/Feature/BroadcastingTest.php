@@ -40,3 +40,15 @@ it('authorizes the admin-dashboard channel only for admins', function () {
     expect($callback($admin))->toBeTrue();
     expect($callback($user))->toBeFalse();
 });
+
+it('authorizes the family channel for any authenticated user and returns their data', function () {
+    $user = User::factory()->create();
+
+    $callback = Broadcast::getChannels()->get('family');
+
+    expect($callback($user))->toBe([
+        'id' => $user->id,
+        'name' => $user->fullname,
+        'email' => $user->email,
+    ]);
+});

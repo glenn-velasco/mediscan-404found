@@ -20,7 +20,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
-#[Fillable(['public_key', 'label', 'is_active'])]
+#[Fillable(['user_id', 'public_key', 'label', 'is_active'])]
 class UserDeviceKey extends Model
 {
     /** @use HasFactory<UserDeviceKeyFactory> */

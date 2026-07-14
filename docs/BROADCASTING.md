@@ -7,7 +7,7 @@ This app pushes real-time updates over WebSockets using [Laravel Reverb](https:/
 - Driver: `reverb` (`config/broadcasting.php`), default connection set via `BROADCAST_CONNECTION` in `.env`.
 - Server env vars: `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET`, `REVERB_HOST`, `REVERB_PORT`, `REVERB_SCHEME`.
 - Frontend env vars: `VITE_REVERB_APP_KEY`, `VITE_REVERB_HOST`, `VITE_REVERB_PORT`, `VITE_REVERB_SCHEME`.
-- Channel authorization endpoint: `POST /broadcasting/auth`, registered automatically via the `channels: __DIR__.'/../routes/channels.php'` key in `bootstrap/app.php`'s `withRouting()`. Authorization rules live in `routes/channels.php`.
+- Channel authorization endpoint: `POST /broadcasting/auth`, registered automatically via the `channels: __DIR__.'/../routes/channels.php'` key in `bootstrap/app.php`'s `withRouting()`. The auto-registered route uses the **web** guard (sessions). An explicit `POST /api/v1/broadcasting/auth` route is also registered in `routes/api/v1.php` under the `auth:sanctum` + `api.active` middleware for mobile API clients. Authorization rules live in `routes/channels.php`.
 - The Reverb server itself runs alongside the app via `composer run dev` (see `CONTRIBUTING.md`).
 
 ## Two patterns in this codebase
@@ -85,6 +85,7 @@ Used by: `UserDeactivated`, `UserDeleted`, `ProfessionalApplicationStatusChanged
 |---|---|---|
 | `admin-dashboard` | Private | Users with the `Admin` role |
 | `App.Models.User.{id}` | Private | Only the user matching `{id}` |
+| `family` | Private | Any authenticated user (returns `{ id, name, email }`) |
 
 ## Events per channel
 
