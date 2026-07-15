@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PendingSyncController;
 use App\Http\Controllers\Api\V1\ProfessionalApplicationController;
 use App\Http\Controllers\Api\V1\ProfessionalSyncController;
+use App\Http\Controllers\Api\V1\ScanController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +43,8 @@ Route::prefix('v1')->group(function () {
 
         // Emergency QR usage analytics (shown/scanned events, logged to audit_logs)
         Route::post('/emergency-qr/events', [EmergencyQrEventController::class, 'store']);
+
+        Route::post('/scans', [ScanController::class, 'store']);
 
         // Uploading a government ID + biometric selfie is sensitive enough to
         // also require a verified email, unlike the routes above.

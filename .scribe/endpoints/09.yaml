@@ -1,0 +1,243 @@
+name: 'Professional Applications'
+description: ''
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/professional-applications
+    metadata:
+      custom: []
+      groupName: 'Professional Applications'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Submits a professional application for automatic + manual KYC review.'
+      description: |-
+        The selfie/flash frames are a liveness challenge, not a plain photo
+        upload: `selfie_frames` must be a short burst spanning at least one
+        real blink (eyes open -> closed -> open), and `flash_frames` must be
+        captured while the client's own screen displayed each color in
+        `flash_colors` in turn (e.g. flash red, capture a frame, flash green,
+        capture a frame, ...). There is no face-api.js/browser dependency on
+        the API side - clients are free to implement this capture flow
+        however suits their platform (native camera APIs, a WebView, etc.);
+        the server independently re-verifies both the blink and the color
+        reflection in the uploaded frames, so client-side gating is only a UX
+        nicety, never trusted as-is.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: multipart/form-data
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      id_type:
+        custom: []
+        name: id_type
+        description: 'One of: ph_prc.'
+        required: true
+        example: ph_prc
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      id_photo:
+        custom: []
+        name: id_photo
+        description: 'Photo of the professional ID. jpg/jpeg/png, max 5MB.'
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      selfie_frames:
+        custom: []
+        name: selfie_frames
+        description: 'Burst of 3-10 selfie frames spanning at least one real blink. jpg/jpeg/png, max 3MB each.'
+        required: true
+        example:
+          - null
+        type: 'file[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      flash_frames:
+        custom: []
+        name: flash_frames
+        description: 'One selfie frame captured per entry in flash_colors, in the same order (3-10 frames). jpg/jpeg/png, max 3MB each.'
+        required: true
+        example:
+          - null
+        type: 'file[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      flash_colors:
+        custom: []
+        name: flash_colors
+        description: 'One of red/green/blue per entry, same length and order as flash_frames - the color that was on-screen when that frame was captured.'
+        required: true
+        example:
+          - red
+          - green
+          - blue
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      coe:
+        custom: []
+        name: coe
+        description: 'Certificate of Employment. pdf/jpg/jpeg/png, max 10MB.'
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      id_type: ph_prc
+      flash_colors:
+        - red
+        - green
+        - blue
+    fileParameters:
+      id_photo: null
+      selfie_frames:
+        - null
+      flash_frames:
+        - null
+      coe: null
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"status":201,"message":"Application submitted.","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":null,"specialty":null,"status":"processing","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":422,"message":"You already have a professional application being processed or under review.","errors":null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/professional-applications
+    metadata:
+      custom: []
+      groupName: 'Professional Applications'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Success","data":[{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","specialty":"Orthopedic","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}]}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/professional-applications/{professionalApplication_id}'
+    metadata:
+      custom: []
+      groupName: 'Professional Applications'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      professionalApplication_id:
+        custom: []
+        name: professionalApplication_id
+        description: 'The ID of the professionalApplication.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      professionalApplication_id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Success","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","specialty":"Orthopedic","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":404,"message":"Not found.","errors":null}'
+        headers: []
+        description: 'Not found or not owned'
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
