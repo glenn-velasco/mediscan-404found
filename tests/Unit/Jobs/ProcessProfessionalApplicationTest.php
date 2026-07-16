@@ -85,6 +85,75 @@ it('does not auto reject a banner-only profession as long as a known profession 
         ->and($fresh->specialty)->toBeNull();
 });
 
+it('degrades to pending review when the id photo file is missing from storage', function () {
+    $application = ($this->application)();
+    Storage::disk('s3')->delete('id.jpg');
+
+    ($this->run)($application);
+
+    $fresh = $application->fresh();
+
+    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+        ->and($fresh->verification_notes)->toBe('ID photo file missing from storage; manual review required.')
+        ->and($fresh->ocr_extracted_data)->toBeNull();
+});
+
+it('degrades to pending review when a liveness frame file is missing from storage', function () {
+    Http::fake([
+        '*/ocr' => Http::response(['text' => "Profession: Physician\nLicense No. 123456"]),
+    ]);
+
+    $application = ($this->application)();
+    Storage::disk('s3')->delete('selfie-1.jpg');
+
+    ($this->run)($application);
+
+    $fresh = $application->fresh();
+
+    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+        ->and($fresh->verification_notes)->toBe('Liveness frame file missing from storage; manual review required.')
+        ->and($fresh->liveness_score)->toBeNull();
+});
+
+it('degrades to pending review when a liveness flash frame file is missing from storage', function () {
+    Http::fake([
+        '*/ocr' => Http::response(['text' => "Profession: Physician\nLicense No. 123456"]),
+    ]);
+
+    $application = ($this->application)();
+    $application->update([
+        'liveness_flash_frames' => [['path' => 'flash-0.jpg', 'color' => 'red']],
+    ]);
+
+    ($this->run)($application);
+
+    $fresh = $application->fresh();
+
+    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+        ->and($fresh->verification_notes)->toBe('Liveness flash frame file missing from storage; manual review required.')
+        ->and($fresh->liveness_score)->toBeNull();
+});
+
+it('degrades to pending review when the selfie file is missing from storage', function () {
+    Http::fake([
+        '*/ocr' => Http::response(['text' => "Profession: Physician\nLicense No. 123456"]),
+        '*/liveness' => Http::response(passingLivenessResponse()),
+    ]);
+
+    $application = ($this->application)();
+    $application->update(['selfie_path' => 'standalone-selfie.jpg']);
+    Storage::disk('s3')->put('standalone-selfie.jpg', 'fake-standalone-selfie');
+    Storage::disk('s3')->delete('standalone-selfie.jpg');
+
+    ($this->run)($application);
+
+    $fresh = $application->fresh();
+
+    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+        ->and($fresh->verification_notes)->toBe('Selfie file missing from storage; manual review required.')
+        ->and($fresh->face_match_score)->toBeNull();
+});
+
 it('degrades to pending review when the ocr service is unavailable', function () {
     Http::fake(['*/ocr' => Http::response('', 500)]);
 
