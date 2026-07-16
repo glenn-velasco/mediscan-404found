@@ -4,6 +4,7 @@ namespace App\Services\User;
 
 use App\Enums\AuditLogType;
 use App\Enums\Role;
+use App\Events\RoleChanged;
 use App\Events\UserDeactivated;
 use App\Events\UserDeleted;
 use App\Models\User;
@@ -41,6 +42,8 @@ class UserService
     {
         $user->syncRoles([$role->value]);
         $this->adminDashboard->flushCache();
+
+        event(new RoleChanged($user));
 
         $this->auditLogger->log(
             action: 'user.role_assigned',
