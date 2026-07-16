@@ -58,6 +58,10 @@ class ProfessionalApplicationController extends Controller
             default => abort(404),
         };
 
+        if (empty($path)) {
+            abort(404);
+        }
+
         $this->auditLogger->log(
             action: 'professional_application.file_viewed',
             type: AuditLogType::View,
