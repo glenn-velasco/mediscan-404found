@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $recipient_id
  * @property string $envelope_type
  * @property string $ciphertext
- * @property PendingSyncEnvelopeStatus $status
+ * @property PendingSyncEnvelopeStatus|null $status
  * @property Carbon $expires_at
  * @property Carbon|null $acknowledged_at
  * @property Carbon $created_at
