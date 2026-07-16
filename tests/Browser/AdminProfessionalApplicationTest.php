@@ -66,7 +66,6 @@ it('admin can approve a pending application', function () {
     visit(route('admin.professional-applications.show', $this->application))
         ->assertSee($this->application->user->fullname)
         ->assertSee('Physician')
-        ->assertSee('Orthopedic')
         ->assertSee('Approve')
         ->screenshot(filename: 'admin-application-show')
         ->click('Approve')
@@ -74,7 +73,7 @@ it('admin can approve a pending application', function () {
         ->assertNoJavascriptErrors();
 
     $applicant = $this->application->user->fresh();
-    expect($applicant->hasRole('orthopedic'))->toBeTrue()
+    expect($applicant->hasRole('physician'))->toBeTrue()
         ->and($this->application->fresh()->status->value)->toBe('approved');
 });
 

@@ -26,7 +26,6 @@ beforeEach(function () {
             'id_type' => 'ph_prc',
             'issuing_country' => 'PH',
             'profession' => 'Physician',
-            'specialty' => 'Orthopedic',
             'license_number' => '123456',
             'id_photo_path' => 'fixtures/id.jpg',
             'selfie_path' => 'fixtures/selfie.jpg',
@@ -101,7 +100,7 @@ it('non admin cannot stream an application evidence file', function () {
         ->assertForbidden();
 });
 
-it('admin approving an application grants the specialty role without removing the base user role', function () {
+it('admin approving an application grants the profession role without removing the base user role', function () {
     Event::fake([ProfessionalApplicationStatusChanged::class]);
 
     $admin = ($this->admin)();
@@ -118,11 +117,11 @@ it('admin approving an application grants the specialty role without removing th
     $applicant->refresh();
     $application->refresh();
 
-    expect($applicant->hasRole('orthopedic'))->toBeTrue()
+    expect($applicant->hasRole('physician'))->toBeTrue()
         ->and($applicant->hasRole(Role::User->value))->toBeTrue()
         ->and($applicant->hasPermissionTo(PermissionEnum::VerifiedProfessional->value))->toBeTrue()
         ->and($application->status->value)->toBe('approved')
-        ->and($application->role_granted)->toBe('orthopedic')
+        ->and($application->role_granted)->toBe('physician')
         ->and($applicant->profile_photo_path)->not->toBeNull();
 
     Storage::disk('public')->assertExists($applicant->profile_photo_path);

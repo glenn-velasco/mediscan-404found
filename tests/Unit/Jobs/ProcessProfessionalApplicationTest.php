@@ -68,7 +68,7 @@ it('auto rejects when profession or license number cannot be extracted', functio
         ->and($application->fresh()->rejection_reason)->toContain('incomplete');
 });
 
-it('does not auto reject a banner-only profession as long as a known specialty keyword matches', function () {
+it('does not auto reject a banner-only profession as long as a known profession keyword matches', function () {
     Http::fake([
         '*/ocr' => Http::response(['text' => "NURSING\nLicense No. 123456"]),
         '*/liveness' => Http::response(passingLivenessResponse()),
@@ -81,8 +81,8 @@ it('does not auto reject a banner-only profession as long as a known specialty k
     $fresh = $application->fresh();
 
     expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
-        ->and($fresh->profession)->toBeNull()
-        ->and($fresh->specialty)->toBe('Nursing');
+        ->and($fresh->profession)->toBe('Nursing')
+        ->and($fresh->specialty)->toBeNull();
 });
 
 it('degrades to pending review when the ocr service is unavailable', function () {

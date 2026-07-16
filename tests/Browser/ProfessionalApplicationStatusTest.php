@@ -9,12 +9,11 @@ it('shows the correct status for an approved application', function () {
         'id_type' => 'ph_prc',
         'issuing_country' => 'PH',
         'profession' => 'Physician',
-        'specialty' => 'Orthopedic',
         'id_photo_path' => 'demo/id.jpg',
         'selfie_path' => 'demo/selfie.jpg',
         'coe_path' => 'demo/coe.pdf',
         'status' => 'approved',
-        'role_granted' => 'orthopedic',
+        'role_granted' => 'physician',
     ]);
 
     $this->actingAs($user);
@@ -22,7 +21,7 @@ it('shows the correct status for an approved application', function () {
     visit(route('professional-application.show'))
         ->assertSee('Approved')
         ->assertSee("You're verified")
-        ->assertSee('orthopedic')
+        ->assertSee('physician')
         ->assertNoJavascriptErrors();
 });
 

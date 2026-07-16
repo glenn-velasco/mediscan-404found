@@ -65,13 +65,21 @@ expect()->extend('toBeOne', function () {
  */
 function selectRadixOption(mixed $page, string $triggerSelector, string $optionText): mixed
 {
-    $page->click($triggerSelector);
+    $escapedTrigger = addslashes($triggerSelector);
+    $escapedOption = addslashes($optionText);
 
-    $escaped = addslashes($optionText);
-    $page->script("(() => {
+    $page->script("(async () => {
+        const trigger = document.querySelector('{$escapedTrigger}');
+        if (!trigger) { throw new Error('Select trigger not found: {$escapedTrigger}'); }
+        trigger.click();
+
+        // Radix renders the options in a portal; wait for them to appear.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
         const opts = Array.from(document.querySelectorAll('[role=\"option\"]'));
-        const match = opts.find((o) => o.textContent.trim() === '{$escaped}');
-        if (match) { match.click(); }
+        const match = opts.find((o) => o.textContent.trim() === '{$escapedOption}');
+        if (!match) { throw new Error('Option not found: {$escapedOption}'); }
+        match.click();
     })()");
 
     return $page;

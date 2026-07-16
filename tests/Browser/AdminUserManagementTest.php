@@ -81,7 +81,7 @@ it('admin can change a user\'s role from the detail page, and access flips accor
     $this->actingAs($admin);
 
     $page = visit(route('admin.users.show', $target));
-    selectRadixOption($page, 'User', 'Administrator');
+    selectRadixOption($page, '[data-testid="role-select-trigger"]', 'Administrator');
     $page->press('Save role')
         ->assertSee('Administrator')
         ->assertNoJavascriptErrors();
@@ -110,7 +110,7 @@ it('sole admin cannot demote themselves via the role select', function () {
     $this->actingAs($admin);
 
     $page = visit(route('admin.users.show', $admin));
-    selectRadixOption($page, 'Administrator', 'User');
+    selectRadixOption($page, '[data-testid="role-select-trigger"]', 'User');
     $page->press('Save role')
         ->assertNoJavascriptErrors();
 
@@ -133,7 +133,7 @@ it('cannot demote the last remaining admin, but can once a second admin exists',
 
     // With two admins present, demoting the other one is allowed (positive control).
     $page = visit(route('admin.users.show', $sole));
-    selectRadixOption($page, 'Administrator', 'User');
+    selectRadixOption($page, '[data-testid="role-select-trigger"]', 'User');
     $page->press('Save role')
         ->assertNoJavascriptErrors();
 

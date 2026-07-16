@@ -99,9 +99,10 @@ it('gender select only offers Male and Female', function () {
         'expires_at' => now()->addDays(3),
     ]);
 
-    visit(route('invitation.accept', $invitation->token))
-        ->click('#gender')
-        ->assertSee('Male')
+    $page = visit(route('invitation.accept', $invitation->token));
+    $page->script("document.querySelector('#gender').click();");
+
+    $page->assertSee('Male')
         ->assertSee('Female')
         ->assertDontSee('Other')
         ->assertDontSee('Non-binary')
