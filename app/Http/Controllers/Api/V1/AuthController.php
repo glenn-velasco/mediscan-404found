@@ -40,9 +40,11 @@ class AuthController extends Controller
             $request->validated('device_name'),
         );
 
+        $user = $token->accessToken->tokenable->load(['roles', 'permissions']);
+
         return $this->success([
             'token' => $token->plainTextToken,
-            'user' => new UserResource($token->accessToken->tokenable),
+            'user' => new UserResource($user),
         ]);
     }
 
@@ -72,9 +74,11 @@ class AuthController extends Controller
 
         $token = $this->accountService->register($request->all());
 
+        $user = $token->accessToken->tokenable->load(['roles', 'permissions']);
+
         return $this->success([
             'token' => $token->plainTextToken,
-            'user' => new UserResource($token->accessToken->tokenable),
+            'user' => new UserResource($user),
         ], 'Registered.', 201);
     }
 
@@ -106,7 +110,7 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return $this->success([
-            'user' => new UserResource($request->user()),
+            'user' => new UserResource($request->user()->load(['roles', 'permissions'])),
         ]);
     }
 }

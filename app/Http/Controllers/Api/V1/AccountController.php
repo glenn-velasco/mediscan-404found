@@ -28,13 +28,13 @@ class AccountController extends Controller
         $user = $request->user();
 
         if ($user->email === $request->validated('email')) {
-            return $this->success(new UserResource($user), 'No changes made.');
+            return $this->success(new UserResource($user->load(['roles', 'permissions'])), 'No changes made.');
         }
 
         $updatedUser = $this->accountService->updateEmail($user, $request->validated('email'), 'api');
 
         return $this->success(
-            new UserResource($updatedUser),
+            new UserResource($updatedUser->load(['roles', 'permissions'])),
             'Email updated. Please verify your new address.',
         );
     }
