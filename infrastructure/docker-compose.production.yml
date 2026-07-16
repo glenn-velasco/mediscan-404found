@@ -211,7 +211,10 @@ services:
     networks: [internal]
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    # v0.49.1 (gcr.io) couldn't read container stats at all here - Docker's
+    # containerd-snapshotter storage layout broke its layer-ID lookup. Fixed
+    # in v0.60.x (now on ghcr.io, registry moved upstream). See docs/INCIDENTS.md.
+    image: ghcr.io/google/cadvisor:v0.60.5
     restart: unless-stopped
     mem_limit: 256m
     volumes:
