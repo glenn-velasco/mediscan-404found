@@ -46,6 +46,12 @@ class ProcessProfessionalApplication implements ShouldQueue
         // S3 objects a second time per step.
         $idPhotoContents = Storage::disk(self::DISK)->get($application->id_photo_path);
 
+        if ($idPhotoContents === null) {
+            $this->markPendingReview($application, 'ID photo file missing from storage; manual review required.');
+
+            return;
+        }
+
         try {
             $fullText = $ocrClient->detectText($idPhotoContents);
         } catch (KycSidecarUnavailableException) {
@@ -83,6 +89,12 @@ class ProcessProfessionalApplication implements ShouldQueue
         $frameContentsByPath = collect($application->selfie_frame_paths ?? [])
             ->mapWithKeys(fn (string $path) => [$path => Storage::disk(self::DISK)->get($path)]);
 
+        if ($frameContentsByPath->contains(null)) {
+            $this->markPendingReview($application, 'Liveness frame file missing from storage; manual review required.');
+
+            return;
+        }
+
         if ($frameContentsByPath->isNotEmpty()) {
             $flashFrameContents = collect($application->liveness_flash_frames ?? [])
                 ->map(fn (array $flashFrame) => [
@@ -90,6 +102,12 @@ class ProcessProfessionalApplication implements ShouldQueue
                     'color' => $flashFrame['color'],
                 ])
                 ->all();
+
+            if (collect($flashFrameContents)->pluck('contents')->contains(null)) {
+                $this->markPendingReview($application, 'Liveness flash frame file missing from storage; manual review required.');
+
+                return;
+            }
 
             try {
                 $liveness = $faceMatchClient->checkLiveness($frameContentsByPath->values()->all(), $flashFrameContents);
@@ -119,6 +137,12 @@ class ProcessProfessionalApplication implements ShouldQueue
 
         $selfieContents = $frameContentsByPath->get($application->selfie_path)
             ?? Storage::disk(self::DISK)->get($application->selfie_path);
+
+        if ($selfieContents === null) {
+            $this->markPendingReview($application, 'Selfie file missing from storage; manual review required.');
+
+            return;
+        }
 
         try {
             $faceMatch = $faceMatchClient->compare($selfieContents, $idPhotoContents);
