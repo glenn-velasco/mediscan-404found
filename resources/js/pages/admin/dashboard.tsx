@@ -1,5 +1,4 @@
 import { Head } from '@inertiajs/react';
-import { useEcho } from '@laravel/echo-react';
 import { useState } from 'react';
 import StatCard from '@/components/stat-card';
 import admin from '@/routes/admin';
@@ -16,13 +15,7 @@ export default function AdminDashboard({
 }: {
     stats: DashboardStats;
 }) {
-    const [stats, setStats] = useState<DashboardStats>(initialStats);
-
-    useEcho<{ stats: DashboardStats }>(
-        'admin-dashboard',
-        '.UserRegistered',
-        (payload) => setStats(payload.stats),
-    );
+    const [stats] = useState<DashboardStats>(initialStats);
 
     const adminCount =
         stats.by_role && typeof stats.by_role === 'object'

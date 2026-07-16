@@ -10,7 +10,7 @@ const DETECTION_INTERVAL_MS = 150;
 // dlib-style model the usual ~0.2 absolute threshold assumes - an absolute
 // cutoff can sit on the wrong side of this model's actual open/closed range
 // entirely, which is what was preventing blinks from ever registering.
-const EAR_DROP_RATIO = 0.75;
+const EAR_DROP_RATIO = 0.85;
 const REQUIRED_BLINKS = 3;
 const POSITIONING_TIMEOUT_MS = 12_000;
 const BLINKING_TIMEOUT_MS = 30_000;
@@ -24,7 +24,10 @@ const FLASH_BACKGROUND: Record<(typeof FLASH_COLORS)[number], string> = {
 // Stateless options object - built once and reused across every detection
 // tick instead of being reallocated ~7 times a second during positioning
 // and blinking.
-const TINY_FACE_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions();
+const TINY_FACE_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({
+    scoreThreshold: 0.3,
+    inputSize: 160,
+});
 
 type CaptureStatus =
     | 'idle'
@@ -148,7 +151,8 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
             }
 
             runPositioning();
-        } catch {
+        } catch (e) {
+            console.error('Face capture startup error:', e);
             fail(
                 'Could not start face tracking. Please allow camera access and try again.',
             );
@@ -181,10 +185,12 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
             const result = await detectFace();
 
             if (!result) {
+                consecutiveDetections = 0;
+
                 return;
             }
 
-            consecutiveDetections = result ? consecutiveDetections + 1 : 0;
+            consecutiveDetections += 1;
 
             if (consecutiveDetections >= 3) {
                 stopDetectionLoop();
@@ -339,7 +345,9 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
             const rightEar = eyeAspectRatio(result.landmarks.getRightEye());
 
             return { ear: (leftEar + rightEar) / 2 };
-        } catch {
+        } catch (e) {
+            console.error('Face detection error:', e);
+
             return null;
         } finally {
             detectionBusyRef.current = false;

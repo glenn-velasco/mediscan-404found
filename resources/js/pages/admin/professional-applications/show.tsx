@@ -25,8 +25,9 @@ interface ApplicationDetail {
     id_type: string;
     issuing_country: string;
     profession: string | null;
-    specialty: string | null;
+    full_name_on_id: string | null;
     license_number: string | null;
+    license_expiry: string | null;
     status: ProfessionalApplicationStatus;
     face_match_score: number | null;
     face_match_passed: boolean | null;
@@ -38,6 +39,28 @@ interface ApplicationDetail {
     reviewed_by: string | null;
     reviewed_at: string | null;
     created_at: string | null;
+}
+
+const idTypeLabels: Record<string, string> = {
+    ph_prc: 'PRC ID',
+};
+
+function formatDate(value: string | null): string | null {
+    if (!value) {
+        return null;
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
 }
 
 interface ShowProps {
@@ -127,7 +150,10 @@ export default function Show({ application, files }: ShowProps) {
                         <div className="grid grid-cols-2 gap-4 px-6 py-4 sm:grid-cols-3">
                             <Field
                                 label="ID Type"
-                                value={application.id_type}
+                                value={
+                                    idTypeLabels[application.id_type] ??
+                                    application.id_type
+                                }
                             />
                             <Field
                                 label="Issuing Country"
@@ -138,12 +164,16 @@ export default function Show({ application, files }: ShowProps) {
                                 value={application.profession}
                             />
                             <Field
-                                label="Specialty"
-                                value={application.specialty}
+                                label="Full Name on ID"
+                                value={application.full_name_on_id}
                             />
                             <Field
                                 label="License Number"
                                 value={application.license_number}
+                            />
+                            <Field
+                                label="License Expiry"
+                                value={formatDate(application.license_expiry)}
                             />
                             <Field
                                 label="Face Match Score"

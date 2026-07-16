@@ -17,12 +17,36 @@ interface Application {
     id_type: string;
     issuing_country: string;
     profession: string | null;
-    specialty: string | null;
+    full_name_on_id: string | null;
+    license_number: string | null;
+    license_expiry: string | null;
     status: ProfessionalApplicationStatus;
     rejection_reason: string | null;
     verification_notes: string | null;
     role_granted: string | null;
     created_at: string | null;
+}
+
+const idTypeLabels: Record<string, string> = {
+    ph_prc: 'PRC ID',
+};
+
+function formatDate(value: string | null): string | null {
+    if (!value) {
+        return null;
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return value;
+    }
+
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
 }
 
 interface ShowProps {
@@ -64,8 +88,6 @@ export default function Show({ application }: ShowProps) {
                                     <p className="font-medium">
                                         {application.profession ??
                                             'Professional application'}
-                                        {application.specialty &&
-                                            ` — ${application.specialty}`}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
                                         Submitted{' '}
@@ -85,6 +107,35 @@ export default function Show({ application }: ShowProps) {
                                         ]
                                     }
                                 </Badge>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                    <span className="text-muted-foreground">
+                                        ID Type:
+                                    </span>{' '}
+                                    {idTypeLabels[application.id_type] ??
+                                        application.id_type}
+                                </div>
+                                <div>
+                                    <span className="text-muted-foreground">
+                                        Name on ID:
+                                    </span>{' '}
+                                    {application.full_name_on_id ?? '—'}
+                                </div>
+                                <div>
+                                    <span className="text-muted-foreground">
+                                        License:
+                                    </span>{' '}
+                                    {application.license_number ?? '—'}
+                                </div>
+                                <div>
+                                    <span className="text-muted-foreground">
+                                        Expiry:
+                                    </span>{' '}
+                                    {formatDate(application.license_expiry) ??
+                                        '—'}
+                                </div>
                             </div>
 
                             {application.status === 'approved' &&

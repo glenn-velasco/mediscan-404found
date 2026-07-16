@@ -18,7 +18,6 @@ interface ApplicationListItem {
     id: number;
     applicant: { id: number; name: string | null; email: string };
     profession: string | null;
-    specialty: string | null;
     status: ProfessionalApplicationStatus;
     created_at: string | null;
 }
@@ -105,8 +104,6 @@ export default function Index({ applications, filters }: IndexProps) {
                                     </td>
                                     <td className="px-4 py-3">
                                         {application.profession ?? '—'}
-                                        {application.specialty &&
-                                            ` (${application.specialty})`}
                                     </td>
                                     <td className="px-4 py-3">
                                         <Badge

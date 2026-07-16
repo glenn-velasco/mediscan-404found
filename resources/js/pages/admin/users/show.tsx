@@ -80,7 +80,10 @@ export default function UserShow({ user }: Props) {
                             <p className="mb-2 text-sm font-medium">Role</p>
                             <div className="flex items-center gap-2">
                                 <Select value={role} onValueChange={setRole}>
-                                    <SelectTrigger className="w-56">
+                                    <SelectTrigger
+                                        className="w-56"
+                                        data-testid="role-select-trigger"
+                                    >
                                         <SelectValue placeholder="Select a role" />
                                     </SelectTrigger>
                                     <SelectContent>
