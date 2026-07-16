@@ -66,17 +66,12 @@ class ProcessProfessionalApplication implements ShouldQueue
             'ocr_extracted_data' => $extracted,
             'ocr_raw_response' => ['full_text' => $fullText],
             'profession' => $extracted['profession'],
-            'specialty' => $extracted['specialty'],
             'license_number' => $extracted['license_number'],
             'license_expiry' => $extracted['license_expiry'],
             'full_name_on_id' => $extracted['full_name'],
         ])->save();
 
-        // Some PRC layouts print the profession/board only as an unlabeled
-        // banner (e.g. "PROFESSIONAL TEACHER") rather than a "Profession:"
-        // line, so a matched specialty keyword also clears this gate even
-        // when the profession field itself is blank.
-        if ((blank($extracted['profession']) && blank($extracted['specialty'])) || blank($extracted['license_number'])) {
+        if (blank($extracted['profession']) || blank($extracted['license_number'])) {
             $this->autoReject($application, 'ID fields unreadable/incomplete.');
 
             return;

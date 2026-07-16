@@ -145,7 +145,7 @@ class ProfessionalApplicationService
         }
 
         DB::transaction(function () use ($application, $admin) {
-            $roleName = Str::slug($application->specialty ?? $application->profession ?? 'verified-professional');
+            $roleName = Str::slug($application->profession ?? 'verified-professional');
 
             $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
             $role->givePermissionTo(Permission::VerifiedProfessional->value);
