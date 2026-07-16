@@ -22,7 +22,7 @@ class PendingSyncEnvelopeResource extends JsonResource
             'recipient_id' => $this->recipient_id,
             'envelope_type' => $this->envelope_type,
             'ciphertext' => $this->ciphertext, // client still needs to fetch and decrypt
-            'status' => $this->status->value,
+            'status' => $this->status?->value,
             'expires_at' => $this->expires_at,
             'acknowledged_at' => $this->acknowledged_at,
             'created_at' => $this->created_at,

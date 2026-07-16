@@ -11,6 +11,8 @@ enum EnvelopeType: string
     case AllergyVerification = 'allergy_verification';
     case TransfusionWitness = 'transfusion_witness';
     case GeneralNote = 'general_note';
+    case DiagnosisVerification = 'diagnosis_verification';
+    case MedicalInformationUpdate = 'medical_information_update';
 
     public function label(): string
     {
@@ -18,6 +20,8 @@ enum EnvelopeType: string
             self::AllergyVerification => 'Allergy Verification',
             self::TransfusionWitness => 'Transfusion Witness',
             self::GeneralNote => 'General Note',
+            self::DiagnosisVerification => 'Diagnosis Verification',
+            self::MedicalInformationUpdate => 'Medical Information Update',
         };
     }
 }
