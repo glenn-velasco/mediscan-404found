@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Filesystem\AwsS3V3Adapter;
 use Illuminate\Support\Facades\Storage;
 
 #[Signature('storage:ensure-bucket')]
@@ -14,7 +15,10 @@ class EnsureStorageBucketExists extends Command
     public function handle(): int
     {
         $bucket = config('filesystems.disks.s3.bucket');
-        $client = Storage::disk('s3')->getClient();
+
+        /** @var AwsS3V3Adapter $disk */
+        $disk = Storage::disk('s3');
+        $client = $disk->getClient();
 
         try {
             $client->headBucket(['Bucket' => $bucket]);
