@@ -2,6 +2,7 @@
 
 use App\Exceptions\ProfessionalApplicationAlreadyPendingException;
 use App\Exceptions\ProfessionalApplicationAlreadyReviewedException;
+use App\Exceptions\ProfessionalApplicationUploadFailedException;
 use App\Exceptions\TooManyAttemptsException;
 use App\Exceptions\UserInvitationLinkInvalidException;
 use App\Http\Controllers\Api\Controller as ApiController;
@@ -94,6 +95,11 @@ return Application::configure(basePath: dirname(__DIR__))
             ->withErrors(['id_type' => $exception->getMessage()])
         );
 
+        $exceptions->renderable(fn (ProfessionalApplicationUploadFailedException $exception) => redirect()
+            ->back()
+            ->withErrors(['id_photo' => $exception->getMessage()])
+        );
+
         $exceptions->renderable(function (ProfessionalApplicationAlreadyReviewedException $exception) {
             Inertia::flash('toast', [
                 'type' => 'error',
@@ -120,6 +126,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     $e->errors(),
                 ),
                 $e instanceof ProfessionalApplicationAlreadyPendingException => ApiController::error($e->getMessage(), 422),
+                $e instanceof ProfessionalApplicationUploadFailedException => ApiController::error($e->getMessage(), 422),
                 $e instanceof AuthenticationException => ApiController::error('Unauthenticated.', 401),
                 $e instanceof MethodNotAllowedHttpException => ApiController::error('Method not allowed.', 405),
                 $e instanceof NotFoundHttpException => ApiController::error('Not found.', 404),

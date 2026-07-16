@@ -113,8 +113,8 @@ class ProfessionalApplicationRepository extends BaseRepository
             'verification_notes' => $application->verification_notes,
             'role_granted' => $application->role_granted,
             'reviewed_by' => $application->reviewer?->fullname,
-            'reviewed_at' => $application->reviewed_at?->toDateTimeString(),
-            'created_at' => $application->created_at?->toDateTimeString(),
+            'reviewed_at' => $application->reviewed_at?->toIso8601String(),
+            'created_at' => $application->created_at?->toIso8601String(),
         ];
     }
 }

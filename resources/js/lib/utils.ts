@@ -20,5 +20,23 @@ export function formatDate(dateStr: string | null) {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
+        timeZone: 'Asia/Manila',
+    });
+}
+
+// Always renders in Philippine time (UTC+8) regardless of the viewer's
+// browser locale, since this is an internal PH-ops-facing timestamp.
+export function formatDateTime(dateStr: string | null) {
+    if (!dateStr) {
+        return '—';
+    }
+
+    return new Date(dateStr).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: 'Asia/Manila',
     });
 }

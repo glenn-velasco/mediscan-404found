@@ -9,6 +9,7 @@ use App\Enums\ProfessionalApplicationStatus;
 use App\Events\ProfessionalApplicationStatusChanged;
 use App\Exceptions\ProfessionalApplicationAlreadyPendingException;
 use App\Exceptions\ProfessionalApplicationAlreadyReviewedException;
+use App\Exceptions\ProfessionalApplicationUploadFailedException;
 use App\Jobs\ProcessProfessionalApplication;
 use App\Models\ProfessionalApplication;
 use App\Models\Role;
@@ -96,13 +97,13 @@ class ProfessionalApplicationService
      */
     private function insertApplication(User $user, array $data, IdType $idType, string $folder): ProfessionalApplication
     {
-        $idPhotoPath = $data['id_photo']->store($folder, self::DISK);
-        $coePath = $data['coe']->store($folder, self::DISK);
+        $idPhotoPath = $this->storeOrFail($data['id_photo'], $folder);
+        $coePath = $this->storeOrFail($data['coe'], $folder);
 
         /** @var array<int, UploadedFile> $selfieFrames */
         $selfieFrames = array_values($data['selfie_frames']);
         $frames = collect($selfieFrames)
-            ->map(fn (UploadedFile $frame, int $index) => $frame->storeAs($folder, "selfie-frame-{$index}.jpg", self::DISK));
+            ->map(fn (UploadedFile $frame, int $index) => $this->storeOrFail($frame, $folder, "selfie-frame-{$index}.jpg"));
 
         /** @var array<int, UploadedFile> $flashFrames */
         $flashFrames = array_values($data['flash_frames']);
@@ -110,7 +111,7 @@ class ProfessionalApplicationService
         $flashColors = array_values($data['flash_colors']);
         $livenessFlashFrames = collect($flashFrames)
             ->map(fn (UploadedFile $frame, int $index) => [
-                'path' => $frame->storeAs($folder, "flash-frame-{$index}.jpg", self::DISK),
+                'path' => $this->storeOrFail($frame, $folder, "flash-frame-{$index}.jpg"),
                 'color' => $flashColors[$index],
             ])
             ->all();
@@ -136,6 +137,17 @@ class ProfessionalApplicationService
 
             return $application;
         });
+    }
+
+    private function storeOrFail(UploadedFile $file, string $folder, ?string $name = null): string
+    {
+        $path = $name === null ? $file->store($folder, self::DISK) : $file->storeAs($folder, $name, self::DISK);
+
+        if ($path === false) {
+            throw new ProfessionalApplicationUploadFailedException;
+        }
+
+        return $path;
     }
 
     public function approve(ProfessionalApplication $application, User $admin): void

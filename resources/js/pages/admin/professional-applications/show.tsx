@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { formatDate, formatDateTime } from '@/lib/utils';
 import admin from '@/routes/admin';
 import type { ProfessionalApplicationStatus } from '@/types';
 import { professionalApplicationStatusBadgeVariant } from '@/types';
@@ -44,24 +45,6 @@ interface ApplicationDetail {
 const idTypeLabels: Record<string, string> = {
     ph_prc: 'PRC ID',
 };
-
-function formatDate(value: string | null): string | null {
-    if (!value) {
-        return null;
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return value;
-    }
-
-    return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-}
 
 interface ShowProps {
     application: ApplicationDetail;
@@ -132,7 +115,8 @@ export default function Show({ application, files }: ShowProps) {
                                 </p>
                                 {application.created_at && (
                                     <p className="text-sm text-muted-foreground">
-                                        Submitted {application.created_at}
+                                        Submitted{' '}
+                                        {formatDateTime(application.created_at)}
                                     </p>
                                 )}
                             </div>
@@ -264,7 +248,7 @@ export default function Show({ application, files }: ShowProps) {
                             <div className="px-6 py-4">
                                 <p className="text-sm text-muted-foreground">
                                     Reviewed by {application.reviewed_by} on{' '}
-                                    {application.reviewed_at}
+                                    {formatDateTime(application.reviewed_at)}
                                 </p>
                             </div>
                         )}

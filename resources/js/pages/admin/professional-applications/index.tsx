@@ -10,6 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { formatDateTime } from '@/lib/utils';
 import admin from '@/routes/admin';
 import type { Paginated, ProfessionalApplicationStatus } from '@/types';
 import { professionalApplicationStatusBadgeVariant } from '@/types';
@@ -121,7 +122,7 @@ export default function Index({ applications, filters }: IndexProps) {
                                         </Badge>
                                     </td>
                                     <td className="px-4 py-3 text-muted-foreground">
-                                        {application.created_at ?? '—'}
+                                        {formatDateTime(application.created_at)}
                                     </td>
                                     <td className="px-4 py-3 text-right">
                                         <Link

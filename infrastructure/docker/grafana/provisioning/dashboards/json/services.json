@@ -4,7 +4,7 @@
   "schemaVersion": 39,
   "version": 1,
   "editable": true,
-  "timezone": "browser",
+  "timezone": "Asia/Manila",
   "time": { "from": "now-6h", "to": "now" },
   "refresh": "30s",
   "panels": [
@@ -293,6 +293,55 @@
           "gridPos": { "h": 8, "w": 24, "x": 0, "y": 7 },
           "targets": [
             { "refId": "A", "expr": "{service=\"reverb\"}" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "type": "row",
+      "title": "RustFS",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 47 },
+      "panels": [
+        {
+          "id": 27,
+          "title": "Container CPU",
+          "type": "timeseries",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 6, "w": 12, "x": 0, "y": 1 },
+          "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\".*mediscan.*rustfs.*\"}[5m])) * 100",
+              "legendFormat": "{{name}}"
+            }
+          ]
+        },
+        {
+          "id": 28,
+          "title": "Container memory",
+          "type": "timeseries",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 6, "w": 12, "x": 12, "y": 1 },
+          "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (name) (container_memory_usage_bytes{name=~\".*mediscan.*rustfs.*\"})",
+              "legendFormat": "{{name}}"
+            }
+          ]
+        },
+        {
+          "id": 29,
+          "title": "RustFS logs",
+          "type": "logs",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 7 },
+          "targets": [
+            { "refId": "A", "expr": "{service=\"rustfs\"}" }
           ]
         }
       ]

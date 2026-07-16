@@ -168,6 +168,9 @@ jobs:
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd $REMOTE_DIR && docker compose run --rm app php artisan migrate --force"
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd $REMOTE_DIR && docker compose run --rm app php artisan db:seed --class=RoleAndPermissionSeeder --force"
 
+      - name: Ensure storage bucket exists
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd $REMOTE_DIR && docker compose run --rm app php artisan storage:ensure-bucket"
+
       - name: Start the stack
         run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cd $REMOTE_DIR && docker compose up -d --remove-orphans"
 

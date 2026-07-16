@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
+import { formatDateTime } from '@/lib/utils';
 import professionalApplication from '@/routes/professional-application';
 import type { ProfessionalApplicationStatus } from '@/types';
 import {
@@ -91,7 +92,7 @@ export default function Show({ application }: ShowProps) {
                                     </p>
                                     <p className="text-sm text-muted-foreground">
                                         Submitted{' '}
-                                        {application.created_at ?? '—'}
+                                        {formatDateTime(application.created_at)}
                                     </p>
                                 </div>
                                 <Badge
