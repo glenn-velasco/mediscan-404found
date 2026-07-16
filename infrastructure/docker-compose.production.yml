@@ -10,7 +10,6 @@ services:
   app:
     image: ghcr.io/${GHCR_OWNER}/mediscan-app:${IMAGE_TAG}
     restart: unless-stopped
-    mem_limit: 1g
     environment:
       CADDY_STORAGE_ROOT: /tmp/caddy
     env_file: .env
