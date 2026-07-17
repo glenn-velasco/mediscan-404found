@@ -10,6 +10,13 @@
 name: mediscan-staging
 
 services:
+  caddy-permissions:
+    image: busybox
+    command: chown -R 1000:1000 /caddy_storage
+    volumes:
+      - caddy_storage:/caddy_storage
+    networks: [internal]
+
   app:
     image: ghcr.io/${GHCR_OWNER}/mediscan-app:${IMAGE_TAG}
     restart: unless-stopped
@@ -19,6 +26,8 @@ services:
     volumes:
       - caddy_storage:/caddy_storage
     depends_on:
+      caddy-permissions:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       postgres:
@@ -177,7 +186,7 @@ services:
     networks: [public, internal]
 
   postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:v0.16.0
+    image: prometheuscommunity/postgres-exporter:v0.17.1
     restart: unless-stopped
     mem_limit: 64m
     environment:
