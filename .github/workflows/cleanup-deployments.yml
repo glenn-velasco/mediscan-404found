@@ -1,0 +1,83 @@
+name: cleanup-deployments
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      keep_count:
+        description: 'Number of recent deployments to keep per environment'
+        required: false
+        default: '15'
+        type: string
+
+permissions:
+  deployments: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const keepCount = parseInt('${{ inputs.keep_count }}') || 15;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Discover all environments with deployments
+            const deployments = await github.paginate(
+              github.rest.repos.listDeployments,
+              { owner, repo, per_page: 100 }
+            );
+
+            const envs = new Map();
+            for (const dep of deployments) {
+              if (!envs.has(dep.environment)) {
+                envs.set(dep.environment, []);
+              }
+              envs.get(dep.environment).push(dep);
+            }
+
+            core.info(`Found deployments in ${envs.size} environment(s): ${Array.from(envs.keys()).join(', ')}`);
+
+            let totalDeleted = 0;
+            let totalKept = 0;
+
+            for (const [env, deps] of envs) {
+              // Sort by created_at descending (most recent first)
+              deps.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+              const toDelete = deps.slice(keepCount);
+              const toKeep = deps.slice(0, keepCount);
+
+              core.info(`\n[${env}] Total: ${deps.length}, Keeping: ${toKeep.length}, Deleting: ${toDelete.length}`);
+
+              for (const dep of toDelete) {
+                try {
+                  // Mark as inactive first (required before deletion)
+                  await github.rest.repos.createDeploymentStatus({
+                    owner,
+                    repo,
+                    deployment_id: dep.id,
+                    state: 'inactive'
+                  });
+
+                  // Delete the deployment
+                  await github.rest.repos.deleteDeployment({
+                    owner,
+                    repo,
+                    deployment_id: dep.id
+                  });
+
+                  core.info(`  ✓ Deleted deployment ${dep.id} (created ${dep.created_at})`);
+                  totalDeleted++;
+                } catch (error) {
+                  core.warning(`  ✗ Failed to delete deployment ${dep.id}: ${error.message}`);
+                }
+              }
+
+              totalKept += toKeep.length;
+            }
+
+            core.info(`\n📊 Summary: Kept ${totalKept} deployments, deleted ${totalDeleted} deployments`);
