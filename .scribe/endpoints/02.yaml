@@ -1,38 +1,130 @@
-name: Endpoints
+name: 'Account Retrieval'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/broadcasting/auth
+    uri: api/v1/account-retrieval-requests
     metadata:
       custom: []
-      groupName: Endpoints
+      groupName: 'Account Retrieval'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: ''
-      description: ''
-      authenticated: true
+      title: |-
+        Submits a request to regain access to a forgotten account (email or
+        password), reachable both before registering a new account and from a
+        logged-in fresh account. Reviewed by admin/support staff before any
+        access is granted - this endpoint never grants anything itself, and
+        its response is identical whether or not old_email matched an
+        account, so it cannot be used to probe for existing accounts.
+      description: 'Requests are automatically pruned 5 days after submission.'
+      authenticated: false
       deprecated: false
     headers:
-      Authorization: 'Bearer {YOUR_AUTH_KEY}'
-      Content-Type: application/json
+      Content-Type: multipart/form-data
       Accept: application/json
     urlParameters: []
     cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
+    bodyParameters:
+      old_email:
+        custom: []
+        name: old_email
+        description: "The email address of the account you're trying to regain access to."
+        required: true
+        example: jane.doe@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      first_name:
+        custom: []
+        name: first_name
+        description: ''
+        required: true
+        example: Jane
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      middle_name:
+        custom: []
+        name: middle_name
+        description: ''
+        required: false
+        example: Marie
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      last_name:
+        custom: []
+        name: last_name
+        description: ''
+        required: true
+        example: Doe
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      dob:
+        custom: []
+        name: dob
+        description: 'Date of birth in YYYY-MM-DD format.'
+        required: true
+        example: '1990-01-15'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      id_photo:
+        custom: []
+        name: id_photo
+        description: 'Photo of a government ID. jpg/jpeg/png, max 5MB.'
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      selfie:
+        custom: []
+        name: selfie
+        description: 'Live selfie photo. jpg/jpeg/png, max 3MB.'
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      old_email: jane.doe@example.com
+      first_name: Jane
+      middle_name: Marie
+      last_name: Doe
+      dob: '1990-01-15'
+    fileParameters:
+      id_photo: null
+      selfie: null
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"status":201,"message":"Request submitted for review.","data":null}'
+        headers: []
+        description: ''
     responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    auth: []
     controller: null
     method: null
     route: null

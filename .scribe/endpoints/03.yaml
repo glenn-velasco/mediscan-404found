@@ -1,21 +1,19 @@
-name: 'Email Verification'
+name: Endpoints
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/email/verification-notification
+    uri: api/v1/broadcasting/auth
     metadata:
       custom: []
-      groupName: 'Email Verification'
+      groupName: Endpoints
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Send an email verification notification.'
-      description: |-
-        Dispatches a verification email to the authenticated user's current
-        email address. No-op if the address is already verified.
+      title: ''
+      description: ''
       authenticated: true
       deprecated: false
     headers:
@@ -29,19 +27,7 @@ endpoints:
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: '{"status":200,"message":"Verification link sent.","data":null}'
-        headers: []
-        description: 'Verification link sent'
-      -
-        custom: []
-        status: 200
-        content: '{"status":200,"message":"Email already verified.","data":null}'
-        headers: []
-        description: 'Already verified'
+    responses: []
     responseFields: []
     auth:
       - headers
