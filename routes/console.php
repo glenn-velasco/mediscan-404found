@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('invitations:prune')->daily();
 Schedule::command('professional-applications:prune')->daily();
+Schedule::command('account-retrieval-requests:prune')->daily();
