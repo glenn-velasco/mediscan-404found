@@ -21,7 +21,7 @@ services:
     image: ghcr.io/${GHCR_OWNER}/mediscan-app:${IMAGE_TAG}
     restart: unless-stopped
     environment:
-      CADDY_STORAGE_ROOT: /caddy_storage
+      XDG_DATA_HOME: /caddy_storage
     env_file: .env
     volumes:
       - caddy_storage:/caddy_storage
@@ -186,9 +186,12 @@ services:
     networks: [public, internal]
 
   postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:v0.17.1
+    image: prometheuscommunity/postgres-exporter:v0.20.1
     restart: unless-stopped
     mem_limit: 64m
+    command:
+      - --no-collector.stat_bgwriter
+      - --collector.stat_checkpointer
     environment:
       DATA_SOURCE_NAME: postgresql://${DB_USERNAME}:${DB_PASSWORD}@postgres:5432/${DB_DATABASE}?sslmode=disable
     depends_on:
