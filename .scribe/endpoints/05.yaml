@@ -1,22 +1,19 @@
-name: 'Device Keys'
+name: Account
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/v1/device-keys
+      - PUT
+    uri: api/v1/email
     metadata:
       custom: []
-      groupName: 'Device Keys'
+      groupName: Account
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Register or rotate a device's public key."
-      description: |-
-        The mobile app generates a public/private key pair (sodium sealed-box),
-        registers its public key here, and uses the private key to decrypt
-        envelopes received from professionals.
+      title: ''
+      description: ''
       authenticated: true
       deprecated: false
     headers:
@@ -28,45 +25,39 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      public_key:
+      email:
         custom: []
-        name: public_key
-        description: 'Base64-encoded sodium sealed-box public key (44 chars for 32-byte key).'
+        name: email
+        description: 'The new email address.'
         required: true
-        example: 1234567890abcdefghijklmnopqrstuvwxyzABCDEF12
+        example: new-email@example.com
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      label:
-        custom: []
-        name: label
-        description: 'Device name/label (e.g., iPhone 15, Samsung Galaxy).'
-        required: false
-        example: 'iPhone 15'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
     cleanBodyParameters:
-      public_key: 1234567890abcdefghijklmnopqrstuvwxyzABCDEF12
-      label: 'iPhone 15'
+      email: new-email@example.com
     fileParameters: []
     responses:
       -
         custom: []
-        status: 201
-        content: '{"status":201,"message":"Device key registered.","data":{"id":1,"user_id":1,"public_key":"1234567890abcdefghijklmnopqrstuvwxyzABCDEF12","label":"iPhone 15","is_active":true,"registered_at":"2026-01-01T00:00:00.000000Z","revoked_at":null}}'
+        status: 200
+        content: '{"status":200,"message":"Email updated. Please verify your new address.","data":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","phone_country_code":"PH","email":"new-email@example.com","email_verified_at":null,"is_active":true,"roles":["User"],"permissions":[]}}'
         headers: []
-        description: ''
+        description: 'Email updated'
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"No changes made.","data":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","phone_country_code":"PH","email":"jane.doe@example.com","email_verified_at":"2026-01-01T00:00:00.000000Z","is_active":true,"roles":["User"],"permissions":[]}}'
+        headers: []
+        description: 'No changes made'
       -
         custom: []
         status: 422
-        content: '{"status":422,"message":"The public_key field must be 44 characters.","errors":{"public_key":["The public_key field must be 44 characters."]}}'
+        content: '{"status":422,"message":"The email has already been taken.","errors":{"email":["The email has already been taken."]}}'
         headers: []
-        description: ''
+        description: 'Email already taken'
     responseFields: []
     auth:
       - headers
@@ -78,60 +69,76 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - DELETE
-    uri: 'api/v1/device-keys/{deviceKey_id}'
+      - PUT
+    uri: api/v1/password
     metadata:
       custom: []
-      groupName: 'Device Keys'
+      groupName: Account
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Revoke a device key.'
-      description: |-
-        Mark a previously registered key as inactive/revoked.
-        Envelopes encrypted to this key become unretrievable.
+      title: "Update the authenticated user's password."
+      description: 'Revokes all other access tokens after the change.'
       authenticated: true
       deprecated: false
     headers:
       Authorization: 'Bearer {YOUR_AUTH_KEY}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters:
-      deviceKey_id:
-        custom: []
-        name: deviceKey_id
-        description: 'The ID of the deviceKey.'
-        required: true
-        example: 16
-        type: integer
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      deviceKey_id: 16
+    urlParameters: []
+    cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
+    bodyParameters:
+      current_password:
+        custom: []
+        name: current_password
+        description: "The user's current password."
+        required: true
+        example: OldPassword123!
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: 'The new password.'
+        required: true
+        example: NewPassword123!
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password_confirmation:
+        custom: []
+        name: password_confirmation
+        description: 'Must match password.'
+        required: true
+        example: NewPassword123!
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      current_password: OldPassword123!
+      password: NewPassword123!
+      password_confirmation: NewPassword123!
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Device key revoked.","data":null}'
+        content: '{"status":200,"message":"Password updated.","data":null}'
         headers: []
         description: ''
       -
         custom: []
-        status: 403
-        content: '{"status":403,"message":"This device key does not belong to you.","errors":null}'
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 404
-        content: '{"status":404,"message":"Not found.","errors":null}'
+        status: 422
+        content: '{"status":422,"message":"The current password field is incorrect.","errors":{"current_password":["The current password field is incorrect."]}}'
         headers: []
         description: ''
     responseFields: []

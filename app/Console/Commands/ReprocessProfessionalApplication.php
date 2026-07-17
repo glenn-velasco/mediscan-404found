@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\ProfessionalApplicationStatus;
+use App\Enums\WorkflowStatus;
 use App\Jobs\ProcessProfessionalApplication;
 use App\Models\ProfessionalApplication;
 use Illuminate\Console\Attributes\Description;
@@ -31,7 +31,7 @@ class ReprocessProfessionalApplication extends Command
         }
 
         $applications = ProfessionalApplication::query()
-            ->where('status', ProfessionalApplicationStatus::PendingReview->value)
+            ->where('status', WorkflowStatus::PendingReview->value)
             ->where('verification_notes', 'like', '%missing from storage%')
             ->get();
 

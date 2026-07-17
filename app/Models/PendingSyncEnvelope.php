@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\PendingSyncEnvelopeStatus;
+use App\Enums\WorkflowStatus;
 use Database\Factories\PendingSyncEnvelopeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $recipient_id
  * @property string $envelope_type
  * @property string $ciphertext
- * @property PendingSyncEnvelopeStatus|null $status
+ * @property WorkflowStatus|null $status
  * @property Carbon $expires_at
  * @property Carbon|null $acknowledged_at
  * @property Carbon $created_at
@@ -31,7 +31,7 @@ class PendingSyncEnvelope extends Model
     protected function casts(): array
     {
         return [
-            'status' => PendingSyncEnvelopeStatus::class,
+            'status' => WorkflowStatus::class,
             'expires_at' => 'datetime',
             'acknowledged_at' => 'datetime',
         ];

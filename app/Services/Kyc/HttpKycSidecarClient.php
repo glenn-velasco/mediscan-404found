@@ -106,10 +106,10 @@ class HttpKycSidecarClient implements FaceMatchClientContract, OcrClientContract
             $request = Http::retry(2, 200, when: fn (Throwable $exception) => ! (
                 $exception instanceof RequestException && $exception->response->clientError()
             ), throw: false)
-                ->timeout((int) config('services.face_match.timeout'))
-                ->withToken(config('services.face_match.token'));
+                ->timeout((int) config('services.machine_learning.timeout'))
+                ->withToken(config('services.machine_learning.token'));
 
-            $response = $withPayload($request)->post(config('services.face_match.base_url').$path);
+            $response = $withPayload($request)->post(config('services.machine_learning.base_url').$path);
         } catch (ConnectionException $e) {
             throw new KycSidecarUnavailableException(previous: $e);
         }

@@ -1,58 +1,136 @@
-name: Professional
+name: 'Professional Applications'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
-      - GET
-    uri: 'api/v1/professional/patients/{patient_id}/public-key'
+      - POST
+    uri: api/v1/professional-applications
     metadata:
       custom: []
-      groupName: Professional
+      groupName: 'Professional Applications'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Fetch a patient's public key."
+      title: 'Submits a professional application for automatic + manual KYC review.'
       description: |-
-        Retrieve a specific patient's current active public key for offline scenario (scenario 1).
-        Used by a professional's phone when initiating a P2P sync handshake over BLE/WiFi.
-        The professional app encrypts the medical data to this key before sending locally.
+        The selfie/flash frames are a liveness challenge, not a plain photo
+        upload: `selfie_frames` must be a short burst spanning at least one
+        real blink (eyes open -> closed -> open), and `flash_frames` must be
+        captured while the client's own screen displayed each color in
+        `flash_colors` in turn (e.g. flash red, capture a frame, flash green,
+        capture a frame, ...). There is no face-api.js/browser dependency on
+        the API side - clients are free to implement this capture flow
+        however suits their platform (native camera APIs, a WebView, etc.);
+        the server independently re-verifies both the blink and the color
+        reflection in the uploaded frames, so client-side gating is only a UX
+        nicety, never trusted as-is.
       authenticated: true
       deprecated: false
     headers:
       Authorization: 'Bearer {YOUR_AUTH_KEY}'
-      Content-Type: application/json
+      Content-Type: multipart/form-data
       Accept: application/json
-    urlParameters:
-      patient_id:
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      id_type:
         custom: []
-        name: patient_id
-        description: 'The ID of the patient.'
+        name: id_type
+        description: 'One of: ph_prc.'
         required: true
-        example: 1
-        type: integer
+        example: ph_prc
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      id_photo:
+        custom: []
+        name: id_photo
+        description: 'Photo of the professional ID. jpg/jpeg/png, max 5MB.'
+        required: true
+        example: null
+        type: file
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-    cleanUrlParameters:
-      patient_id: 1
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
+      selfie_frames:
+        custom: []
+        name: selfie_frames
+        description: 'Burst of 3-10 selfie frames spanning at least one real blink. jpg/jpeg/png, max 3MB each.'
+        required: true
+        example:
+          - null
+        type: 'file[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      flash_frames:
+        custom: []
+        name: flash_frames
+        description: 'One selfie frame captured per entry in flash_colors, in the same order (3-10 frames). jpg/jpeg/png, max 3MB each.'
+        required: true
+        example:
+          - null
+        type: 'file[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      flash_colors:
+        custom: []
+        name: flash_colors
+        description: 'One of red/green/blue per entry, same length and order as flash_frames - the color that was on-screen when that frame was captured.'
+        required: true
+        example:
+          - red
+          - green
+          - blue
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      coe:
+        custom: []
+        name: coe
+        description: 'Certificate of Employment. pdf/jpg/jpeg/png, max 10MB.'
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      id_type: ph_prc
+      flash_colors:
+        - red
+        - green
+        - blue
+    fileParameters:
+      id_photo: null
+      selfie_frames:
+        - null
+      flash_frames:
+        - null
+      coe: null
     responses:
       -
         custom: []
-        status: 200
-        content: '{"status":200,"message":"Success","data":{"public_key":"1234567890abcdefghijklmnopqrstuvwxyzABCDEF12"}}'
+        status: 201
+        content: '{"status":201,"message":"Application submitted.","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":null,"status":"processing","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
         custom: []
-        status: 404
-        content: '{"status":404,"message":"Patient has no registered device key.","errors":null}'
+        status: 422
+        content: '{"status":422,"message":"You already have a professional application being processed or under review.","errors":null}'
         headers: []
         description: ''
     responseFields: []
@@ -66,19 +144,57 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: 'api/v1/professional/patients/{patient_id}/envelopes'
+      - GET
+    uri: api/v1/professional-applications
     metadata:
       custom: []
-      groupName: Professional
+      groupName: 'Professional Applications'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Submit an encrypted sync envelope for a patient.'
-      description: |-
-        Called when a professional scans a patient (QR/card) without the patient's device present (scenario 2).
-        The `ciphertext` must already be encrypted client-side using the patient's public key (sealed-box).
-        The server relays this opaque blob to the patient's device when it next comes online.
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Success","data":[{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}]}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/professional-applications/{professionalApplication_id}'
+    metadata:
+      custom: []
+      groupName: 'Professional Applications'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
       authenticated: true
       deprecated: false
     headers:
@@ -86,61 +202,37 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      patient_id:
+      professionalApplication_id:
         custom: []
-        name: patient_id
-        description: 'The ID of the patient.'
+        name: professionalApplication_id
+        description: 'The ID of the professionalApplication.'
         required: true
-        example: 1
+        example: 16
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      patient_id: 1
+      professionalApplication_id: 16
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters:
-      ciphertext:
-        custom: []
-        name: ciphertext
-        description: 'Base64-encoded sealed-box ciphertext.'
-        required: true
-        example: abc123def456...
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      envelope_type:
-        custom: []
-        name: envelope_type
-        description: 'Type/category of the payload. One of: allergy_verification, transfusion_witness, general_note.'
-        required: true
-        example: allergy_verification
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanBodyParameters:
-      ciphertext: abc123def456...
-      envelope_type: allergy_verification
+    bodyParameters: []
+    cleanBodyParameters: []
     fileParameters: []
     responses:
       -
         custom: []
-        status: 201
-        content: '{"status":201,"message":"Envelope submitted.","data":{"id":1,"sender_id":2,"recipient_id":3,"envelope_type":"allergy_verification","ciphertext":"<base64-encoded-sealed-box-ciphertext>","status":"pending","expires_at":"2026-10-08T00:00:00.000000Z","acknowledged_at":null,"created_at":"2026-01-01T00:00:00.000000Z"}}'
+        status: 200
+        content: '{"status":200,"message":"Success","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
         custom: []
-        status: 422
-        content: '{"status":422,"message":"The ciphertext field is required.","errors":{"ciphertext":["The ciphertext field is required."]}}'
+        status: 404
+        content: '{"status":404,"message":"Not found.","errors":null}'
         headers: []
-        description: ''
+        description: 'Not found or not owned'
     responseFields: []
     auth:
       - headers

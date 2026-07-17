@@ -19,4 +19,18 @@ return [
 
     'face_match_hard_floor' => (float) env('KYC_FACE_MATCH_HARD_FLOOR', 0.2),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Account Retrieval Face Match Floor
+    |--------------------------------------------------------------------------
+    |
+    | Minimum selfie-vs-ID-photo similarity score for an account retrieval
+    | request. Set higher than the KYC floor above because this flow has no
+    | liveness burst backing the score up (single selfie, not a capture
+    | flow) - clearing it still never auto-approves, an admin always reviews.
+    |
+    */
+
+    'account_retrieval_face_match_floor' => (float) env('KYC_ACCOUNT_RETRIEVAL_FACE_MATCH_FLOOR', 0.4),
+
 ];

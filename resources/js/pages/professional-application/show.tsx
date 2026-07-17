@@ -7,11 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 import { formatDateTime } from '@/lib/utils';
 import professionalApplication from '@/routes/professional-application';
-import type { ProfessionalApplicationStatus } from '@/types';
-import {
-    professionalApplicationStatusBadgeVariant,
-    ProfessionalApplicationStatusLabel,
-} from '@/types';
+import type { WorkflowStatus } from '@/types';
+import { workflowStatusBadgeVariant, WorkflowStatusLabel } from '@/types';
 
 interface Application {
     id: number;
@@ -21,7 +18,7 @@ interface Application {
     full_name_on_id: string | null;
     license_number: string | null;
     license_expiry: string | null;
-    status: ProfessionalApplicationStatus;
+    status: WorkflowStatus;
     rejection_reason: string | null;
     verification_notes: string | null;
     role_granted: string | null;
@@ -97,16 +94,12 @@ export default function Show({ application }: ShowProps) {
                                 </div>
                                 <Badge
                                     variant={
-                                        professionalApplicationStatusBadgeVariant[
+                                        workflowStatusBadgeVariant[
                                             application.status
                                         ]
                                     }
                                 >
-                                    {
-                                        ProfessionalApplicationStatusLabel[
-                                            application.status
-                                        ]
-                                    }
+                                    {WorkflowStatusLabel[application.status]}
                                 </Badge>
                             </div>
 

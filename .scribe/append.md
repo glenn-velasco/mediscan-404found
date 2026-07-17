@@ -44,7 +44,7 @@ of PHP, Octane serves HTTP directly and Nginx reverse-proxies to it.
 | **horizon** | Laravel Horizon (queue worker + dashboard) | — | `php artisan horizon` |
 | **scheduler** | Task scheduler | — | `php artisan schedule:work` |
 | **reverb** | WebSocket broadcasting | 8080 | Public path is `/app/` via Nginx; backend services reach it directly over `internal` |
-| **face-match** | OCR + face-match + liveness sidecar (Python) | 8500 | |
+| **machine-learning** | OCR + face-match + liveness sidecar (Python) | 8500 | |
 | **redis** | Cache, sessions, queue, Reverb scaling | 6379 | |
 | **rustfs** / **rustfs-permissions** | S3-compatible object storage; `rustfs-permissions` is a one-shot `chown` init container | 9000 | |
 | **postgres** | PostgreSQL 18 | 5432 | **Staging only** — production uses Supabase via `DB_URL` |
@@ -55,7 +55,7 @@ of PHP, Octane serves HTTP directly and Nginx reverse-proxies to it.
 | **node-exporter** | Host metrics | — | |
 | **cadvisor** | Per-container metrics | — | |
 
-Every image (`app`, `nginx`, `face-match`, `prometheus`, `grafana`, `promtail`, `loki` — 7 total)
+Every image (`app`, `nginx`, `machine-learning`, `prometheus`, `grafana`, `promtail`, `loki` — 7 total)
 is built and pushed to `ghcr.io/<owner>/mediscan-<name>` on every push; the
 only difference between staging and production deploys is which compose file
 and GitHub Environment secrets are used, not the images themselves.
@@ -137,7 +137,7 @@ write access to `/opt`).
 | `RUSTFS_ACCESS_KEY` / `RUSTFS_SECRET_KEY` | Per-environment | Also used as `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` |
 | `REVERB_APP_SECRET` | Per-environment | Server-side only |
 | `RESEND_API_KEY` | Per-environment | Transactional email |
-| `FACE_MATCH_SHARED_SECRET` | Per-environment | Shared with the face-match sidecar |
+| `MACHINE_LEARNING_SHARED_SECRET` | Per-environment | Shared with the machine-learning sidecar |
 | `GRAFANA_ADMIN_PASSWORD` | Per-environment | Grafana admin login |
 
 Plus repository **variables** (non-secret): `APP_NAME`, `APP_DEBUG`, `APP_URL`,
@@ -290,3 +290,16 @@ Uses `libsodium` (PHP's `ext-sodium`) sealed boxes (crypto_box_seal):
 - **Patient's phone** receives the ciphertext and decrypts with the private key (stored only on their device)
 
 The server never stores, transmits, or has access to the private key or plaintext medical content.
+
+# Account Retrieval
+
+`POST /v1/account-retrieval-requests` lets someone regain access to a forgotten account (email or password) by submitting their old email plus an ID photo + selfie for admin review. It replaces the old ID-verified link-request-at-registration flow, which has been removed entirely — registration itself now auto-matches by name+dob and notifies the matched record's primary user directly (see `docs/BROADCASTING.md` for the `MedicalInformationRegistrationMatchStatusChanged` event that flow emits).
+
+- **Reachable both pre-registration and from a logged-in fresh account.** The endpoint sits outside the `auth:sanctum` middleware group; if a bearer token is present it's still used to associate the request with `requester_user_id`, otherwise the request is anonymous (pre-registration).
+- **Anti-enumeration:** the response is identical (`201`, generic message) whether or not `old_email` matches an existing account. Never rely on the response to probe for account existence.
+- **Review is admin-only**, mirroring the deleted link-request flow: OCR + face-match run as decision support (`ProcessAccountRetrievalRequest` job), but an admin always makes the final call via the admin panel.
+- **On approval:**
+  - If the request was submitted from a logged-in account (`requester_user_id` present), that account is repointed onto the matched medical record and its interim record is discarded.
+  - If the request was submitted pre-registration (`requester_user_id` null), there's no fresh account to repoint — instead a standard password-reset email is sent to the old account's email address so the requester can log back into it directly.
+- **Expiry:** every request exposes `expires_at` (`created_at + 5 days`) in its API representation so a client can render a countdown. Requests are permanently deleted 5 days after submission regardless of status (`account-retrieval-requests:prune`, scheduled daily) — treat `expires_at` as informational, not authoritative, since a request can also be resolved (approved/denied) before it expires.
+- **Real-time status:** once reviewed, `AccountRetrievalRequestStatusChanged` broadcasts on the requester's own `App.Models.User.{id}` channel (only when `requester_user_id` is set) with `{ account_retrieval_request_id, status }` — metadata only, no PHI. See `docs/BROADCASTING.md` for the full channel/event/payload reference and the admin-side `admin-dashboard` broadcast.

@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\ProfessionalApplicationStatus;
+use App\Enums\WorkflowStatus;
 use App\Exceptions\ProfessionalApplicationAlreadyPendingException;
 use App\Models\ProfessionalApplication;
 use App\Models\User;
@@ -26,7 +26,7 @@ it('converts a unique-constraint race into the friendly already-pending exceptio
         'id_photo_path' => 'id.jpg',
         'selfie_path' => 'selfie.jpg',
         'coe_path' => 'coe.pdf',
-        'status' => ProfessionalApplicationStatus::Processing->value,
+        'status' => WorkflowStatus::Processing->value,
     ]);
 
     $this->app->bind(ProfessionalApplicationRepository::class, fn () => new class(new ProfessionalApplication) extends ProfessionalApplicationRepository

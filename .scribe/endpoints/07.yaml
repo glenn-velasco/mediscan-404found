@@ -1,22 +1,22 @@
-name: 'Emergency QR Events'
+name: Sync
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: api/v1/emergency-qr/events
+      - GET
+    uri: api/v1/pending-sync
     metadata:
       custom: []
-      groupName: 'Emergency QR Events'
+      groupName: Sync
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Log an emergency QR "shown" or "scanned" event for usage analytics.'
+      title: 'Get pending sync envelopes.'
       description: |-
-        Best-effort ping fired by the mobile app whenever a patient's emergency QR is presented
-        or scanned; never blocks the offline read path. Reuses the generic audit_logs table —
-        the backend stores no plaintext medical data.
+        Retrieve all envelopes waiting to be delivered to the authenticated user.
+        The mobile app calls this on startup or when triggered by a broadcast notification.
+        Envelopes are ordered by creation time (oldest first) for consistent application order.
       authenticated: true
       deprecated: false
     headers:
@@ -27,56 +27,87 @@ endpoints:
     cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters:
-      action:
-        custom: []
-        name: action
-        description: 'Either "shown" or "scanned".'
-        required: true
-        example: scanned
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      patient_id:
-        custom: []
-        name: patient_id
-        description: 'The patient whose emergency QR this event concerns.'
-        required: true
-        example: 1
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      context:
-        custom: []
-        name: context
-        description: 'The scanning context (e.g. viewer, professional_submit).'
-        required: false
-        example: professional_submit
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-    cleanBodyParameters:
-      action: scanned
-      patient_id: 1
-      context: professional_submit
+    bodyParameters: []
+    cleanBodyParameters: []
     fileParameters: []
     responses:
       -
         custom: []
-        status: 201
-        content: '{"status":201,"message":"Logged.","data":null}'
+        status: 200
+        content: '{"status":200,"message":"Success","data":{"envelopes":[{"id":1,"sender_id":2,"recipient_id":1,"envelope_type":"allergy_verification","ciphertext":"<base64-encoded-sealed-box-ciphertext>","status":"pending","expires_at":"2026-10-08T00:00:00.000000Z","acknowledged_at":null,"created_at":"2026-01-01T00:00:00.000000Z"}]}}'
         headers: []
         description: ''
       -
         custom: []
-        status: 422
-        content: '{"status":422,"message":"The action field is required.","errors":{"action":["The action field is required."]}}'
+        status: 403
+        content: '{"status":403,"message":"Your account has been deactivated.","errors":null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/pending-sync/{pendingSyncEnvelope_id}/ack'
+    metadata:
+      custom: []
+      groupName: Sync
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Acknowledge receipt of a sync envelope.'
+      description: |-
+        Called after the mobile app successfully decrypts and merges an envelope.
+        This marks the envelope as acknowledged and logs the receipt for audit purposes.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      pendingSyncEnvelope_id:
+        custom: []
+        name: pendingSyncEnvelope_id
+        description: 'The ID of the pendingSyncEnvelope.'
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      pendingSyncEnvelope_id: 16
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Envelope acknowledged.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"status":403,"message":"Unauthenticated.","errors":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":404,"message":"Not found.","errors":null}'
         headers: []
         description: ''
     responseFields: []

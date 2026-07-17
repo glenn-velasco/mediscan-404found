@@ -3,12 +3,14 @@
 use App\Enums\Permission;
 use App\Enums\Role;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\AccountRetrievalRequestController as AdminAccountRetrievalRequestController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\ProfessionalApplicationController as AdminProfessionalApplicationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AcceptInvitationController;
 use App\Http\Controllers\Auth\VerifyApiEmailController;
 use App\Http\Controllers\BroadcastingDocsController;
+use App\Http\Controllers\MedicalInformationRegistrationMatchController;
 use App\Http\Controllers\ProfessionalApplicationController;
 use App\Http\Controllers\SeoController;
 use App\Http\Middleware\CheckUserActive;
@@ -47,6 +49,18 @@ Route::get('/verify-email/{id}/{hash}', VerifyApiEmailController::class)
     ->middleware(['signed', 'throttle:6,1'])
     ->name('email.verify');
 
+// Signed, no-login landing links emailed to a record's primary user when a
+// new registration's name+dob matches their record. The primary accepts or
+// denies without ever creating a session - same "signature is the only
+// guard" shape as the verify-email route above.
+Route::middleware(['signed', 'throttle:6,1'])
+    ->prefix('medical-information-registration-matches/{registrationMatch}')
+    ->name('medical-information-registration-matches.')
+    ->group(function () {
+        Route::get('/accept', [MedicalInformationRegistrationMatchController::class, 'accept'])->name('accept');
+        Route::get('/deny', [MedicalInformationRegistrationMatchController::class, 'deny'])->name('deny');
+    });
+
 // Uploading a government ID + biometric selfie is sensitive enough to also
 // require a verified email, unlike the dashboard group above.
 Route::middleware(['auth', 'verified', CheckUserActive::class])
@@ -83,6 +97,14 @@ Route::prefix('admin')->name('admin.')
             ->withTrashed()->name('professional-applications.file');
         Route::patch('professional-applications/{professionalApplication}/approve', [AdminProfessionalApplicationController::class, 'approve'])->name('professional-applications.approve');
         Route::patch('professional-applications/{professionalApplication}/reject', [AdminProfessionalApplicationController::class, 'reject'])->name('professional-applications.reject');
+
+        Route::get('account-retrieval-requests', [AdminAccountRetrievalRequestController::class, 'index'])->name('account-retrieval-requests.index');
+        Route::get('account-retrieval-requests/{accountRetrievalRequest}', [AdminAccountRetrievalRequestController::class, 'show'])->name('account-retrieval-requests.show');
+        Route::get('account-retrieval-requests/{accountRetrievalRequest}/file/{type}', [AdminAccountRetrievalRequestController::class, 'file'])
+            ->whereIn('type', ['id-photo', 'selfie'])
+            ->name('account-retrieval-requests.file');
+        Route::patch('account-retrieval-requests/{accountRetrievalRequest}/approve', [AdminAccountRetrievalRequestController::class, 'approve'])->name('account-retrieval-requests.approve');
+        Route::patch('account-retrieval-requests/{accountRetrievalRequest}/deny', [AdminAccountRetrievalRequestController::class, 'deny'])->name('account-retrieval-requests.deny');
     });
 
 require __DIR__.'/settings.php';

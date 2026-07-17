@@ -86,9 +86,9 @@ services:
         condition: service_started
     networks: [mediscan-dev]
 
-  face-match:
+  machine-learning:
     build:
-      context: ../docker/face-match
+      context: ../docker/machine-learning
     networks: [mediscan-dev]
 
   postgres:

@@ -1,21 +1,22 @@
-name: Scans
+name: 'Emergency QR Events'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/scans
+    uri: api/v1/emergency-qr/events
     metadata:
       custom: []
-      groupName: Scans
+      groupName: 'Emergency QR Events'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Log a QR scan event for audit purposes.'
+      title: 'Log an emergency QR "shown" or "scanned" event for usage analytics.'
       description: |-
-        Records who scanned whom. The authenticated user is the scanner (actor);
-        `scanned_user_id` is the scanned subject. Stored in the `audit_logs` table.
+        Best-effort ping fired by the mobile app whenever a patient's emergency QR is presented
+        or scanned; never blocks the offline read path. Reuses the generic audit_logs table —
+        the backend stores no plaintext medical data.
       authenticated: true
       deprecated: false
     headers:
@@ -27,10 +28,21 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      scanned_user_id:
+      action:
         custom: []
-        name: scanned_user_id
-        description: 'The user whose QR code was scanned.'
+        name: action
+        description: 'Either "shown" or "scanned".'
+        required: true
+        example: scanned
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      patient_id:
+        custom: []
+        name: patient_id
+        description: 'The patient whose emergency QR this event concerns.'
         required: true
         example: 1
         type: integer
@@ -41,17 +53,18 @@ endpoints:
       context:
         custom: []
         name: context
-        description: 'The scan context (e.g. qr_scan).'
+        description: 'The scanning context (e.g. viewer, professional_submit).'
         required: false
-        example: qr_scan
+        example: professional_submit
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: true
         deprecated: false
     cleanBodyParameters:
-      scanned_user_id: 1
-      context: qr_scan
+      action: scanned
+      patient_id: 1
+      context: professional_submit
     fileParameters: []
     responses:
       -
@@ -63,7 +76,7 @@ endpoints:
       -
         custom: []
         status: 422
-        content: '{"status":422,"message":"The scanned_user_id field is required.","errors":{"scanned_user_id":["The scanned_user_id field is required."]}}'
+        content: '{"status":422,"message":"The action field is required.","errors":{"action":["The action field is required."]}}'
         headers: []
         description: ''
     responseFields: []

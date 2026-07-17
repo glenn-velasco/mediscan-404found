@@ -17,8 +17,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import admin from '@/routes/admin';
-import type { ProfessionalApplicationStatus } from '@/types';
-import { professionalApplicationStatusBadgeVariant } from '@/types';
+import type { WorkflowStatus } from '@/types';
+import { workflowStatusBadgeVariant } from '@/types';
 
 interface ApplicationDetail {
     id: number;
@@ -29,7 +29,7 @@ interface ApplicationDetail {
     full_name_on_id: string | null;
     license_number: string | null;
     license_expiry: string | null;
-    status: ProfessionalApplicationStatus;
+    status: WorkflowStatus;
     face_match_score: number | null;
     face_match_passed: boolean | null;
     liveness_score: number | null;
@@ -122,7 +122,7 @@ export default function Show({ application, files }: ShowProps) {
                             </div>
                             <Badge
                                 variant={
-                                    professionalApplicationStatusBadgeVariant[
+                                    workflowStatusBadgeVariant[
                                         application.status
                                     ]
                                 }

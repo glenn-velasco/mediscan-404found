@@ -2,10 +2,12 @@
 
 use App\Enums\Permission;
 use App\Http\Controllers\Api\V1\AccountController;
+use App\Http\Controllers\Api\V1\AccountRetrievalRequestController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DeviceKeyController;
 use App\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Http\Controllers\Api\V1\EmergencyQrEventController;
+use App\Http\Controllers\Api\V1\MedicalInformationController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PendingSyncController;
 use App\Http\Controllers\Api\V1\ProfessionalApplicationController;
@@ -21,6 +23,13 @@ Route::prefix('v1')->group(function () {
 
     Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:6,1');
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1');
+
+    // Reachable both pre-registration (no account yet) and from a logged-in
+    // fresh account - deliberately outside the auth:sanctum group. When a
+    // bearer token is present, $request->user('sanctum') still resolves it
+    // (Sanctum resolves on demand, independent of route middleware); when
+    // absent, requester_user_id is simply null.
+    Route::post('/account-retrieval-requests', [AccountRetrievalRequestController::class, 'store'])->middleware('throttle:6,1');
 
     Route::middleware(['auth:sanctum', 'api.active'])->group(function () {
         Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
@@ -46,12 +55,19 @@ Route::prefix('v1')->group(function () {
 
         Route::post('/scans', [ScanController::class, 'store']);
 
-        // Uploading a government ID + biometric selfie is sensitive enough to
-        // also require a verified email, unlike the routes above.
+        // Uploading a government ID + biometric selfie (or handling PHI) is
+        // sensitive enough to also require a verified email, unlike the
+        // routes above.
         Route::middleware('verified')->group(function () {
             Route::post('/professional-applications', [ProfessionalApplicationController::class, 'store']);
             Route::get('/professional-applications', [ProfessionalApplicationController::class, 'index']);
             Route::get('/professional-applications/{professionalApplication}', [ProfessionalApplicationController::class, 'show']);
+
+            Route::get('/medical-information', [MedicalInformationController::class, 'index']);
+            Route::post('/medical-information', [MedicalInformationController::class, 'store']);
+            Route::get('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'show']);
+            Route::put('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'update']);
+            Route::delete('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'destroy']);
 
             // Professional sync: patient public key lookup and envelope submission
             Route::middleware('abilities:'.Permission::VerifiedProfessional->value)

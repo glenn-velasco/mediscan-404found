@@ -3,7 +3,7 @@
 namespace App\Services\Sync;
 
 use App\Enums\AuditLogType;
-use App\Enums\PendingSyncEnvelopeStatus;
+use App\Enums\WorkflowStatus;
 use App\Models\PendingSyncEnvelope;
 use App\Models\User;
 use App\Services\Audit\AuditLogger;
@@ -22,7 +22,7 @@ class PendingSyncService
     public function pendingFor(User $user): Collection
     {
         return PendingSyncEnvelope::where('recipient_id', $user->id)
-            ->where('status', PendingSyncEnvelopeStatus::Pending->value)
+            ->where('status', WorkflowStatus::Pending->value)
             ->orderBy('created_at')
             ->get();
     }
@@ -38,7 +38,7 @@ class PendingSyncService
 
         DB::transaction(function () use ($user, $envelope) {
             $envelope->update([
-                'status' => PendingSyncEnvelopeStatus::Acknowledged->value,
+                'status' => WorkflowStatus::Acknowledged->value,
                 'acknowledged_at' => now(),
             ]);
 
@@ -61,13 +61,13 @@ class PendingSyncService
      */
     public function expireStale(): void
     {
-        $expired = PendingSyncEnvelope::where('status', PendingSyncEnvelopeStatus::Pending->value)
+        $expired = PendingSyncEnvelope::where('status', WorkflowStatus::Pending->value)
             ->where('expires_at', '<=', now())
             ->get();
 
         foreach ($expired as $envelope) {
             DB::transaction(function () use ($envelope) {
-                $envelope->update(['status' => PendingSyncEnvelopeStatus::Expired->value]);
+                $envelope->update(['status' => WorkflowStatus::Expired->value]);
 
                 $this->auditLogger->log(
                     action: 'envelope.expired',

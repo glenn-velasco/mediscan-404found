@@ -35,10 +35,10 @@ return [
         ],
     ],
 
-    'face_match' => [
-        'base_url' => env('FACE_MATCH_BASE_URL', 'http://face-match:8500'),
-        'token' => env('FACE_MATCH_SHARED_SECRET'),
-        'timeout' => env('FACE_MATCH_TIMEOUT', 15),
+    'machine_learning' => [
+        'base_url' => env('MACHINE_LEARNING_BASE_URL', 'http://machine-learning:8500'),
+        'token' => env('MACHINE_LEARNING_SHARED_SECRET'),
+        'timeout' => env('MACHINE_LEARNING_TIMEOUT', 15),
     ],
 
     'google' => [

@@ -11,8 +11,10 @@ services:
     image: ghcr.io/${GHCR_OWNER}/mediscan-app:${IMAGE_TAG}
     restart: unless-stopped
     environment:
-      CADDY_STORAGE_ROOT: /tmp/caddy
+      CADDY_STORAGE_ROOT: /caddy_storage
     env_file: .env
+    volumes:
+      - caddy_storage:/caddy_storage
     depends_on:
       redis:
         condition: service_healthy
@@ -121,12 +123,12 @@ services:
       - rustfs_data:/data/rustfs
     networks: [internal]
 
-  face-match:
-    image: ghcr.io/${GHCR_OWNER}/mediscan-face-match:${IMAGE_TAG}
+  machine-learning:
+    image: ghcr.io/${GHCR_OWNER}/mediscan-machine-learning:${IMAGE_TAG}
     restart: unless-stopped
     mem_limit: 1g
     environment:
-      FACE_MATCH_SHARED_SECRET: ${FACE_MATCH_SHARED_SECRET}
+      MACHINE_LEARNING_SHARED_SECRET: ${MACHINE_LEARNING_SHARED_SECRET}
     networks: [internal]
 
   nginx:
@@ -149,7 +151,7 @@ services:
     networks: [public, internal]
 
   postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:v0.15.0
+    image: prometheuscommunity/postgres-exporter:v0.16.0
     restart: unless-stopped
     mem_limit: 64m
     environment:
@@ -229,6 +231,7 @@ networks:
   internal:
 
 volumes:
+  caddy_storage:
   redis_data:
   rustfs_data:
   prometheus_data:

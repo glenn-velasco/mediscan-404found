@@ -5,7 +5,7 @@ namespace App\Services\Kyc;
 use App\Enums\AuditLogType;
 use App\Enums\IdType;
 use App\Enums\Permission;
-use App\Enums\ProfessionalApplicationStatus;
+use App\Enums\WorkflowStatus;
 use App\Events\ProfessionalApplicationStatusChanged;
 use App\Exceptions\ProfessionalApplicationAlreadyPendingException;
 use App\Exceptions\ProfessionalApplicationAlreadyReviewedException;
@@ -130,7 +130,7 @@ class ProfessionalApplicationService
                 'liveness_flash_frames' => $livenessFlashFrames,
                 'coe_path' => $coePath,
                 'coe_original_filename' => $data['coe']->getClientOriginalName(),
-                'status' => ProfessionalApplicationStatus::Processing->value,
+                'status' => WorkflowStatus::Processing->value,
             ]);
 
             ProcessProfessionalApplication::dispatch($application->id)->afterCommit();
@@ -173,7 +173,7 @@ class ProfessionalApplicationService
             $application->user->forceFill(['profile_photo_path' => $publicAvatarPath])->save();
 
             $application->forceFill([
-                'status' => ProfessionalApplicationStatus::Approved,
+                'status' => WorkflowStatus::Approved,
                 'reviewed_by' => $admin->id,
                 'reviewed_at' => now(),
                 'role_granted' => $roleName,
@@ -203,7 +203,7 @@ class ProfessionalApplicationService
 
         DB::transaction(function () use ($application, $admin, $reason) {
             $application->forceFill([
-                'status' => ProfessionalApplicationStatus::Denied,
+                'status' => WorkflowStatus::Denied,
                 'rejection_reason' => $reason,
                 'reviewed_by' => $admin->id,
                 'reviewed_at' => now(),

@@ -73,7 +73,7 @@ class UserDeactivated implements ShouldBroadcast
 }
 ```
 
-Used by: `UserDeactivated`, `UserDeleted`, `ProfessionalApplicationStatusChanged` (broadcasts on both the applicant's own channel and `admin-dashboard` at once - see its `broadcastOn()`).
+Used by: `UserDeactivated`, `UserDeleted`, `ProfessionalApplicationStatusChanged` (broadcasts on both the applicant's own channel and `admin-dashboard` at once - see its `broadcastOn()`), `MedicalInformationUpdated` (broadcasts on every currently-linked user's own channel at once, since one medical information record can back many accounts - see its `broadcastOn()`), `AccountRetrievalRequestStatusChanged` (broadcasts on `admin-dashboard` and, when the request has a `requester_user_id`, the requester's own channel too - see its `broadcastOn()`), `MedicalInformationRegistrationMatchStatusChanged` (broadcasts only on the requester's own channel - this flow never involves an admin).
 
 `public bool $afterCommit = true` is the equivalent of `ShouldQueueAfterCommit` in pattern 1 — it delays the broadcast job until the current DB transaction commits.
 
@@ -100,6 +100,10 @@ Used by: `UserDeactivated`, `UserDeleted`, `ProfessionalApplicationStatusChanged
 | `App.Models.User.{id}` | `.UserDeactivated` | `App\Events\UserDeactivated` (self-broadcasting), dispatched from `UserService::setActive()` | `{ user_id: number }` |
 | `App.Models.User.{id}` | `.UserDeleted` | `App\Events\UserDeleted` (self-broadcasting), dispatched from `UserService::delete()` | `{ user_id: number }` |
 | `App.Models.User.{id}` | `.ProfessionalApplicationStatusChanged` | Same event as above, on the applicant's own channel | `{ application_id: number, status: string }` |
+| `App.Models.User.{id}` | `.MedicalInformationUpdated` | `App\Events\MedicalInformationUpdated` (self-broadcasting), dispatched from `MedicalInformationService::update()`/`syncAvatar()`/`repointUserToRecord()`, on every currently-linked user's channel | `{ medical_information_id: number }` — deliberately metadata-only, no PHI fields, consistent with `PendingSyncEnvelopeCreated`'s convention |
+| `admin-dashboard` | `.AccountRetrievalRequestStatusChanged` | `App\Events\AccountRetrievalRequestStatusChanged` (self-broadcasting), dispatched from `AccountRetrievalRequestService::approve()`/`deny()` | `{ account_retrieval_request_id: number, status: string }` |
+| `App.Models.User.{id}` | `.AccountRetrievalRequestStatusChanged` | Same event as above, on the requester's own channel - only when the request has a `requester_user_id` (pre-registration submissions have no account to notify) | `{ account_retrieval_request_id: number, status: string }` |
+| `App.Models.User.{id}` | `.MedicalInformationRegistrationMatchStatusChanged` | `App\Events\MedicalInformationRegistrationMatchStatusChanged` (self-broadcasting), dispatched from `MedicalInformationRegistrationMatchService::accept()`/`deny()`, on the requester's own channel | `{ medical_information_registration_match_id: number, status: string }` — metadata only, no PHI. No frontend UI consumes this yet (the requester-side experience lives in an external client); documented here for that client to wire up |
 
 
 ## Frontend consumption
@@ -118,7 +122,8 @@ Real usages:
 - `resources/js/layouts/user-layout.tsx` — listens on the current user's own `App.Models.User.{id}` channel for `.UserDeactivated`/`.UserDeleted` and force-logs the user out (`router.post(logout.url())`) so a deactivated/deleted user's open tab reacts immediately instead of waiting for their next request to hit `CheckUserActive`/`EnsureApiUserActive` middleware. It also listens for `.EmailChanged` on the same channel and does a partial `router.reload({ only: ['auth'] })` so `useAuth()`-driven UI (e.g. the email shown on `resources/js/components/user-info.tsx`) reflects an email change made elsewhere without a full page reload.
 - `resources/js/pages/admin/professional-applications/index.tsx` and `.../show.tsx` — listen on `admin-dashboard` for `.ProfessionalApplicationStatusChanged` and `router.reload()`, so the list/detail view picks up automatic-verification results and other admins' approve/deny actions live.
 - `resources/js/pages/professional-application/show.tsx` — listens on the applicant's own `App.Models.User.{id}` channel for `.ProfessionalApplicationStatusChanged` and `router.reload()`, so the status page updates the moment the background job or an admin decision changes it, without the applicant needing to refresh.
-Note: `EmailVerified` is broadcast on `App.Models.User.{id}` but currently has **no frontend consumer** — nothing subscribes to it yet.
+- `resources/js/pages/admin/account-retrieval-requests/index.tsx` and `.../show.tsx` — listen on `admin-dashboard` for `.AccountRetrievalRequestStatusChanged` and `router.reload()`, so the queue picks up other admins' approve/deny actions live.
+Note: `EmailVerified` and `MedicalInformationRegistrationMatchStatusChanged` are broadcast on `App.Models.User.{id}` but currently have **no frontend consumer** in this repo — this app's frontend is the admin panel; the end-user (requester/primary) experience lives in an external (mobile/other) client that has yet to be built against these channels.
 
 ## Testing
 

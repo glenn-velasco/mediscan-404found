@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Contracts\Kyc\FaceMatchClientContract;
 use App\Contracts\Kyc\OcrClientContract;
-use App\Enums\ProfessionalApplicationStatus;
+use App\Enums\WorkflowStatus;
 use App\Events\ProfessionalApplicationStatusChanged;
 use App\Exceptions\KycSidecarUnavailableException;
 use App\Models\ProfessionalApplication;
@@ -172,7 +172,7 @@ class ProcessProfessionalApplication implements ShouldQueue
             return;
         }
 
-        $application->forceFill(['status' => ProfessionalApplicationStatus::PendingReview])->save();
+        $application->forceFill(['status' => WorkflowStatus::PendingReview])->save();
 
         $this->broadcastStatusChanged($application);
     }
@@ -191,7 +191,7 @@ class ProcessProfessionalApplication implements ShouldQueue
     private function markPendingReview(ProfessionalApplication $application, string $note): void
     {
         $application->forceFill([
-            'status' => ProfessionalApplicationStatus::PendingReview,
+            'status' => WorkflowStatus::PendingReview,
             'verification_notes' => $note,
         ])->save();
 
@@ -201,7 +201,7 @@ class ProcessProfessionalApplication implements ShouldQueue
     private function autoReject(ProfessionalApplication $application, string $reason): void
     {
         $application->forceFill([
-            'status' => ProfessionalApplicationStatus::AutoRejected,
+            'status' => WorkflowStatus::AutoRejected,
             'rejection_reason' => $reason,
         ])->save();
 

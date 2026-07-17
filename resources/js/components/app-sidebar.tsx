@@ -1,4 +1,4 @@
-import { IdCard, LayoutGrid, Mail, Users } from 'lucide-react';
+import { IdCard, KeyRound, LayoutGrid, Mail, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -37,6 +37,11 @@ export function AppSidebar() {
             title: 'Professional Applications',
             href: admin.professionalApplications.index(),
             icon: IdCard,
+        },
+        {
+            title: 'Account Retrieval Requests',
+            href: admin.accountRetrievalRequests.index(),
+            icon: KeyRound,
         },
     ];
 

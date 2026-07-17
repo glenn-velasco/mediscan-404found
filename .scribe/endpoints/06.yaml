@@ -1,22 +1,22 @@
-name: Sync
+name: 'Device Keys'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
-      - GET
-    uri: api/v1/pending-sync
+      - POST
+    uri: api/v1/device-keys
     metadata:
       custom: []
-      groupName: Sync
+      groupName: 'Device Keys'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Get pending sync envelopes.'
+      title: "Register or rotate a device's public key."
       description: |-
-        Retrieve all envelopes waiting to be delivered to the authenticated user.
-        The mobile app calls this on startup or when triggered by a broadcast notification.
-        Envelopes are ordered by creation time (oldest first) for consistent application order.
+        The mobile app generates a public/private key pair (sodium sealed-box),
+        registers its public key here, and uses the private key to decrypt
+        envelopes received from professionals.
       authenticated: true
       deprecated: false
     headers:
@@ -27,20 +27,44 @@ endpoints:
     cleanUrlParameters: []
     queryParameters: []
     cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
+    bodyParameters:
+      public_key:
+        custom: []
+        name: public_key
+        description: 'Base64-encoded sodium sealed-box public key (44 chars for 32-byte key).'
+        required: true
+        example: 1234567890abcdefghijklmnopqrstuvwxyzABCDEF12
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      label:
+        custom: []
+        name: label
+        description: 'Device name/label (e.g., iPhone 15, Samsung Galaxy).'
+        required: false
+        example: 'iPhone 15'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      public_key: 1234567890abcdefghijklmnopqrstuvwxyzABCDEF12
+      label: 'iPhone 15'
     fileParameters: []
     responses:
       -
         custom: []
-        status: 200
-        content: '{"status":200,"message":"Success","data":{"envelopes":[{"id":1,"sender_id":2,"recipient_id":1,"envelope_type":"allergy_verification","ciphertext":"<base64-encoded-sealed-box-ciphertext>","status":"pending","expires_at":"2026-10-08T00:00:00.000000Z","acknowledged_at":null,"created_at":"2026-01-01T00:00:00.000000Z"}]}}'
+        status: 201
+        content: '{"status":201,"message":"Device key registered.","data":{"id":1,"user_id":1,"public_key":"1234567890abcdefghijklmnopqrstuvwxyzABCDEF12","label":"iPhone 15","is_active":true,"registered_at":"2026-01-01T00:00:00.000000Z","revoked_at":null}}'
         headers: []
         description: ''
       -
         custom: []
-        status: 403
-        content: '{"status":403,"message":"Your account has been deactivated.","errors":null}'
+        status: 422
+        content: '{"status":422,"message":"The public_key field must be 44 characters.","errors":{"public_key":["The public_key field must be 44 characters."]}}'
         headers: []
         description: ''
     responseFields: []
@@ -54,18 +78,18 @@ endpoints:
   -
     custom: []
     httpMethods:
-      - POST
-    uri: 'api/v1/pending-sync/{pendingSyncEnvelope_id}/ack'
+      - DELETE
+    uri: 'api/v1/device-keys/{deviceKey_id}'
     metadata:
       custom: []
-      groupName: Sync
+      groupName: 'Device Keys'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Acknowledge receipt of a sync envelope.'
+      title: 'Revoke a device key.'
       description: |-
-        Called after the mobile app successfully decrypts and merges an envelope.
-        This marks the envelope as acknowledged and logs the receipt for audit purposes.
+        Mark a previously registered key as inactive/revoked.
+        Envelopes encrypted to this key become unretrievable.
       authenticated: true
       deprecated: false
     headers:
@@ -73,10 +97,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      pendingSyncEnvelope_id:
+      deviceKey_id:
         custom: []
-        name: pendingSyncEnvelope_id
-        description: 'The ID of the pendingSyncEnvelope.'
+        name: deviceKey_id
+        description: 'The ID of the deviceKey.'
         required: true
         example: 16
         type: integer
@@ -85,7 +109,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      pendingSyncEnvelope_id: 16
+      deviceKey_id: 16
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -95,13 +119,13 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Envelope acknowledged.","data":null}'
+        content: '{"status":200,"message":"Device key revoked.","data":null}'
         headers: []
         description: ''
       -
         custom: []
         status: 403
-        content: '{"status":403,"message":"Unauthenticated.","errors":null}'
+        content: '{"status":403,"message":"This device key does not belong to you.","errors":null}'
         headers: []
         description: ''
       -

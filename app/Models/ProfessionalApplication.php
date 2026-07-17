@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Enums\IdType;
-use App\Enums\ProfessionalApplicationStatus;
+use App\Enums\WorkflowStatus;
 use Illuminate\Database\Eloquent\Attributes\Guarded;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,7 +32,7 @@ use Illuminate\Support\Carbon;
  * @property bool|null $face_match_passed
  * @property float|null $liveness_score
  * @property bool|null $liveness_passed
- * @property ProfessionalApplicationStatus $status
+ * @property WorkflowStatus $status
  * @property string|null $rejection_reason
  * @property string|null $verification_notes
  * @property string|null $role_granted
@@ -51,7 +51,7 @@ class ProfessionalApplication extends Model
     {
         return [
             'id_type' => IdType::class,
-            'status' => ProfessionalApplicationStatus::class,
+            'status' => WorkflowStatus::class,
             'license_expiry' => 'date',
             'ocr_extracted_data' => 'encrypted:array',
             'ocr_raw_response' => 'encrypted:array',
@@ -85,9 +85,9 @@ class ProfessionalApplication extends Model
     public function isTerminal(): bool
     {
         return in_array($this->status, [
-            ProfessionalApplicationStatus::Approved,
-            ProfessionalApplicationStatus::Denied,
-            ProfessionalApplicationStatus::AutoRejected,
+            WorkflowStatus::Approved,
+            WorkflowStatus::Denied,
+            WorkflowStatus::AutoRejected,
         ], true);
     }
 }
