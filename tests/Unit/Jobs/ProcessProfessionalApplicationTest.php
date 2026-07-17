@@ -2,7 +2,7 @@
 
 use App\Contracts\Kyc\FaceMatchClientContract;
 use App\Contracts\Kyc\OcrClientContract;
-use App\Enums\ProfessionalApplicationStatus;
+use App\Enums\WorkflowStatus;
 use App\Jobs\ProcessProfessionalApplication;
 use App\Models\ProfessionalApplication;
 use App\Models\User;
@@ -54,7 +54,7 @@ it('auto rejects when the id has no readable text', function () {
     $application = ($this->application)();
     ($this->run)($application);
 
-    expect($application->fresh()->status)->toBe(ProfessionalApplicationStatus::AutoRejected)
+    expect($application->fresh()->status)->toBe(WorkflowStatus::AutoRejected)
         ->and($application->fresh()->rejection_reason)->toContain('unreadable');
 });
 
@@ -64,7 +64,7 @@ it('auto rejects when profession or license number cannot be extracted', functio
     $application = ($this->application)();
     ($this->run)($application);
 
-    expect($application->fresh()->status)->toBe(ProfessionalApplicationStatus::AutoRejected)
+    expect($application->fresh()->status)->toBe(WorkflowStatus::AutoRejected)
         ->and($application->fresh()->rejection_reason)->toContain('incomplete');
 });
 
@@ -80,7 +80,7 @@ it('does not auto reject a banner-only profession as long as a known profession 
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+    expect($fresh->status)->toBe(WorkflowStatus::PendingReview)
         ->and($fresh->profession)->toBe('Nursing')
         ->and($fresh->specialty)->toBeNull();
 });
@@ -93,7 +93,7 @@ it('degrades to pending review when the id photo file is missing from storage', 
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+    expect($fresh->status)->toBe(WorkflowStatus::PendingReview)
         ->and($fresh->verification_notes)->toBe('ID photo file missing from storage; manual review required.')
         ->and($fresh->ocr_extracted_data)->toBeNull();
 });
@@ -110,7 +110,7 @@ it('degrades to pending review when a liveness frame file is missing from storag
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+    expect($fresh->status)->toBe(WorkflowStatus::PendingReview)
         ->and($fresh->verification_notes)->toBe('Liveness frame file missing from storage; manual review required.')
         ->and($fresh->liveness_score)->toBeNull();
 });
@@ -129,7 +129,7 @@ it('degrades to pending review when a liveness flash frame file is missing from 
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+    expect($fresh->status)->toBe(WorkflowStatus::PendingReview)
         ->and($fresh->verification_notes)->toBe('Liveness flash frame file missing from storage; manual review required.')
         ->and($fresh->liveness_score)->toBeNull();
 });
@@ -149,7 +149,7 @@ it('degrades to pending review when the selfie file is missing from storage', fu
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+    expect($fresh->status)->toBe(WorkflowStatus::PendingReview)
         ->and($fresh->verification_notes)->toBe('Selfie file missing from storage; manual review required.')
         ->and($fresh->face_match_score)->toBeNull();
 });
@@ -162,7 +162,7 @@ it('degrades to pending review when the ocr service is unavailable', function ()
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+    expect($fresh->status)->toBe(WorkflowStatus::PendingReview)
         ->and($fresh->verification_notes)->toContain('OCR service unavailable')
         ->and($fresh->ocr_extracted_data)->toBeNull();
 });
@@ -178,7 +178,7 @@ it('auto rejects when no blink is detected during the liveness capture', functio
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::AutoRejected)
+    expect($fresh->status)->toBe(WorkflowStatus::AutoRejected)
         ->and($fresh->liveness_passed)->toBeFalse()
         ->and($fresh->rejection_reason)->toBe('Liveness check failed — no blink detected.');
 });
@@ -194,7 +194,7 @@ it('auto rejects when the color flash does not reflect on the face', function ()
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::AutoRejected)
+    expect($fresh->status)->toBe(WorkflowStatus::AutoRejected)
         ->and($fresh->liveness_passed)->toBeFalse()
         ->and($fresh->rejection_reason)->toBe('Liveness check failed — the on-screen color flash did not reflect on the face as expected.');
 });
@@ -210,7 +210,7 @@ it('degrades to pending review when the liveness service is unavailable', functi
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+    expect($fresh->status)->toBe(WorkflowStatus::PendingReview)
         ->and($fresh->verification_notes)->toContain('Liveness check service unavailable')
         ->and($fresh->liveness_score)->toBeNull();
 });
@@ -225,7 +225,7 @@ it('auto rejects when no face is detected during face match', function () {
     $application = ($this->application)();
     ($this->run)($application);
 
-    expect($application->fresh()->status)->toBe(ProfessionalApplicationStatus::AutoRejected)
+    expect($application->fresh()->status)->toBe(WorkflowStatus::AutoRejected)
         ->and($application->fresh()->rejection_reason)->toContain('No face detected');
 });
 
@@ -239,7 +239,7 @@ it('auto rejects when the face match score is below the hard floor', function ()
     $application = ($this->application)();
     ($this->run)($application);
 
-    expect($application->fresh()->status)->toBe(ProfessionalApplicationStatus::AutoRejected)
+    expect($application->fresh()->status)->toBe(WorkflowStatus::AutoRejected)
         ->and($application->fresh()->face_match_score)->toBe(0.1)
         ->and($application->fresh()->rejection_reason)->toContain('below minimum threshold');
 });
@@ -256,7 +256,7 @@ it('moves to pending review without auto approving when liveness and face match 
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+    expect($fresh->status)->toBe(WorkflowStatus::PendingReview)
         ->and($fresh->liveness_passed)->toBeTrue()
         ->and($fresh->face_match_passed)->toBeTrue()
         ->and($fresh->profession)->toBe('Physician')
@@ -275,7 +275,7 @@ it('degrades to pending review when the face match service is unavailable', func
 
     $fresh = $application->fresh();
 
-    expect($fresh->status)->toBe(ProfessionalApplicationStatus::PendingReview)
+    expect($fresh->status)->toBe(WorkflowStatus::PendingReview)
         ->and($fresh->verification_notes)->toContain('unavailable')
         ->and($fresh->face_match_score)->toBeNull();
 });

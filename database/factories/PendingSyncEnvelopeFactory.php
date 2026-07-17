@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\EnvelopeType;
-use App\Enums\PendingSyncEnvelopeStatus;
+use App\Enums\WorkflowStatus;
 use App\Models\PendingSyncEnvelope;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -25,7 +25,7 @@ class PendingSyncEnvelopeFactory extends Factory
             'recipient_id' => User::factory(),
             'envelope_type' => fake()->randomElement(EnvelopeType::cases())->value,
             'ciphertext' => base64_encode(fake()->sha256()),
-            'status' => PendingSyncEnvelopeStatus::Pending,
+            'status' => WorkflowStatus::Pending,
             'expires_at' => now()->addDays(7),
             'acknowledged_at' => null,
         ];

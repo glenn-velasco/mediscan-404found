@@ -7,6 +7,6 @@ export * from './permissions';
 export * from './bloodtype';
 export * from './allergyseverity';
 export * from './idtype';
-export * from './professionalapplicationstatus';
+export * from './workflowstatus';
 export * from './religion';
 export * from './relationtopatient';

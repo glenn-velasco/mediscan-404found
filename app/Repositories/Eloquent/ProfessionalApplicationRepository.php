@@ -2,7 +2,7 @@
 
 namespace App\Repositories\Eloquent;
 
-use App\Enums\ProfessionalApplicationStatus;
+use App\Enums\WorkflowStatus;
 use App\Models\ProfessionalApplication;
 use Carbon\CarbonInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -31,8 +31,8 @@ class ProfessionalApplicationRepository extends BaseRepository
 
         $status = $filters['status'] ?? null;
 
-        if ($status === ProfessionalApplicationStatus::Denied->value) {
-            $query->onlyTrashed()->where('status', ProfessionalApplicationStatus::Denied->value);
+        if ($status === WorkflowStatus::Denied->value) {
+            $query->onlyTrashed()->where('status', WorkflowStatus::Denied->value);
         } elseif ($status !== null) {
             $query->where('status', $status);
         }
@@ -49,8 +49,8 @@ class ProfessionalApplicationRepository extends BaseRepository
         return $this->model->newQuery()
             ->where('user_id', $userId)
             ->whereIn('status', [
-                ProfessionalApplicationStatus::Processing->value,
-                ProfessionalApplicationStatus::PendingReview->value,
+                WorkflowStatus::Processing->value,
+                WorkflowStatus::PendingReview->value,
             ])
             ->first();
     }
@@ -80,9 +80,9 @@ class ProfessionalApplicationRepository extends BaseRepository
         return $this->model->newQuery()
             ->withTrashed()
             ->whereIn('status', [
-                ProfessionalApplicationStatus::PendingReview->value,
-                ProfessionalApplicationStatus::Denied->value,
-                ProfessionalApplicationStatus::AutoRejected->value,
+                WorkflowStatus::PendingReview->value,
+                WorkflowStatus::Denied->value,
+                WorkflowStatus::AutoRejected->value,
             ])
             ->where('updated_at', '<=', $cutoff)
             ->lazyById();

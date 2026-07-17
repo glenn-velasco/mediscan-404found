@@ -12,14 +12,14 @@ import {
 } from '@/components/ui/select';
 import { formatDateTime } from '@/lib/utils';
 import admin from '@/routes/admin';
-import type { Paginated, ProfessionalApplicationStatus } from '@/types';
-import { professionalApplicationStatusBadgeVariant } from '@/types';
+import type { Paginated, WorkflowStatus } from '@/types';
+import { workflowStatusBadgeVariant } from '@/types';
 
 interface ApplicationListItem {
     id: number;
     applicant: { id: number; name: string | null; email: string };
     profession: string | null;
-    status: ProfessionalApplicationStatus;
+    status: WorkflowStatus;
     created_at: string | null;
 }
 
@@ -109,7 +109,7 @@ export default function Index({ applications, filters }: IndexProps) {
                                     <td className="px-4 py-3">
                                         <Badge
                                             variant={
-                                                professionalApplicationStatusBadgeVariant[
+                                                workflowStatusBadgeVariant[
                                                     application.status
                                                 ]
                                             }
