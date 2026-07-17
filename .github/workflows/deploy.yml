@@ -41,7 +41,7 @@ jobs:
         image:
           - { name: app, context: ., dockerfile: infrastructure/docker/app/Dockerfile }
           - { name: nginx, context: infrastructure/docker/nginx, dockerfile: infrastructure/docker/nginx/Dockerfile }
-          - { name: face-match, context: docker/face-match, dockerfile: docker/face-match/Dockerfile }
+          - { name: machine-learning, context: docker/machine-learning, dockerfile: docker/machine-learning/Dockerfile }
           - { name: prometheus, context: infrastructure/docker/prometheus, dockerfile: infrastructure/docker/prometheus/Dockerfile }
           - { name: grafana, context: infrastructure/docker/grafana, dockerfile: infrastructure/docker/grafana/Dockerfile }
           - { name: promtail, context: infrastructure/docker/promtail, dockerfile: infrastructure/docker/promtail/Dockerfile }
@@ -146,8 +146,8 @@ jobs:
           REVERB_PORT=8080
           REVERB_SCHEME=http
           REVERB_BROADCAST_HOST=reverb
-          FACE_MATCH_BASE_URL=http://face-match:8500
-          FACE_MATCH_SHARED_SECRET=${{ secrets.FACE_MATCH_SHARED_SECRET }}
+          MACHINE_LEARNING_BASE_URL=http://machine-learning:8500
+          MACHINE_LEARNING_SHARED_SECRET=${{ secrets.MACHINE_LEARNING_SHARED_SECRET }}
           KYC_FACE_MATCH_HARD_FLOOR=0.4
           MAIL_MAILER=resend
           MAIL_FROM_ADDRESS=${{ vars.MAIL_FROM_ADDRESS }}

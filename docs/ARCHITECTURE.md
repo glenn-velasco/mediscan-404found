@@ -48,7 +48,7 @@ C4Container
         Container(redis, "redis", "Redis", "Cache, session, queue")
         Container(rustfs, "rustfs", "RustFS", "S3-compatible object storage - KYC photos, documents")
         Container(postgres, "postgres", "Postgres", "Staging DB only")
-        Container(faceMatch, "face-match", "Python/Flask", "OCR + face-match + liveness sidecar")
+        Container(machineLearning, "machine-learning", "Python/Flask", "OCR + face-match + liveness sidecar")
         Container(grafana, "grafana + prometheus + loki + promtail + node-exporter + cadvisor", "Observability stack", "Logs + metrics + dashboards")
     }
 
@@ -61,7 +61,7 @@ C4Container
     Rel(app, rustfs, "S3 API")
     Rel(app, postgres, "Postgres (staging)")
     Rel(app, supabase, "Postgres (production)")
-    Rel(app, faceMatch, "HTTP")
+    Rel(app, machineLearning, "HTTP")
     Rel(app, resend, "SMTP/API")
     Rel(horizon, redis, "queue")
     Rel(scheduler, redis, "cache")
@@ -83,7 +83,7 @@ C4Deployment
         Container(edge, "Proxy + CDN cache", "Full (Strict) TLS")
     }
     Deployment_Node(vps, "VPS", "Single Docker Engine host (8GB/2vCPU/100GB)"){
-        Container(stack, "docker-compose stack", "nginx, app, horizon, reverb, scheduler, redis, rustfs, face-match, postgres (staging), observability")
+        Container(stack, "docker-compose stack", "nginx, app, horizon, reverb, scheduler, redis, rustfs, machine-learning, postgres (staging), observability")
     }
     Deployment_Node(supabaseInfra, "Supabase infrastructure", "Managed"){
         Container(pg, "Postgres", "Production DB")

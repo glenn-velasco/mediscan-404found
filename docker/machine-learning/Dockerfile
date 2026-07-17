@@ -17,7 +17,7 @@ RUN mkdir -p models \
     && curl --retry 5 --retry-delay 3 --retry-all-errors -fL -o models/face_recognition_sface_2021dec.onnx \
         https://github.com/opencv/opencv_zoo/raw/main/models/face_recognition_sface/face_recognition_sface_2021dec.onnx
 
-COPY app.py .
+COPY app.py ocr.py face_detection.py imaging.py ./
 
 EXPOSE 8500
 

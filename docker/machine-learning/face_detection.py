@@ -1,34 +1,5 @@
-"""
-Self-hosted OCR + face-match + liveness sidecar.
-
-Contract (see the KYC plan doc for the Laravel side):
-  POST /ocr       multipart "image" (the ID photo), `Authorization: Bearer <secret>`
-    -> 200 {"text": "..."}
-    -> 400 {"error": "missing_image" | "undecodable_image"}
-  POST /compare   multipart "source" + "target" images, `Authorization: Bearer <secret>`
-    -> 200 {"match": bool, "score": float, "faces_detected": {"source": int, "target": int}}
-    -> 422 {"match": false, "score": 0.0, "faces_detected": {...}, "error": "no_face_detected_..."}
-  POST /liveness  multipart "frames" (repeated, >=2 blink-burst images) +
-                  "flash_frames" (repeated images, one per on-screen flash
-                  color) + "flash_colors" (repeated text fields, same order/
-                  count as flash_frames, each one of red/green/blue),
-                  `Authorization: Bearer <secret>`
-    -> 200 {"live": bool, "score": float, "blink_detected": bool, "color_reflection_passed": bool, "frames_analyzed": int}
-    -> 422 {"live": false, "score": 0.0, "error": "..."}
-  GET  /health -> 200 {"status": "ok"}
-
-OCR: Tesseract (via pytesseract), genuinely free and self-hosted - no cloud
-account, no billing, unlike Google/AWS OCR APIs. Trade-off: noticeably less
-accurate than a commercial OCR API, especially on ID cards with busy
-backgrounds, watermarks, or small/stylized fonts. A light Otsu threshold pass
-is applied first since Tesseract does measurably better on cleanly binarized
-text than on raw color/grayscale card photos.
-
-Live client-side feedback (face box + blink indicator) while the user
-positions/blinks is handled entirely in the browser via face-api.js
-(resources/js/components/liveness-capture.tsx) - this sidecar is only
-called once, at submission time, for the authoritative /compare and
-/liveness checks.
+"""Face-detection/face-match/liveness blueprint - OpenCV YuNet + SFace only,
+no Tesseract/OCR here.
 
 Face detection/recognition: OpenCV's YuNet (face_detection_yunet) + SFace
 (face_recognition_sface) models, both from the official OpenCV Zoo
@@ -66,12 +37,12 @@ import os
 
 import cv2
 import numpy as np
-import pytesseract
-from flask import Flask, jsonify, request
+from flask import Blueprint, jsonify, request
 
-app = Flask(__name__)
+from imaging import decode, demo_enabled
 
-SHARED_SECRET = os.environ.get("FACE_MATCH_SHARED_SECRET", "")
+face_bp = Blueprint("face_detection", __name__)
+
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
 
 DETECTOR = cv2.FaceDetectorYN_create(
@@ -114,137 +85,13 @@ COLOR_DOMINANCE_MARGIN = 8.0
 # RGB tint.
 WHITE_FLASH_BRIGHTNESS_THRESHOLD = 80.0
 
-DEMO_MODE = os.environ.get("DEMO_MODE", "").lower() in ("1", "true", "yes")
-
-# Canned OCR text returned in demo mode - simulates a readable PRC ID so the
-# full verification pipeline can be exercised without a real ID photo.
-DEMO_OCR_TEXT = (
-    "Republic of the Philippines\n"
-    "Professional Regulation Commission\n"
-    "Professional Identification Card\n"
-    "LAST NAME\tDELA CRUZ\n"
-    "FIRST NAME\tJUAN\n"
-    "MIDDLE NAME\tSANTOS\n"
-    "REGISTRATION NO.\t0012345\n"
-    "REGISTRATION DATE\t04/05/2019\n"
-    "VALID UNTIL\t11/25/2022\n"
-    "NURSE"
-)
-
-
-def _authorized(req) -> bool:
-    if not SHARED_SECRET:
-        return True
-    return req.headers.get("Authorization") == f"Bearer {SHARED_SECRET}"
-
-
-def _demo_enabled() -> bool:
-    """Return True when the request opts into demo mode via the DEMO_MODE env
-    var or the ``?demo=true`` query parameter."""
-    return DEMO_MODE or request.args.get("demo", "").lower() in ("1", "true", "yes")
-
-
-@app.before_request
-def _require_auth():
-    # /health is exempt - the Docker HEALTHCHECK command hits it without an
-    # Authorization header (see Dockerfile). Every other route - including
-    # any added later - is covered by this one central check rather than
-    # each route remembering to call _authorized() itself.
-    if request.path == "/health":
-        return None
-
-    if not _authorized(request):
-        return jsonify(error="unauthorized"), 401
-
-    return None
-
-
-def _decode(file_storage):
-    data = np.frombuffer(file_storage.read(), dtype=np.uint8)
-    return cv2.imdecode(data, cv2.IMREAD_COLOR)
-
 
 def _decode_and_detect_face(file_storage):
     """Decodes an uploaded frame and returns (image, largest_face) - the
     face is None if the image failed to decode or no face was found."""
-    image = _decode(file_storage)
+    image = decode(file_storage)
     face = _detect_largest_face(image) if image is not None else None
     return image, face
-
-
-def _prepare_for_ocr(image):
-    """Enhance the image for better Tesseract recognition on ID cards with
-    busy backgrounds, watermarks, or uneven lighting.
-
-    Generates three candidate preprocessed images, runs Tesseract's word-
-    confidence scoring on each, and returns the winner:
-
-    1. Bilateral filter + Otsu — best for clean, well-lit cards
-    2. CLAHE + adaptive threshold — best for uneven lighting / low contrast
-    3. Denoised grayscale (no binarization) — lets Tesseract threshold
-       internally, avoiding watermark/texture strokes being misread as text
-    """
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Upscale small images so Tesseract gets more pixels per glyph.
-    # ID card label text is small; character segmentation improves
-    # substantially when the shorter side has at least ~1000 px.
-    h, w = gray.shape[:2]
-    if min(h, w) < 1000:
-        scale = 1000 / min(h, w)
-        gray = cv2.resize(gray, None, fx=scale, fy=scale,
-                          interpolation=cv2.INTER_CUBIC)
-
-    # --- Candidate 1: Bilateral filter + Otsu ---
-    denoised = cv2.bilateralFilter(gray, 9, 75, 75)
-    _, otsu = cv2.threshold(denoised, 0, 255,
-                            cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-    # --- Candidate 2: CLAHE + adaptive threshold ---
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-    enhanced = clahe.apply(gray)
-    blurred = cv2.GaussianBlur(enhanced, (0, 0), 3)
-    sharpened = cv2.addWeighted(enhanced, 1.5, blurred, -0.5, 0)
-    adaptive = cv2.adaptiveThreshold(
-        sharpened, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY, 31, 2,
-    )
-
-    # --- Candidate 3: Denoised grayscale (no binarization) ---
-    # Aggressive adaptive thresholding can pick up watermark strokes as
-    # text strokes.  Letting Tesseract's internal Otsu handle the
-    # binarization on clean grayscale avoids that corruption.
-    denoised_gray = cv2.bilateralFilter(gray, 9, 75, 75)
-
-    candidates = [otsu, adaptive, denoised_gray]
-
-    # --- Pick the candidate with highest Tesseract word confidence ---
-    from pytesseract import Output
-
-    best = candidates[0]
-    best_conf = -1.0
-
-    for candidate in candidates:
-        data = pytesseract.image_to_data(
-            candidate, output_type=Output.DICT,
-            config="--psm 6 --oem 3",
-        )
-        # conf entries are -1 for non-text blocks; skip those.
-        confs = [int(c) for c in data["conf"] if isinstance(c, (int, float)) and c > 0]
-        if confs:
-            mean_conf = sum(confs) / len(confs)
-            if mean_conf > best_conf:
-                best_conf = mean_conf
-                best = candidate
-
-    # Light morphological opening on binary results only to remove
-    # small noise dots without eroding text strokes.  Skip for the
-    # grayscale candidate — the op would blur rather than clean it.
-    if len(best.shape) == 2 and best.max() == 255 and best.min() == 0:
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-        best = cv2.morphologyEx(best, cv2.MORPH_OPEN, kernel)
-
-    return best
 
 
 def _detect_largest_face(image):
@@ -338,40 +185,12 @@ def _color_reflection_passed(flash_frame_files, flash_colors) -> bool:
     return (matches / len(flash_frame_files)) >= COLOR_REFLECTION_PASS_RATIO
 
 
-@app.get("/health")
-def health():
-    return jsonify(status="ok")
-
-
-@app.post("/ocr")
-def ocr():
-    if "image" not in request.files:
-        return jsonify(error="missing_image"), 400
-
-    if _demo_enabled():
-        return jsonify(text=DEMO_OCR_TEXT)
-
-    image = _decode(request.files["image"])
-    if image is None:
-        return jsonify(error="undecodable_image"), 400
-
-    prepared = _prepare_for_ocr(image)
-
-    # PSM 6 (single uniform block) tends to work best for ID cards.
-    text = pytesseract.image_to_string(
-        prepared,
-        config="--psm 6 --oem 3",
-    )
-
-    return jsonify(text=text)
-
-
-@app.post("/compare")
+@face_bp.post("/compare")
 def compare():
     if "source" not in request.files or "target" not in request.files:
         return jsonify(error="missing_files"), 400
 
-    if _demo_enabled():
+    if demo_enabled():
         return jsonify(match=True, score=0.85, faces_detected={"source": 1, "target": 1})
 
     source_image, source_face = _decode_and_detect_face(request.files["source"])
@@ -397,13 +216,13 @@ def compare():
     return jsonify(match=score >= 0.5, score=round(score, 4), faces_detected=faces_detected)
 
 
-@app.post("/liveness")
+@face_bp.post("/liveness")
 def liveness():
     frames = request.files.getlist("frames")
     if len(frames) < MIN_FRAMES_FOR_LIVENESS:
         return jsonify(error="not_enough_frames"), 400
 
-    if _demo_enabled():
+    if demo_enabled():
         return jsonify(
             live=True,
             score=1.0,
@@ -451,7 +270,3 @@ def liveness():
         color_reflection_passed=color_reflection_passed,
         frames_analyzed=len(frames),
     )
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8500)

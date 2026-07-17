@@ -345,6 +345,68 @@
           ]
         }
       ]
+    },
+    {
+      "id": 30,
+      "type": "row",
+      "title": "Machine Learning (OCR + face-match)",
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 54 },
+      "panels": [
+        {
+          "id": 31,
+          "title": "Request rate",
+          "type": "timeseries",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 6, "w": 8, "x": 0, "y": 1 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(count_over_time({service=\"machine-learning\"} [1m]))",
+              "legendFormat": "requests"
+            }
+          ]
+        },
+        {
+          "id": 32,
+          "title": "Error rate",
+          "type": "timeseries",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 6, "w": 8, "x": 8, "y": 1 },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(count_over_time({service=\"machine-learning\"} |~ \"(?i)error|exception\" [1m]))",
+              "legendFormat": "errors"
+            }
+          ]
+        },
+        {
+          "id": 33,
+          "title": "Container CPU",
+          "type": "timeseries",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "gridPos": { "h": 6, "w": 8, "x": 16, "y": 1 },
+          "fieldConfig": { "defaults": { "unit": "percent" }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\".*mediscan.*machine-learning.*\"}[5m])) * 100",
+              "legendFormat": "{{name}}"
+            }
+          ]
+        },
+        {
+          "id": 34,
+          "title": "Machine Learning logs",
+          "type": "logs",
+          "datasource": { "type": "loki", "uid": "loki" },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 7 },
+          "targets": [
+            { "refId": "A", "expr": "{service=\"machine-learning\"}" }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -21,7 +21,7 @@ infrastructure/
 
 ## Local development - this project already uses Sail, and that stays your daily tool
 
-`compose.yaml` at the repo root (Sail) is the day-to-day dev environment - `./vendor/bin/sail up`, bind-mounted source, instant PHP changes, no rebuild. **Keep using it as-is.** It already runs Postgres, Redis, Mailpit, RustFS, Reverb, a queue worker, and face-match - nothing about this infra work replaces it.
+`compose.yaml` at the repo root (Sail) is the day-to-day dev environment - `./vendor/bin/sail up`, bind-mounted source, instant PHP changes, no rebuild. **Keep using it as-is.** It already runs Postgres, Redis, Mailpit, RustFS, Reverb, a queue worker, and machine-learning - nothing about this infra work replaces it.
 
 `infrastructure/docker-compose.dev.yml` is a **different, narrower tool**: it builds the *exact* Dockerfiles CI builds and pushes to GHCR (multi-stage composer/pnpm build, FrankenPHP runtime - not Sail's generic bind-mounted runtime image), so you can catch a broken Dockerfile *before* pushing, not to replace your daily loop. Use it occasionally, before a push you're unsure about - not all day every day.
 
