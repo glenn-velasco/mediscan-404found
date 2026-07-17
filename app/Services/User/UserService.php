@@ -38,6 +38,17 @@ class UserService
         return $this->userRepository->transform($user);
     }
 
+    public function recordView(User $subject, User $actor): void
+    {
+        $this->auditLogger->log(
+            action: 'user.viewed',
+            type: AuditLogType::View,
+            actor: $actor,
+            subject: $subject,
+            channel: 'web',
+        );
+    }
+
     public function assignRole(User $user, Role $role): User
     {
         $user->syncRoles([$role->value]);

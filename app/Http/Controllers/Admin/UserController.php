@@ -8,6 +8,7 @@ use App\Http\Requests\AssignRoleRequest;
 use App\Models\User;
 use App\Services\User\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -33,6 +34,8 @@ class UserController extends Controller
 
     public function show(User $user): Response
     {
+        $this->userService->recordView($user, Auth::user());
+
         return Inertia::render('admin/users/show', [
             'user' => $this->userService->transform($user),
         ]);
