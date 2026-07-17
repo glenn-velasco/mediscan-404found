@@ -4,6 +4,18 @@ Postmortems for production/staging incidents — root cause, fix, and prevention
 
 ---
 
+## 2026-07-16 — Admin invitation acceptance returns 502 Bad Gateway
+
+**Symptom**: accepting an admin invitation from Resend email results in a 502 Bad Gateway error.
+
+**Root cause**: Resend API response headers exceeded nginx's default `proxy_buffer_size` (4k). When nginx encounters a response with headers larger than the configured buffer, it cannot handle the proxied response and returns 502.
+
+**Fix**: increased `proxy_buffer_size` to 32k and `proxy_buffers` to 8x32k across all upstream proxy locations in `infrastructure/docker/nginx/templates/{app,cdn,monitor}.conf.template`. This allows nginx to handle larger response headers from Resend and other upstreams without buffering failures.
+
+**Blast radius**: admin invitation flow only — affects any new admin sign-ups via email invitation.
+
+---
+
 ## 2026-07-16 — cadvisor silently reporting zero per-container metrics
 
 **Symptom**: while adding a RustFS row to the `Services` Grafana dashboard, discovered that the existing "Container CPU"/"Container memory" panels (App, Scheduler, Reverb rows; also the generic per-container panels in `Host & Containers`) have never shown any data, for any service.
