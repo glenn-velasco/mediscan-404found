@@ -63,7 +63,7 @@ jobs:
         # box (e.g. just to reissue the TLS cert for new hostnames) connect
         # as `mediscan` with sudo instead of root. Leave it unset if you'd
         # rather always re-run by hand from your own machine as `mediscan`.
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: |
             ${{ secrets.PROVISION_SSH_PRIVATE_KEY }}
