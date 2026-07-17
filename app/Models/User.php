@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\Gender;
 use App\Models\Builders\UserBuilder;
 use Database\Factories\UserFactory;
@@ -13,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -26,6 +26,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
+ * @property int|null $medical_information_id
  * @property string|null $first_name
  * @property string|null $middle_name
  * @property string|null $last_name
@@ -79,6 +80,14 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function professionalApplications(): HasMany
     {
         return $this->hasMany(ProfessionalApplication::class);
+    }
+
+    /**
+     * @return BelongsTo<MedicalInformation, $this>
+     */
+    public function medicalInformation(): BelongsTo
+    {
+        return $this->belongsTo(MedicalInformation::class);
     }
 
     public function isActive(): bool

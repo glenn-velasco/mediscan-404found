@@ -47,6 +47,11 @@ class UserRepository extends BaseRepository
         return $this->model->newQuery()->where('email', $email)->first();
     }
 
+    public function findMedicalInformationId(int $userId): ?int
+    {
+        return $this->model->newQuery()->whereKey($userId)->value('medical_information_id');
+    }
+
     public function countAll(): int
     {
         return $this->model->count();
