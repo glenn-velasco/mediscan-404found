@@ -1,5 +1,5 @@
-import http from 'k6/http';
 import { check, sleep } from 'k6';
+import http from 'k6/http';
 import { Trend, Rate } from 'k6/metrics';
 
 const BASE_URL = __ENV.K6_BASE_URL || 'https://staging.mediscan.cloud';
@@ -94,35 +94,44 @@ export function coreApiScenario(data) {
     'get /me status 200': (r) => r.status === 200,
   });
   apiErrors.add(res.status !== 200);
+  const selfId = res.json('data.id');
   sleep(0.5);
 
-  // 2. Get medical information (list)
+  // 2. Get medical information - this is the caller's own linked record
+  // (singular, not a list), 404 if they don't have one yet. Both are
+  // valid outcomes for this endpoint, not failures.
   res = http.get(`${BASE_URL}/api/v1/medical-information`, { headers });
   apiLatency.add(res.timings.duration);
   check(res, {
-    'get medical-information status 200': (r) => r.status === 200,
+    'get medical-information status 200 or 404': (r) => r.status === 200 || r.status === 404,
   });
-  apiErrors.add(res.status !== 200);
+  apiErrors.add(res.status !== 200 && res.status !== 404);
   sleep(1);
 
-  // 3. Post a scan (lightweight audit log write)
+  // 3. Post a scan (lightweight audit log write) - scanned_user_id must
+  // reference a real user, so scan self.
   const scanPayload = JSON.stringify({
-    event_type: 'viewed_medical_information',
-    data: { item_count: 1 },
+    scanned_user_id: selfId,
+    context: 'qr_scan',
   });
   res = http.post(`${BASE_URL}/api/v1/scans`, scanPayload, { headers });
   apiLatency.add(res.timings.duration);
   check(res, {
-    'post scan status 200': (r) => r.status === 200 || r.status === 201,
+    'post scan status 201': (r) => r.status === 201,
   });
-  apiErrors.add(res.status > 201);
+  apiErrors.add(res.status !== 201);
   sleep(1);
 
-  // 4. Post medical information
+  // 4. Post medical information. Ownership is a single FK
+  // (users.medical_information_id) - with every VU sharing one account,
+  // concurrent creates race to overwrite that same link, so a later VU's
+  // create can un-own an earlier VU's record before it gets to step 7-9.
+  // That shows up as legitimate 404s there, not a bug.
   const medicalInfoPayload = JSON.stringify({
-    title: `Load Test Record ${Date.now()}`,
-    description: 'Test data generated during load testing',
-    category: 'test',
+    first_name: 'Load',
+    last_name: `Test${Date.now()}`,
+    dob: '1990-01-01',
+    gender: Math.random() < 0.5 ? 'male' : 'female',
   });
   res = http.post(`${BASE_URL}/api/v1/medical-information`, medicalInfoPayload, { headers });
   apiLatency.add(res.timings.duration);
@@ -133,9 +142,11 @@ export function coreApiScenario(data) {
   apiErrors.add(res.status !== 201);
 
   let medicalInfoId = null;
+
   if (postSuccess) {
     medicalInfoId = res.json('data.id');
   }
+
   sleep(1);
 
   // 5. Get pending sync
@@ -147,49 +158,52 @@ export function coreApiScenario(data) {
   apiErrors.add(res.status !== 200);
   sleep(0.5);
 
-  // 6. Post emergency QR event
+  // 6. Post emergency QR event - action must be shown|scanned, patient_id
+  // is any user id (never 404s server-side even if the id doesn't exist).
   const qrEventPayload = JSON.stringify({
-    event_type: 'scanned',
-    scanned_at: new Date().toISOString(),
+    action: 'scanned',
+    patient_id: selfId,
+    context: 'viewer',
   });
   res = http.post(`${BASE_URL}/api/v1/emergency-qr/events`, qrEventPayload, { headers });
   apiLatency.add(res.timings.duration);
   check(res, {
-    'post emergency-qr/events status 200': (r) => r.status === 200 || r.status === 201,
+    'post emergency-qr/events status 201': (r) => r.status === 201,
   });
-  apiErrors.add(res.status > 201);
+  apiErrors.add(res.status !== 201);
   sleep(1);
 
-  // 7. If we created a medical info record, try to retrieve it
+  // 7. If we created a medical info record, try to retrieve it. A 404 here
+  // is expected under concurrency (see note on step 4) - only count other
+  // statuses as errors.
   if (medicalInfoId) {
     res = http.get(`${BASE_URL}/api/v1/medical-information/${medicalInfoId}`, { headers });
     apiLatency.add(res.timings.duration);
     check(res, {
-      'get medical-information/{id} status 200': (r) => r.status === 200,
+      'get medical-information/{id} status 200 or 404': (r) => r.status === 200 || r.status === 404,
     });
-    apiErrors.add(res.status !== 200);
+    apiErrors.add(res.status !== 200 && res.status !== 404);
     sleep(0.5);
 
-    // 8. Update the medical info record
+    // 8. Update the medical info record (same concurrency caveat as step 7)
     const updatePayload = JSON.stringify({
-      title: `Updated Load Test Record ${Date.now()}`,
-      description: 'Updated during load testing',
+      last_name: `Updated${Date.now()}`,
     });
     res = http.put(`${BASE_URL}/api/v1/medical-information/${medicalInfoId}`, updatePayload, { headers });
     apiLatency.add(res.timings.duration);
     check(res, {
-      'put medical-information/{id} status 200': (r) => r.status === 200,
+      'put medical-information/{id} status 200 or 404': (r) => r.status === 200 || r.status === 404,
     });
-    apiErrors.add(res.status !== 200);
+    apiErrors.add(res.status !== 200 && res.status !== 404);
     sleep(1);
 
-    // 9. Delete the medical info record
+    // 9. Delete the medical info record (same concurrency caveat as step 7)
     res = http.delete(`${BASE_URL}/api/v1/medical-information/${medicalInfoId}`, { headers });
     apiLatency.add(res.timings.duration);
     check(res, {
-      'delete medical-information/{id} status 200': (r) => r.status === 200 || r.status === 204,
+      'delete medical-information/{id} status 200 or 404': (r) => r.status === 200 || r.status === 204 || r.status === 404,
     });
-    apiErrors.add(res.status > 204);
+    apiErrors.add(res.status !== 200 && res.status !== 204 && res.status !== 404);
     sleep(0.5);
   }
 

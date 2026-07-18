@@ -1,5 +1,5 @@
-import { browser } from 'k6/browser';
 import { check } from 'k6';
+import { browser } from 'k6/browser';
 
 const BASE_URL = __ENV.K6_BASE_URL || 'https://staging.mediscan.cloud';
 const TEST_USER_EMAIL = __ENV.K6_TEST_USER_EMAIL || 'test@example.com';
@@ -43,6 +43,7 @@ export default async function () {
 
     // 2. Navigate to login (if not already logged in)
     let currentUrl = page.url();
+
     if (!currentUrl.includes('/app/dashboard')) {
       await page.goto(`${BASE_URL}/login`, { waitUntil: 'networkidle' });
 
@@ -56,6 +57,7 @@ export default async function () {
 
         // 4. Submit login form
         const submitBtn = await page.$('button[type="submit"]');
+
         if (submitBtn) {
           await submitBtn.click();
           // Wait for navigation to dashboard
@@ -87,6 +89,7 @@ export default async function () {
     // 7. Try to interact with a button/form if present (e.g., add new record)
     // This is a generic check; adjust selector based on actual UI
     const addBtn = await page.$('button:has-text("Add"), button:has-text("New"), a:has-text("Add")');
+
     if (addBtn) {
       // Just check that the button is visible/clickable
       const isVisible = await addBtn.isVisible();
@@ -100,6 +103,7 @@ export default async function () {
     // 8. Log out (optional, but good for cleanup)
     // This is a best-effort attempt; adjust selector as needed
     const logoutLink = await page.$('a:has-text("Logout"), button:has-text("Logout")');
+
     if (logoutLink) {
       await logoutLink.click();
       // Don't wait for full navigation, just a moment for the request

@@ -750,8 +750,22 @@ k6-browser not found
    ```bash
    which chromium  # or google-chrome, firefox
    ```
-3. If running in GitHub Actions, browser tests gracefully fall back to API-only
+3. If running in GitHub Actions, see [Browser Tests in CI](#browser-tests-in-ci) below
 4. Try API test first: `k6 run loadtest/k6/scenarios.js`
+
+### Browser Tests in CI
+
+**Symptom** (seen on GitHub-hosted `ubuntu-latest` runners):
+```
+level=error msg="process with PID 2995 unexpectedly ended: signal: aborted (core dumped)" category=browser
+level=error msg="error building browser on IterStart: launching browser: open /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq: No such file or directory (2)"
+```
+
+**Cause:** k6's bundled Chromium probes `/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq` on launch (part of Chromium's power/battery status reporting). GitHub-hosted runners execute jobs inside a nested container that doesn't expose that path under `/sys` — this isn't something `apt install`-ing a package fixes, since the file simply doesn't exist in that environment.
+
+**Fix:** `load-test.yml` sets `K6_BROWSER_ARGS: 'no-sandbox,disable-dev-shm-usage'` on the browser step. This is Grafana's own documented mitigation for running k6 browser tests inside containerized CI (both flags relax sandboxing/shared-memory assumptions Chromium otherwise makes about its host). If browser tests still fail after this, the job's `|| echo "..."` fallback keeps the workflow from hard-failing — check the step's log for the specific error and treat the API scenario (`scenarios.js`) as the reliable signal in the meantime, since it has none of Chromium's environment dependencies.
+
+**If you need browser tests to reliably pass in CI** (not just not-fail): the two most robust options are (a) run `browser.js` via **k6 Cloud** instead of the local runner — Grafana's own infrastructure doesn't have this constraint — or (b) self-host a runner (e.g. a small persistent VM/container you control) where you can confirm `/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq` is actually present.
 
 ---
 
@@ -825,13 +839,17 @@ Inside tinker:
 
 ```php
 // test@example.com is a shared seeded fixture (Admin role), not a disposable
-// load-test-only account - do NOT delete the user or bulk-delete by user_id.
-// The seeder also links this admin's own record via users.medical_information_id,
-// and medical_information.user_id cascadeOnDelete()s child tables, so wiping
-// by user_id risks taking out that fixture record too. Instead, only clean up
-// records scenarios.js actually created (title prefix "Load Test Record"):
-\App\Models\MedicalInformation::where('title', 'like', 'Load Test Record%')
-    ->orWhere('title', 'like', 'Updated Load Test Record%')
+// load-test-only account - do NOT delete the user or bulk-delete by its
+// linked medical_information_id, since that could take out the fixture's
+// own record too. scenarios.js normally deletes what it creates in the same
+// iteration (step 9) - this is only needed to clean up after an interrupted
+// run. It creates records with first_name "Load" and last_name prefixed
+// "Test" (create) or "Updated" (update):
+\App\Models\MedicalInformation::where('first_name', 'Load')
+    ->where(function ($query) {
+        $query->where('last_name', 'like', 'Test%')
+            ->orWhere('last_name', 'like', 'Updated%');
+    })
     ->delete();
 
 exit
