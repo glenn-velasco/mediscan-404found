@@ -2,8 +2,8 @@
 
 use App\Enums\Permission;
 use App\Enums\Role;
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\AccountRetrievalRequestController as AdminAccountRetrievalRequestController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\ProfessionalApplicationController as AdminProfessionalApplicationController;
 use App\Http\Controllers\Admin\UserController;

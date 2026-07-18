@@ -103,6 +103,18 @@ export default [
         },
     },
     {
+        // k6 scripts run in k6's own JS runtime, not Node/browser - __ENV,
+        // __VU, and __ITER are k6 runtime globals, not undefined variables.
+        files: ['loadtest/k6/**/*.js'],
+        languageOptions: {
+            globals: {
+                __ENV: 'readonly',
+                __VU: 'readonly',
+                __ITER: 'readonly',
+            },
+        },
+    },
+    {
         ignores: [
             'vendor',
             'node_modules',

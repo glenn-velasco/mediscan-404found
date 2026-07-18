@@ -30,14 +30,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y k6
 
-      - name: Install dependencies for browser tests
-        if: ${{ inputs.test_type == 'browser' || inputs.test_type == 'both' }}
-        run: |
-          # k6 browser requires xvfb-run for headless execution in CI
-          sudo apt-get install -y xvfb
-          # Download k6-browser extension or use containerized approach
-          # For now, we'll rely on k6 built-in browser module
-
       # K6_TEST_USER_EMAIL/PASSWORD default to test@example.com/password inside
       # scenarios.js and browser.js - the account already seeded by
       # database/seeders/DatabaseSeeder.php (plaintext in source, not a secret).
@@ -52,16 +44,20 @@ jobs:
           K6_TEST_USER_PASSWORD: ${{ secrets.STAGING_TEST_USER_PASSWORD }}
         run: k6 run loadtest/k6/scenarios.js --out json=results-api.json
 
+      # k6's bundled Chromium can't launch as-is on GitHub-hosted runners -
+      # it aborts trying to read /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq,
+      # which these runners don't expose (nested-container /sys limitation,
+      # not something we can fix by installing packages). --no-sandbox and
+      # --disable-dev-shm-usage are Grafana's documented mitigation for
+      # running k6 browser in containerized CI. See loadtest/SETUP_AND_WORKFLOW.md.
       - name: Run browser load test
         if: ${{ inputs.test_type == 'browser' || inputs.test_type == 'both' }}
         env:
           K6_BASE_URL: ${{ secrets.STAGING_BASE_URL || 'https://staging.mediscan.cloud' }}
           K6_TEST_USER_EMAIL: ${{ secrets.STAGING_TEST_USER_EMAIL }}
           K6_TEST_USER_PASSWORD: ${{ secrets.STAGING_TEST_USER_PASSWORD }}
-        run: |
-          # Browser tests require special handling - may need docker or k6-browser
-          # Fallback to API-only if browser setup is not available
-          k6 run loadtest/k6/browser.js --out json=results-browser.json || echo "Browser tests skipped (requires k6-browser)"
+          K6_BROWSER_ARGS: 'no-sandbox,disable-dev-shm-usage'
+        run: k6 run loadtest/k6/browser.js --out json=results-browser.json || echo "Browser tests failed - see loadtest/SETUP_AND_WORKFLOW.md#browser-tests-in-ci"
 
       - name: Upload test results
         if: always()
