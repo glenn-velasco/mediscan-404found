@@ -85,7 +85,7 @@ While a load test runs, watch your staging environment's Prometheus/Grafana dash
 
 ### API Scenario (`auth_and_core_api`)
 
-- **Auth**: Each VU authenticates once at the start and reuses the Sanctum bearer token for all subsequent requests.
+- **Auth**: One login for the entire test run (in k6's `setup()`, which runs once regardless of VU count), shared by every VU. All VUs impersonate the same seeded account, and Fortify's login limiter is 5/min per email+IP — authenticating per-VU or per-iteration would blow through that almost instantly (429s), so a single shared token is not just an optimization, it's required.
 - **Load**: Ramps 0 → 50 → 200 → 100 → 0 VUs over ~4 minutes.
 - **Endpoints exercised**:
   - `GET /me` — Current user info

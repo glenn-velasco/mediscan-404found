@@ -253,8 +253,10 @@ source loadtest/k6/.env.local
 k6 run loadtest/k6/scenarios.js
 
 # This will:
-# 1. Ramp VUs 0 → 50 → 200 → 100 → 0 over ~4 minutes
-# 2. Each VU authenticates once, then loops through endpoints
+# 1. Log in once for the whole run (setup()) - all VUs share that one
+#    token, since they impersonate the same seeded account and the
+#    login throttle (5/min per email+IP) can't tolerate per-VU logins
+# 2. Ramp VUs 0 → 50 → 200 → 100 → 0 over ~4 minutes
 # 3. Print results summary at the end
 ```
 

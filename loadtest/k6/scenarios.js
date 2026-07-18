@@ -1,6 +1,6 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
-import { Trend, Rate, Gauge } from 'k6/metrics';
+import { Trend, Rate } from 'k6/metrics';
 
 const BASE_URL = __ENV.K6_BASE_URL || 'https://staging.mediscan.cloud';
 // Defaults match the account seeded by database/seeders/DatabaseSeeder.php
@@ -11,12 +11,12 @@ const TEST_USER_PASSWORD = __ENV.K6_TEST_USER_PASSWORD || 'password';
 
 const apiLatency = new Trend('api_latency');
 const apiErrors = new Rate('api_errors');
-const queueDepth = new Gauge('queue_depth');
 
 export const options = {
   scenarios: {
     auth_and_core_api: {
       executor: 'ramping-vus',
+      exec: 'coreApiScenario',
       startVUs: 0,
       stages: [
         { duration: '30s', target: 50 },  // Ramp up to 50 VUs
@@ -28,6 +28,7 @@ export const options = {
     },
     upload_pipeline: {
       executor: 'ramping-vus',
+      exec: 'uploadPipelineScenario',
       startVUs: 0,
       stages: [
         { duration: '1m', target: 5 },   // Small VU pool for upload stress
@@ -44,67 +45,47 @@ export const options = {
   },
 };
 
-// Authenticate once per VU at the start
+// Runs once for the whole test run (not per-VU, not per-iteration). Every VU
+// impersonates the same seeded account, and Fortify's login limiter is
+// 5/min per user+IP - logging in per-VU or per-iteration blows through that
+// almost instantly. One shared token, reused by every VU/iteration, avoids
+// hitting the login endpoint more than once.
 export function setup() {
-  // Create or get test user credentials from env
-  // This assumes test users are pre-seeded in staging
-  return {
+  const loginPayload = JSON.stringify({
     email: TEST_USER_EMAIL,
     password: TEST_USER_PASSWORD,
-  };
-}
-
-export default function (data) {
-  // Get auth token specific to this VU
-  let token = authenticateUser(data);
-
-  if (!token) {
-    console.error('Failed to authenticate, skipping iterations');
-    return;
-  }
-
-  // Main API loop for this VU
-  runApiScenario(token);
-}
-
-export function authenticateUser(data) {
-  const loginPayload = JSON.stringify({
-    email: data.email,
-    password: data.password,
+    device_name: 'k6-load-test',
   });
 
-  const params = {
+  const res = http.post(`${BASE_URL}/api/v1/login`, loginPayload, {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     },
-  };
-
-  const res = http.post(`${BASE_URL}/api/v1/login`, loginPayload, params);
-
-  const success = check(res, {
-    'login status 200': (r) => r.status === 200,
-    'login returns token': (r) => r.json('token') !== undefined,
   });
 
-  apiErrors.add(!success);
+  const success = check(res, {
+    'setup login status 200': (r) => r.status === 200,
+    'setup login returns token': (r) => r.json('data.token') !== undefined,
+  });
+
   if (!success) {
-    console.error(`Login failed: ${res.status} ${res.body}`);
-    return null;
+    throw new Error(`Setup login failed: ${res.status} ${res.body}`);
   }
 
-  return res.json('token');
+  return { token: res.json('data.token') };
 }
 
-function runApiScenario(token) {
-  const headers = {
+function authHeaders(token) {
+  return {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
+}
 
-  // Iterate through various API endpoints
-  // Each iteration simulates a different user action
+export function coreApiScenario(data) {
+  const headers = authHeaders(data.token);
 
   // 1. Get current user
   let res = http.get(`${BASE_URL}/api/v1/me`, { headers });
@@ -216,20 +197,18 @@ function runApiScenario(token) {
   sleep(Math.random() * 2 + 1);
 }
 
-export function handleUploadScenario(token) {
-  // Placeholder for upload/professional-application stress test
-  // This would handle multipart file uploads when fixtures are available
-  const headers = {
-    'Authorization': `Bearer ${token}`,
-    'Accept': 'application/json',
-  };
+export function uploadPipelineScenario(data) {
+  // Placeholder for upload/professional-application stress test.
+  // Requires verified email on the test user (test@example.com is
+  // pre-verified via DatabaseSeeder). Multipart upload with fixture files
+  // can be added here later - see loadtest/fixtures/README.md.
+  const headers = authHeaders(data.token);
 
-  // This scenario would upload to /professional-applications
-  // Requires verified email on the test user
-  // For now, just polling to keep the code structure consistent
   const res = http.get(`${BASE_URL}/api/v1/professional-applications`, { headers });
+  apiLatency.add(res.timings.duration);
   check(res, {
     'get professional-applications status 200': (r) => r.status === 200,
   });
   apiErrors.add(res.status !== 200);
+  sleep(1);
 }
