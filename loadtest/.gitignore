@@ -1,0 +1,18 @@
+# Environment variables (local secrets)
+.env.local
+.env
+
+# k6 results and artifacts
+results*.json
+results*.csv
+results*.html
+
+# k6 browser downloads (Chromium)
+k6-browser*
+
+# OS temp files
+.DS_Store
+Thumbs.db
+
+# Node modules (if using any)
+node_modules/
