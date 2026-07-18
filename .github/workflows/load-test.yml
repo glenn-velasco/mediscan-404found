@@ -23,18 +23,18 @@ jobs:
 
       - name: Set up k6
         run: |
-          apt-get update
-          apt-get install -y ca-certificates gnupg
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates gnupg
           gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
-          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | tee /etc/apt/sources.list.d/k6-stable.list
-          apt-get update
-          apt-get install -y k6
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6-stable.list
+          sudo apt-get update
+          sudo apt-get install -y k6
 
       - name: Install dependencies for browser tests
         if: ${{ inputs.test_type == 'browser' || inputs.test_type == 'both' }}
         run: |
           # k6 browser requires xvfb-run for headless execution in CI
-          apt-get install -y xvfb
+          sudo apt-get install -y xvfb
           # Download k6-browser extension or use containerized approach
           # For now, we'll rely on k6 built-in browser module
 
@@ -65,7 +65,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: load-test-results
           path: results-*.json
