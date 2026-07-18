@@ -6,6 +6,7 @@ use App\Models\AccountRetrievalRequest;
 use App\Models\MedicalInformation;
 use App\Models\User;
 use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -91,7 +92,7 @@ it('admin approving a pre-registration request sends the old-email recovery link
 
     expect($retrievalRequest->fresh()->status->value)->toBe('approved');
 
-    Notification::assertSentTo($oldUser, \Illuminate\Auth\Notifications\ResetPassword::class);
+    Notification::assertSentTo($oldUser, ResetPassword::class);
 });
 
 it('admin denying leaves the request state unchanged except status and reason', function () {

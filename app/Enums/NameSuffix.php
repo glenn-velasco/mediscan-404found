@@ -17,7 +17,7 @@ enum NameSuffix: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::JUNIOR => 'Jr',
             self::SENIOR => 'Sr',
             self::THE_SECOND => 'Ⅱ',

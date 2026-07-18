@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Aws\S3\Exception\S3Exception;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -25,7 +26,7 @@ class EnsureStorageBucketExists extends Command
             $this->info("Bucket \"{$bucket}\" already exists.");
 
             return self::SUCCESS;
-        } catch (\Aws\S3\Exception\S3Exception $e) {
+        } catch (S3Exception $e) {
             if ($e->getStatusCode() !== 404) {
                 throw $e;
             }
