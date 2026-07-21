@@ -102,6 +102,7 @@ class ProfessionalApplicationRepository extends BaseRepository
             'issuing_country' => $application->issuing_country,
             'profession' => $application->profession,
             'full_name_on_id' => $application->full_name_on_id,
+            'date_of_birth' => $application->date_of_birth?->toDateString(),
             'license_number' => $application->license_number,
             'license_expiry' => $application->license_expiry,
             'status' => $application->status->value,

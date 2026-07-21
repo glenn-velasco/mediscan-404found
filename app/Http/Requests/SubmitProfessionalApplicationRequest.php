@@ -19,6 +19,7 @@ class SubmitProfessionalApplicationRequest extends FormRequest
     {
         return [
             'id_type' => ['required', 'string', Rule::in(IdType::values())],
+            'date_of_birth' => ['required', 'date', 'before:'.now()->subYears(18)->toDateString()],
             'id_photo' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
             'selfie_frames' => ['required', 'array', 'min:3', 'max:10'],
             'selfie_frames.*' => ['image', 'mimes:jpg,jpeg,png', 'max:3072'],
@@ -34,7 +35,6 @@ class SubmitProfessionalApplicationRequest extends FormRequest
                 },
             ],
             'flash_colors.*' => ['string', Rule::in(LivenessFlashColor::values())],
-            'coe' => ['required', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ];
     }
 }

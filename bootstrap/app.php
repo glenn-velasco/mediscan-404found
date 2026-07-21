@@ -9,7 +9,6 @@ use App\Http\Controllers\Api\Controller as ApiController;
 use App\Http\Middleware\EnsureApiUserActive;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\LogHttpRequests;
 use App\Http\Middleware\RestrictScribeDocsAccess;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -58,7 +57,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
-            LogHttpRequests::class,
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

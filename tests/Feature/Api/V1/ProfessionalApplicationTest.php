@@ -13,6 +13,7 @@ beforeEach(function () {
 
     $this->payload = fn (array $overrides = []): array => array_merge([
         'id_type' => 'ph_prc',
+        'date_of_birth' => '1990-05-20',
         'id_photo' => UploadedFile::fake()->image('id.jpg'),
         'selfie_frames' => [
             UploadedFile::fake()->image('selfie-0.jpg'),
@@ -25,7 +26,6 @@ beforeEach(function () {
             UploadedFile::fake()->image('flash-blue.jpg'),
         ],
         'flash_colors' => ['red', 'green', 'blue'],
-        'coe' => UploadedFile::fake()->create('coe.pdf', 100, 'application/pdf'),
     ], $overrides);
 });
 
@@ -36,6 +36,7 @@ it('submits a professional application via the api', function () {
     $this->postJson('/api/v1/professional-applications', ($this->payload)())
         ->assertCreated()
         ->assertJsonPath('data.id_type', 'ph_prc')
+        ->assertJsonPath('data.date_of_birth', '1990-05-20')
         ->assertJsonPath('data.status', 'processing');
 
     expect(ProfessionalApplication::where('user_id', $user->id)->exists())->toBeTrue();

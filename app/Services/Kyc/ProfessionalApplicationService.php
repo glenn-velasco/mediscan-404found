@@ -14,6 +14,8 @@ use App\Jobs\ProcessProfessionalApplication;
 use App\Models\ProfessionalApplication;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\ProfessionalApplicationApprovedNotification;
+use App\Notifications\ProfessionalApplicationDeniedNotification;
 use App\Repositories\Eloquent\ProfessionalApplicationRepository;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Database\QueryException;
@@ -22,12 +24,24 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Encoders\JpegEncoder;
+use Intervention\Image\ImageManager;
 
 class ProfessionalApplicationService
 {
     private const DISK = 's3';
 
     private const ONE_ACTIVE_PER_USER_INDEX = 'professional_applications_one_active_per_user';
+
+    // Native camera captures can run tens of megapixels; the OCR/face-match
+    // sidecar doesn't need that detail, and the web app's own canvas-based
+    // liveness capture already tops out well below this, so downscaling
+    // mobile uploads to match keeps upload size independent of camera
+    // quality without hurting verification accuracy.
+    private const MAX_IMAGE_DIMENSION = 1600;
+
+    private const IMAGE_QUALITY = 90;
 
     public function __construct(
         private ProfessionalApplicationRepository $professionalApplicationRepository,
@@ -61,7 +75,7 @@ class ProfessionalApplicationService
     }
 
     /**
-     * @param  array<string, mixed>  $data  keys: id_type (string), id_photo/coe (UploadedFile), selfie_frames (UploadedFile[])
+     * @param  array<string, mixed>  $data  keys: id_type (string), id_photo (UploadedFile), selfie_frames (UploadedFile[])
      */
     public function submit(User $user, array $data): ProfessionalApplication
     {
@@ -98,7 +112,6 @@ class ProfessionalApplicationService
     private function insertApplication(User $user, array $data, IdType $idType, string $folder): ProfessionalApplication
     {
         $idPhotoPath = $this->storeOrFail($data['id_photo'], $folder);
-        $coePath = $this->storeOrFail($data['coe'], $folder);
 
         /** @var array<int, UploadedFile> $selfieFrames */
         $selfieFrames = array_values($data['selfie_frames']);
@@ -116,11 +129,12 @@ class ProfessionalApplicationService
             ])
             ->all();
 
-        return DB::transaction(function () use ($user, $data, $idType, $idPhotoPath, $coePath, $frames, $livenessFlashFrames) {
+        return DB::transaction(function () use ($user, $data, $idType, $idPhotoPath, $frames, $livenessFlashFrames) {
             $application = $this->professionalApplicationRepository->create([
                 'user_id' => $user->id,
                 'id_type' => $idType->value,
                 'issuing_country' => $idType->issuingCountry(),
+                'date_of_birth' => $data['date_of_birth'],
                 'id_photo_path' => $idPhotoPath,
                 // The last captured frame is most likely to be past the
                 // blink prompt, so it doubles as the canonical face-match
@@ -128,8 +142,6 @@ class ProfessionalApplicationService
                 'selfie_path' => $frames->last(),
                 'selfie_frame_paths' => $frames->all(),
                 'liveness_flash_frames' => $livenessFlashFrames,
-                'coe_path' => $coePath,
-                'coe_original_filename' => $data['coe']->getClientOriginalName(),
                 'status' => WorkflowStatus::Processing->value,
             ]);
 
@@ -141,9 +153,34 @@ class ProfessionalApplicationService
 
     private function storeOrFail(UploadedFile $file, string $folder, ?string $name = null): string
     {
+        if (str_starts_with((string) $file->getMimeType(), 'image/')) {
+            return $this->storeResizedImageOrFail($file, $folder, $name);
+        }
+
         $path = $name === null ? $file->store($folder, self::DISK) : $file->storeAs($folder, $name, self::DISK);
 
         if ($path === false) {
+            throw new ProfessionalApplicationUploadFailedException;
+        }
+
+        return $path;
+    }
+
+    /**
+     * Downscales and re-encodes the upload as JPEG before storing, so file
+     * size depends on MAX_IMAGE_DIMENSION/IMAGE_QUALITY rather than the
+     * client's camera resolution.
+     */
+    private function storeResizedImageOrFail(UploadedFile $file, string $folder, ?string $name): string
+    {
+        $path = $folder.'/'.($name ?? Str::random(40).'.jpg');
+
+        $encoded = (new ImageManager(new Driver))
+            ->decodePath($file->getRealPath())
+            ->scaleDown(width: self::MAX_IMAGE_DIMENSION, height: self::MAX_IMAGE_DIMENSION)
+            ->encode(new JpegEncoder(quality: self::IMAGE_QUALITY));
+
+        if (! Storage::disk(self::DISK)->put($path, (string) $encoded)) {
             throw new ProfessionalApplicationUploadFailedException;
         }
 
@@ -187,7 +224,10 @@ class ProfessionalApplicationService
             subject: $application->user,
             metadata: ['professional_application_id' => $application->id],
             channel: 'web',
+            description: "{$admin->fullname} approved {$application->user->fullname}'s professional application and granted the {$application->role_granted} role.",
         );
+
+        $application->user->notify(new ProfessionalApplicationApprovedNotification($application->role_granted));
 
         $this->broadcastStatusChanged($application);
     }
@@ -219,7 +259,10 @@ class ProfessionalApplicationService
             subject: $applicant,
             metadata: ['professional_application_id' => $applicationId, 'reason' => $reason],
             channel: 'web',
+            description: "{$admin->fullname} denied {$applicant->fullname}'s professional application: {$reason}",
         );
+
+        $applicant->notify(new ProfessionalApplicationDeniedNotification($reason));
 
         $this->broadcastStatusChanged($application);
     }
@@ -229,7 +272,7 @@ class ProfessionalApplicationService
      * applications (default: no state change for 5 days), including their
      * uploaded KYC files. All of an application's files live in one
      * per-application folder, so deleting the id photo's directory removes
-     * the selfie frames, flash frames, and CoE with it.
+     * the selfie frames and flash frames with it.
      */
     public function prune(int $days = 5): int
     {

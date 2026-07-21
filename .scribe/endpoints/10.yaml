@@ -47,6 +47,17 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
+      date_of_birth:
+        custom: []
+        name: date_of_birth
+        description: "The applicant's date of birth. Must be at least 18 years ago."
+        required: true
+        example: '1990-05-20'
+        type: date
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
       id_photo:
         custom: []
         name: id_photo
@@ -96,19 +107,9 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      coe:
-        custom: []
-        name: coe
-        description: 'Certificate of Employment. pdf/jpg/jpeg/png, max 10MB.'
-        required: true
-        example: null
-        type: file
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
     cleanBodyParameters:
       id_type: ph_prc
+      date_of_birth: '1990-05-20'
       flash_colors:
         - red
         - green
@@ -119,12 +120,11 @@ endpoints:
         - null
       flash_frames:
         - null
-      coe: null
     responses:
       -
         custom: []
         status: 201
-        content: '{"status":201,"message":"Application submitted.","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":null,"status":"processing","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}'
+        content: '{"status":201,"message":"Application submitted.","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":null,"date_of_birth":"1990-05-20","status":"processing","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
@@ -171,7 +171,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":[{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}]}'
+        content: '{"status":200,"message":"Success","data":[{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","date_of_birth":"1990-05-20","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}]}'
         headers: []
         description: ''
     responseFields: []
@@ -207,14 +207,14 @@ endpoints:
         name: professionalApplication_id
         description: 'The ID of the professionalApplication.'
         required: true
-        example: 16
+        example: 3
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      professionalApplication_id: 16
+      professionalApplication_id: 3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -224,7 +224,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}'
+        content: '{"status":200,"message":"Success","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","date_of_birth":"1990-05-20","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -

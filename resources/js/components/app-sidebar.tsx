@@ -1,4 +1,11 @@
-import { IdCard, KeyRound, LayoutGrid, Mail, Users } from 'lucide-react';
+import {
+    FileText,
+    IdCard,
+    KeyRound,
+    LayoutGrid,
+    Mail,
+    Users,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -13,6 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import admin from '@/routes/admin';
 import type { NavItem } from '@/types';
+import { reportCategoryOptions } from '@/types/report-category';
 
 export function AppSidebar() {
     const { open } = useSidebar();
@@ -42,6 +50,15 @@ export function AppSidebar() {
             title: 'Account Retrieval Requests',
             href: admin.accountRetrievalRequests.index(),
             icon: KeyRound,
+        },
+        {
+            title: 'Reports',
+            href: admin.reports.show(reportCategoryOptions[0].value),
+            icon: FileText,
+            items: reportCategoryOptions.map((category) => ({
+                title: category.label,
+                href: admin.reports.show(category.value),
+            })),
         },
     ];
 

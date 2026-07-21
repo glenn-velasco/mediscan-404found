@@ -86,10 +86,13 @@ services:
         condition: service_started
     networks: [mediscan-dev]
 
-  machine-learning:
-    build:
-      context: ../docker/machine-learning
-    networks: [mediscan-dev]
+  # Disabled by default - Google Cloud Vision is now the default OCR/face
+  # driver (config/kyc.php ocr_driver/face_driver). Uncomment the whole
+  # block below to bring it back.
+  # machine-learning:
+  #   build:
+  #     context: ../docker/machine-learning
+  #   networks: [mediscan-dev]
 
   postgres:
     image: postgres:18-alpine

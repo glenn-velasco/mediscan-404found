@@ -5,8 +5,11 @@ use App\Enums\Role;
 use App\Events\ProfessionalApplicationStatusChanged;
 use App\Models\ProfessionalApplication;
 use App\Models\User;
+use App\Notifications\ProfessionalApplicationApprovedNotification;
+use App\Notifications\ProfessionalApplicationDeniedNotification;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -29,7 +32,6 @@ beforeEach(function () {
             'license_number' => '123456',
             'id_photo_path' => 'fixtures/id.jpg',
             'selfie_path' => 'fixtures/selfie.jpg',
-            'coe_path' => 'fixtures/coe.pdf',
             'status' => 'pending_review',
         ], $overrides));
     };
@@ -69,7 +71,6 @@ it('admin can stream each evidence file for an application', function () {
 
     Storage::disk('s3')->put('fixtures/id.jpg', 'id-bytes');
     Storage::disk('s3')->put('fixtures/selfie.jpg', 'selfie-bytes');
-    Storage::disk('s3')->put('fixtures/coe.pdf', 'coe-bytes');
     $application = ($this->pendingApplication)($applicant);
 
     $this->actingAs($admin)
@@ -81,11 +82,6 @@ it('admin can stream each evidence file for an application', function () {
         ->get(route('admin.professional-applications.file', [$application, 'selfie']))
         ->assertOk()
         ->assertStreamedContent('selfie-bytes');
-
-    $this->actingAs($admin)
-        ->get(route('admin.professional-applications.file', [$application, 'coe']))
-        ->assertOk()
-        ->assertStreamedContent('coe-bytes');
 });
 
 it('non admin cannot stream an application evidence file', function () {
@@ -102,6 +98,7 @@ it('non admin cannot stream an application evidence file', function () {
 
 it('admin approving an application grants the profession role without removing the base user role', function () {
     Event::fake([ProfessionalApplicationStatusChanged::class]);
+    Notification::fake();
 
     $admin = ($this->admin)();
     $applicant = User::factory()->create();
@@ -130,10 +127,13 @@ it('admin approving an application grants the profession role without removing t
         ProfessionalApplicationStatusChanged::class,
         fn ($event) => $event->applicationId === $application->id
     );
+
+    Notification::assertSentTo($applicant, ProfessionalApplicationApprovedNotification::class);
 });
 
 it('admin denying an application soft deletes it and records the reason', function () {
     Event::fake([ProfessionalApplicationStatusChanged::class]);
+    Notification::fake();
 
     $admin = ($this->admin)();
     $applicant = User::factory()->create();
@@ -158,5 +158,10 @@ it('admin denying an application soft deletes it and records the reason', functi
     Event::assertDispatched(
         ProfessionalApplicationStatusChanged::class,
         fn ($event) => $event->applicationId === $application->id
+    );
+
+    Notification::assertSentTo(
+        $applicant,
+        ProfessionalApplicationDeniedNotification::class
     );
 });

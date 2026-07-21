@@ -10,7 +10,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "directorytree/metrics": "^1.6",
+        "google/cloud-vision": "^2.2",
         "inertiajs/inertia-laravel": "^3.0",
+        "intervention/image": "^4.2",
         "knuckleswtf/scribe": "^5.11",
         "laravel/chisel": "^0.1.0",
         "laravel/fortify": "^1.37.2",

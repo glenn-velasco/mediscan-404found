@@ -1,42 +1,133 @@
-import { Head } from '@inertiajs/react';
-import { useState } from 'react';
-import StatCard from '@/components/stat-card';
+import { Head, router } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
+import TrendChart from '@/components/trend-chart';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import admin from '@/routes/admin';
 
-interface DashboardStats {
-    total: number;
-    active: number;
-    deactivated: number;
-    by_role: { [key: string]: number };
+interface TrendPoint {
+    date: string;
+    value: number;
+}
+
+interface DashboardTrends {
+    signups: TrendPoint[];
+    qr_scans: TrendPoint[];
+    logins: TrendPoint[];
+    total_accounts: TrendPoint[];
+    total_users: TrendPoint[];
+    total_admins: TrendPoint[];
+    active: TrendPoint[];
+    deactivated: TrendPoint[];
+}
+
+interface DashboardFilters {
+    from: string;
+    to: string;
+    earliest: string | null;
+    latest: string;
 }
 
 export default function AdminDashboard({
-    stats: initialStats,
+    trends,
+    filters,
 }: {
-    stats: DashboardStats;
+    trends: DashboardTrends;
+    filters: DashboardFilters;
 }) {
-    const [stats] = useState<DashboardStats>(initialStats);
+    const [from, setFrom] = useState(filters.from);
+    const [to, setTo] = useState(filters.to);
 
-    const adminCount =
-        stats.by_role && typeof stats.by_role === 'object'
-            ? (stats.by_role['admin'] ?? 0)
-            : 0;
+    useEffect(() => {
+        if (from === filters.from && to === filters.to) {
+            return;
+        }
 
-    const userCount =
-        stats.by_role && typeof stats.by_role === 'object'
-            ? (stats.by_role['user'] ?? 0)
-            : 0;
+        const timer = setTimeout(() => {
+            router.get(
+                admin.dashboard().url,
+                { from, to },
+                { preserveState: true, replace: true },
+            );
+        }, 500);
+
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [from, to]);
+
+    const rangeLabel = `${filters.from.replace('T', ' ')} – ${filters.to.replace('T', ' ')}`;
 
     return (
         <>
             <Head title="Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 p-4">
+                <div className="flex flex-wrap items-end gap-2">
+                    <div className="flex flex-col gap-1">
+                        <Label htmlFor="dashboard-from">From</Label>
+                        <Input
+                            id="dashboard-from"
+                            type="datetime-local"
+                            value={from}
+                            min={filters.earliest ?? undefined}
+                            max={to || filters.latest}
+                            onChange={(e) => setFrom(e.target.value)}
+                            className="w-56"
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <Label htmlFor="dashboard-to">To</Label>
+                        <Input
+                            id="dashboard-to"
+                            type="datetime-local"
+                            value={to}
+                            min={from || filters.earliest || undefined}
+                            max={filters.latest}
+                            onChange={(e) => setTo(e.target.value)}
+                            className="w-56"
+                        />
+                    </div>
+                </div>
                 <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <StatCard title="Total Accounts" value={stats.total} />
-                    <StatCard title="Total Users" value={userCount} />
-                    <StatCard title="Total Admins" value={adminCount} />
-                    <StatCard title="Active" value={stats.active} />
-                    <StatCard title="Deactivated" value={stats.deactivated} />
+                    <TrendChart
+                        title="Signups"
+                        subtitle={rangeLabel}
+                        data={trends.signups}
+                    />
+                    <TrendChart
+                        title="QR Scans"
+                        subtitle={rangeLabel}
+                        data={trends.qr_scans}
+                    />
+                    <TrendChart
+                        title="Logins"
+                        subtitle={rangeLabel}
+                        data={trends.logins}
+                    />
+                    <TrendChart
+                        title="Total Accounts"
+                        subtitle={rangeLabel}
+                        data={trends.total_accounts}
+                    />
+                    <TrendChart
+                        title="Total Users"
+                        subtitle={rangeLabel}
+                        data={trends.total_users}
+                    />
+                    <TrendChart
+                        title="Total Admins"
+                        subtitle={rangeLabel}
+                        data={trends.total_admins}
+                    />
+                    <TrendChart
+                        title="Active"
+                        subtitle={rangeLabel}
+                        data={trends.active}
+                    />
+                    <TrendChart
+                        title="Deactivated"
+                        subtitle={rangeLabel}
+                        data={trends.deactivated}
+                    />
                 </div>
             </div>
         </>

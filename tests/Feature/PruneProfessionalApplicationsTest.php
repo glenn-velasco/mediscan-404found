@@ -15,14 +15,12 @@ beforeEach(function () {
 
         Storage::disk('s3')->put("{$folder}/id.jpg", 'id');
         Storage::disk('s3')->put("{$folder}/selfie-frame-0.jpg", 'selfie');
-        Storage::disk('s3')->put("{$folder}/coe.pdf", 'coe');
 
         $application = $user->professionalApplications()->create([
             'id_type' => 'ph_prc',
             'issuing_country' => 'PH',
             'id_photo_path' => "{$folder}/id.jpg",
             'selfie_path' => "{$folder}/selfie-frame-0.jpg",
-            'coe_path' => "{$folder}/coe.pdf",
             'status' => $status,
         ]);
 
@@ -49,7 +47,7 @@ it('prunes stale auto-rejected, denied, and pending-review applications with the
         $this->assertDatabaseMissing('professional_applications', ['id' => $application->id]);
 
         expect(Storage::disk('s3')->exists($application->id_photo_path))->toBeFalse()
-            ->and(Storage::disk('s3')->exists($application->coe_path))->toBeFalse();
+            ->and(Storage::disk('s3')->exists($application->selfie_path))->toBeFalse();
     }
 });
 

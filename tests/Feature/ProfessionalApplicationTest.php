@@ -14,6 +14,7 @@ beforeEach(function () {
 
     $this->payload = fn (array $overrides = []): array => array_merge([
         'id_type' => 'ph_prc',
+        'date_of_birth' => '1990-05-20',
         'id_photo' => UploadedFile::fake()->image('id.jpg'),
         'selfie_frames' => [
             UploadedFile::fake()->image('selfie-0.jpg'),
@@ -26,7 +27,6 @@ beforeEach(function () {
             UploadedFile::fake()->image('flash-blue.jpg'),
         ],
         'flash_colors' => ['red', 'green', 'blue'],
-        'coe' => UploadedFile::fake()->create('coe.pdf', 100, 'application/pdf'),
     ], $overrides);
 });
 
@@ -49,7 +49,6 @@ it('submits a professional application and dispatches the verification job', fun
 
     Storage::disk('s3')->assertExists($application->id_photo_path);
     Storage::disk('s3')->assertExists($application->selfie_path);
-    Storage::disk('s3')->assertExists($application->coe_path);
 
     expect($application->liveness_flash_frames)->toHaveCount(3);
     foreach ($application->liveness_flash_frames as $flashFrame) {
@@ -68,8 +67,8 @@ it('rejects submission with a missing required file', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->post(route('professional-application.store'), ($this->payload)(['coe' => null]))
-        ->assertSessionHasErrors('coe');
+        ->post(route('professional-application.store'), ($this->payload)(['id_photo' => null]))
+        ->assertSessionHasErrors('id_photo');
 });
 
 it('rejects submission with too few liveness capture frames', function () {
@@ -100,6 +99,24 @@ it('rejects submission with an invalid flash color', function () {
             'flash_colors' => ['red', 'green', 'purple'],
         ]))
         ->assertSessionHasErrors('flash_colors.2');
+});
+
+it('rejects submission with a missing date of birth', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('professional-application.store'), ($this->payload)(['date_of_birth' => null]))
+        ->assertSessionHasErrors('date_of_birth');
+});
+
+it('rejects submission when the applicant is under 18', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('professional-application.store'), ($this->payload)([
+            'date_of_birth' => now()->subYears(10)->toDateString(),
+        ]))
+        ->assertSessionHasErrors('date_of_birth');
 });
 
 it('blocks a second submission while one is still active', function () {
@@ -136,7 +153,6 @@ it('the owner sees their application status reflected correctly on the status pa
         'issuing_country' => 'PH',
         'id_photo_path' => 'demo/id.jpg',
         'selfie_path' => 'demo/selfie.jpg',
-        'coe_path' => 'demo/coe.pdf',
         'status' => $status,
         'rejection_reason' => $status === 'denied' ? 'Blurry ID photo.' : null,
         'deleted_at' => $status === 'denied' ? now() : null,

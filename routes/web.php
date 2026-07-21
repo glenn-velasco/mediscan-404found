@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AccountRetrievalRequestController as AdminAccount
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\ProfessionalApplicationController as AdminProfessionalApplicationController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AcceptInvitationController;
 use App\Http\Controllers\Auth\VerifyApiEmailController;
@@ -93,7 +94,7 @@ Route::prefix('admin')->name('admin.')
         Route::get('professional-applications/{professionalApplication}', [AdminProfessionalApplicationController::class, 'show'])
             ->withTrashed()->name('professional-applications.show');
         Route::get('professional-applications/{professionalApplication}/file/{type}', [AdminProfessionalApplicationController::class, 'file'])
-            ->whereIn('type', ['id-photo', 'selfie', 'coe'])
+            ->whereIn('type', ['id-photo', 'selfie'])
             ->withTrashed()->name('professional-applications.file');
         Route::patch('professional-applications/{professionalApplication}/approve', [AdminProfessionalApplicationController::class, 'approve'])->name('professional-applications.approve');
         Route::patch('professional-applications/{professionalApplication}/reject', [AdminProfessionalApplicationController::class, 'reject'])->name('professional-applications.reject');
@@ -105,6 +106,9 @@ Route::prefix('admin')->name('admin.')
             ->name('account-retrieval-requests.file');
         Route::patch('account-retrieval-requests/{accountRetrievalRequest}/approve', [AdminAccountRetrievalRequestController::class, 'approve'])->name('account-retrieval-requests.approve');
         Route::patch('account-retrieval-requests/{accountRetrievalRequest}/deny', [AdminAccountRetrievalRequestController::class, 'deny'])->name('account-retrieval-requests.deny');
+
+        Route::get('reports/{category}', [ReportController::class, 'index'])->name('reports.show');
+        Route::get('reports/{category}/users', [ReportController::class, 'searchUsers'])->name('reports.users.search');
     });
 
 require __DIR__.'/settings.php';

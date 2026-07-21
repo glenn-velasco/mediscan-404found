@@ -2,7 +2,7 @@
 
 This is not covered by Scribe — Scribe only documents HTTP routes under `api/v1/*`. This document is the source of truth for how the staging/production VPS is set up and how CI/CD reaches it. See [`ARCHITECTURE.md`](ARCHITECTURE.md) for the conceptual system design and [`infrastructure/README.md`](../infrastructure/README.md) for day-to-day commands.
 
-**Layout**: 7 sections, grouped by topic rather than chronological order — Cloudflare, SSH, GitHub Environments, Resend, Supabase, the GitHub Actions workflows themselves, and public-repo hygiene. Cross-references use these numbers (e.g. "§3.2").
+**Layout**: 9 sections, grouped by topic rather than chronological order — Cloudflare, SSH, GitHub Environments, Resend, Supabase, the GitHub Actions workflows themselves, Google Cloud Vision, and public-repo hygiene. Cross-references use these numbers (e.g. "§3.2").
 
 Nearly everything here is automated by Ansible (`infrastructure/provision/`) once the VPS is provisioned that way (§6.2) — the "manual way" shown in a few places is what Ansible replaces, kept only as historical reference for understanding what the roles actually do.
 
@@ -191,9 +191,11 @@ Settings → Secrets and variables → Actions → lands on **Repository secrets
 | `SSH_HOST` | secret | the VPS IP |
 | `SSH_USER` | secret | `mediscan` |
 | `RESEND_API_KEY` | secret | Resend dashboard → API Keys (§4) |
+| `GOOGLE_CLOUD_VISION_KEY_BASE64` | secret | base64 of the Cloud Vision service-account JSON key (§8) — one key shared by both environments |
 | `APP_NAME` | variable | `Mediscan` |
 | `AWS_DEFAULT_REGION` | variable | `us-east-1` (RustFS doesn't care about the region, but the S3 client requires *some* value) |
 | `AWS_BUCKET` | variable | `mediscan` |
+| `GOOGLE_CLOUD_PROJECT` | variable | GCP project ID that owns the Cloud Vision service account (§8) |
 
 `GITHUB_TOKEN` (auto-provided) covers pushing/pulling images from GHCR — no PAT needed anywhere.
 
@@ -387,6 +389,50 @@ ansible-playbook playbook.yml -i "<vps-ip>," -u mediscan --become \
 
 ---
 
-## 7. Notes for public repo
+## 8. Google Cloud Vision (OCR + face detection)
+
+As of [this change](../docs/ARCHITECTURE.md#kyc-ocr--face-detection), `config('kyc.ocr_driver')`/`config('kyc.face_driver')` default to `google`, backed by `App\Services\Kyc\GoogleVisionKycClient` — the `machine-learning` sidecar (§ARCHITECTURE.md) stays deployed as the `sidecar` fallback, but isn't what a fresh deploy uses by default. This section is what a real staging/production deploy needs for the `google` driver to actually work.
+
+### 8.1 GCP project + service account
+
+1. Create (or reuse) a GCP project. Enable the **Cloud Vision API** for it (APIs & Services → Enable APIs and Services → search "Cloud Vision API" → Enable).
+2. IAM & Admin → Service Accounts → **Create Service Account** (e.g. `mediscan-vision`) → skip the "Grant this service account access to project" step entirely (**Continue** → **Done** with no role assigned). Cloud Vision's image-annotation calls (`FACE_DETECTION`, `DOCUMENT_TEXT_DETECTION`) don't authorize against a project resource the way Cloud Storage/BigQuery do, so a role-less service account works as long as the Cloud Vision API is enabled and billing is active on the project. If a real call later fails with `PERMISSION_DENIED`, go back and grant `roles/serviceusage.serviceUsageConsumer` — **not** any of the "Vision AI" roles the IAM role picker suggests when you search "Vision"; those belong to a different product (Vertex AI Vision, for video analytics), not the classic Cloud Vision API this integration calls.
+3. On the new service account → **Keys** → **Add Key** → **Create new key** → JSON. This downloads a `.json` file once — there's no way to re-download it, only revoke and reissue.
+
+### 8.2 Getting the key into config — no file, ever
+
+Unlike the TLS origin cert (§1.5), this credential never touches disk on the VPS (or locally) as a file at all — `GoogleVisionKycClient` decodes it from an env var straight into a `Google\Auth\Credentials\ServiceAccountCredentials` object in memory (`config('services.cloud_vision.key_base64')`), so there's no key file to secure, mount, or accidentally leave behind on a box:
+
+1. Base64-encode the downloaded key so it survives being pasted into a single-line env var/secret:
+   ```sh
+   base64 -w0 mediscan-vision-key.json
+   ```
+2. **Repository secret, not an Environment secret** — Settings → Secrets and variables → Actions. That page opens directly on **Repository secrets** (no Environment selected); this is a different list from the one you land on after clicking into Settings → Environments → `staging` or `production`. Click **New repository secret** → name it `GOOGLE_CLOUD_VISION_KEY_BASE64` → paste the base64 output → **Add secret**.
+
+   One key shared by both `staging` and `production` this way — same reasoning as `RESEND_API_KEY` being repo-level (§3.1): this integration isn't environment-scoped the way `APP_KEY`/`REVERB_APP_SECRET`/etc. are (those genuinely need to differ per environment), so a separate service account per environment is unnecessary unless you specifically want to isolate the Vision API quota/billing between them. A repo-level secret is automatically visible to every Environment's jobs unless that Environment defines a same-named secret of its own to override it.
+3. Same **Repository secrets** page → **Variables** tab → **New repository variable** → name it `GOOGLE_CLOUD_PROJECT` → value is the project ID the service account belongs to.
+
+`deploy.yml`'s **"Generate and ship .env"** step writes `GOOGLE_CLOUD_VISION_KEY_BASE64`/`GOOGLE_CLOUD_PROJECT` straight into the shipped `.env` alongside everything else — no separate step, no extra volume mount on `app`/`horizon`/`scheduler`/`reverb`. Locally (`sail`), the same var goes in your own `.env` (already gitignored); see `.env.example` for the placeholder.
+
+### 8.3 Verifying it worked
+
+Service name differs by where you're running this — locally via `compose.yaml`/Sail it's `laravel.test` (already running, so use `exec`); on the deployed VPS via `docker-compose.staging.yml`/`docker-compose.production.yml` it's `app` (use `run --rm`, or `exec` if it's already up):
+
+```sh
+# local (sail)
+docker compose exec laravel.test php artisan tinker --execute="echo get_class(app(App\Contracts\Kyc\OcrClientContract::class)).PHP_EOL;"
+
+# deployed VPS
+docker compose run --rm app php artisan tinker --execute="echo get_class(app(App\Contracts\Kyc\OcrClientContract::class)).PHP_EOL;"
+```
+should print `App\Services\Kyc\GoogleVisionKycClient`. To confirm the app can actually reach the API, trigger a KYC flow that calls OCR/face detection, or call `detectText()`/`compare()` directly against a real image via tinker, and watch for `KycSidecarUnavailableException` in the logs — it wraps both "the base64 secret is missing/invalid" and any real Vision API call failure (bad credentials, API not enabled, quota exceeded), so check the exception message to tell which.
+
+### 8.4 Falling back to the sidecar
+
+If Vision access isn't set up yet, or you want to temporarily revert: SSH in and hand-edit `$REMOTE_DIR/.env` on the VPS, setting `KYC_OCR_DRIVER=sidecar` and/or `KYC_FACE_DRIVER=sidecar`, then `docker compose up -d` to restart the app containers with the new config — no rebuild needed, since both drivers ship in the same image. This isn't wired into `deploy.yml`/GitHub Environments (would reset to `google` on the next deploy); it's a manual break-glass step, not a supported toggle.
+
+---
+
+## 9. Notes for public repo
 
 The repo is currently private; if/when it goes public, run a one-time git-history secret scan first (e.g. `gitleaks detect` or `trufflehog` over the **full history**, not just the current tree) — going public exposes every past commit, not just HEAD. `infrastructure/.env`/`.env.production` are blank-value templates and should stay that way forever; real values only ever go into the GitHub secrets/variables above, never into a tracked file. After going public, verify GitHub secret scanning + push protection are enabled as an ongoing safety net.

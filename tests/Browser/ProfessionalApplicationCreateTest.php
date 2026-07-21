@@ -18,8 +18,6 @@ it('only shows the face verification step until a capture succeeds', function ()
         ->assertSee('Step 1 of 2')
         ->assertSee('Start selfie capture')
         ->assertDontSee('Step 2 of 2')
-        // "Certificate of Employment" can't be asserted absent: the intro
-        // paragraph visible on both steps legitimately mentions it.
         ->assertDontSee('Professional ID photo')
         ->screenshot(filename: 'professional-application-create-step-1')
         ->assertNoJavascriptErrors();

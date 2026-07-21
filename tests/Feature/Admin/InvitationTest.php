@@ -82,7 +82,7 @@ it('admin can send invitation', function () {
 
     $this->actingAs(($this->admin)())
         ->post(route('admin.invitations.store'), ($this->invitePayload)())
-        ->assertRedirect(route('admin.users.index'));
+        ->assertRedirect(route('admin.invitations.index'));
 
     $this->assertDatabaseHas('user_invitations', ['email' => 'invite@example.com']);
 
@@ -95,7 +95,7 @@ it('invitations are always sent as admin regardless of any role field posted', f
 
     $this->actingAs(($this->admin)())
         ->post(route('admin.invitations.store'), ($this->invitePayload)(['role' => Role::User->value]))
-        ->assertRedirect(route('admin.users.index'));
+        ->assertRedirect(route('admin.invitations.index'));
 
     $invitation = UserInvitation::where('email', 'invite@example.com')->first();
     $this->assertSame(Role::Admin->value, $invitation->role->name);
@@ -176,7 +176,7 @@ it('re invitation is allowed after expiry', function () {
 
     $this->actingAs(($this->admin)())
         ->post(route('admin.invitations.store'), ($this->invitePayload)(['email' => 'expired@example.com']))
-        ->assertRedirect(route('admin.users.index'))
+        ->assertRedirect(route('admin.invitations.index'))
         ->assertSessionHasNoErrors();
 });
 

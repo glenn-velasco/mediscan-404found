@@ -22,18 +22,18 @@ export default function Create() {
     const [step, setStep] = useState<Step>('face');
     const { data, setData, post, processing, errors } = useForm<{
         id_type: string;
+        date_of_birth: string;
         id_photo: File | null;
         selfie_frames: File[];
         flash_frames: File[];
         flash_colors: string[];
-        coe: File | null;
     }>({
         id_type: idTypeOptions[0]?.value ?? '',
+        date_of_birth: '',
         id_photo: null,
         selfie_frames: [],
         flash_frames: [],
         flash_colors: [],
-        coe: null,
     });
 
     function submit(e: FormEvent) {
@@ -63,10 +63,9 @@ export default function Create() {
                         Professional Application
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Submit your professional ID, a selfie, and your
-                        Certificate of Employment. We&apos;ll automatically
-                        check your submission, then a MediScan admin will review
-                        it before it&apos;s approved.
+                        Submit your professional ID and a selfie. We&apos;ll
+                        automatically check your submission, then a MediScan
+                        admin will review it before it&apos;s approved.
                     </p>
                 </div>
 
@@ -142,6 +141,19 @@ export default function Create() {
                         </div>
 
                         <div className="grid gap-2">
+                            <Label htmlFor="date_of_birth">Date of birth</Label>
+                            <Input
+                                id="date_of_birth"
+                                type="date"
+                                value={data.date_of_birth}
+                                onChange={(e) =>
+                                    setData('date_of_birth', e.target.value)
+                                }
+                            />
+                            <InputError message={errors.date_of_birth} />
+                        </div>
+
+                        <div className="grid gap-2">
                             <Label htmlFor="id_photo">
                                 Professional ID photo
                             </Label>
@@ -159,25 +171,11 @@ export default function Create() {
                             <InputError message={errors.id_photo} />
                         </div>
 
-                        <div className="grid gap-2">
-                            <Label htmlFor="coe">
-                                Certificate of Employment
-                            </Label>
-                            <Input
-                                id="coe"
-                                type="file"
-                                accept="image/png,image/jpeg,application/pdf"
-                                onChange={(e) =>
-                                    setData('coe', e.target.files?.[0] ?? null)
-                                }
-                            />
-                            <InputError message={errors.coe} />
-                        </div>
-
                         <Button
                             type="submit"
                             disabled={
                                 processing ||
+                                data.date_of_birth === '' ||
                                 data.selfie_frames.length < 3 ||
                                 data.flash_frames.length < 3
                             }

@@ -2,6 +2,7 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import ImageViewerModal from '@/components/image-viewer-modal';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -65,8 +66,14 @@ function Field({
 
 export default function Show({ retrievalRequest, files }: ShowProps) {
     const [denyOpen, setDenyOpen] = useState(false);
+    const [viewerIndex, setViewerIndex] = useState<number | null>(null);
     const approveForm = useForm({});
     const denyForm = useForm({ rejection_reason: '' });
+
+    const viewerImages = [
+        { src: files.id_photo, alt: 'Government ID' },
+        { src: files.selfie, alt: 'Selfie' },
+    ];
 
     useEcho('admin-dashboard', '.AccountRetrievalRequestStatusChanged', () =>
         router.reload(),
@@ -163,33 +170,33 @@ export default function Show({ retrievalRequest, files }: ShowProps) {
                                 <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                                     ID Photo
                                 </span>
-                                <a
-                                    href={files.id_photo}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                <button
+                                    type="button"
+                                    onClick={() => setViewerIndex(0)}
+                                    className="cursor-zoom-in"
                                 >
                                     <img
                                         src={files.id_photo}
                                         alt="Government ID"
                                         className="rounded-lg border"
                                     />
-                                </a>
+                                </button>
                             </div>
                             <div className="flex flex-col gap-2">
                                 <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                                     Selfie
                                 </span>
-                                <a
-                                    href={files.selfie}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                <button
+                                    type="button"
+                                    onClick={() => setViewerIndex(1)}
+                                    className="cursor-zoom-in"
                                 >
                                     <img
                                         src={files.selfie}
                                         alt="Selfie"
                                         className="rounded-lg border"
                                     />
-                                </a>
+                                </button>
                             </div>
                         </div>
 
@@ -283,6 +290,13 @@ export default function Show({ retrievalRequest, files }: ShowProps) {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <ImageViewerModal
+                images={viewerImages}
+                initialIndex={viewerIndex ?? 0}
+                open={viewerIndex !== null}
+                onOpenChange={(open) => !open && setViewerIndex(null)}
+            />
         </>
     );
 }

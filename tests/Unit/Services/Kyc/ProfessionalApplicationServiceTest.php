@@ -25,7 +25,6 @@ it('converts a unique-constraint race into the friendly already-pending exceptio
         'issuing_country' => 'PH',
         'id_photo_path' => 'id.jpg',
         'selfie_path' => 'selfie.jpg',
-        'coe_path' => 'coe.pdf',
         'status' => WorkflowStatus::Processing->value,
     ]);
 
@@ -41,6 +40,7 @@ it('converts a unique-constraint race into the friendly already-pending exceptio
 
     $payload = [
         'id_type' => 'ph_prc',
+        'date_of_birth' => '1990-05-20',
         'id_photo' => UploadedFile::fake()->image('id.jpg'),
         'selfie_frames' => [
             UploadedFile::fake()->image('selfie-0.jpg'),
@@ -53,7 +53,6 @@ it('converts a unique-constraint race into the friendly already-pending exceptio
             UploadedFile::fake()->image('flash-blue.jpg'),
         ],
         'flash_colors' => ['red', 'green', 'blue'],
-        'coe' => UploadedFile::fake()->create('coe.pdf', 100, 'application/pdf'),
     ];
 
     expect(fn () => $service->submit($user, $payload))

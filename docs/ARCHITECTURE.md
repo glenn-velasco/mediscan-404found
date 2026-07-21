@@ -48,9 +48,10 @@ C4Container
         Container(redis, "redis", "Redis", "Cache, session, queue")
         Container(rustfs, "rustfs", "RustFS", "S3-compatible object storage - KYC photos, documents")
         Container(postgres, "postgres", "Postgres", "Staging DB only")
-        Container(machineLearning, "machine-learning", "Python/Flask", "OCR + face-match + liveness sidecar")
+        Container(machineLearning, "machine-learning", "Python/Flask", "OCR + face-match + liveness sidecar (deprecated fallback - see below)")
         Container(grafana, "grafana + prometheus + loki + promtail + node-exporter + cadvisor", "Observability stack", "Logs + metrics + dashboards")
     }
+    System_Ext(cloudVision, "Google Cloud Vision", "Managed OCR + face detection API")
 
     Rel(cloudflare, nginx, "HTTPS")
     Rel(mobileApp, cloudflare, "HTTPS")
@@ -61,11 +62,21 @@ C4Container
     Rel(app, rustfs, "S3 API")
     Rel(app, postgres, "Postgres (staging)")
     Rel(app, supabase, "Postgres (production)")
-    Rel(app, machineLearning, "HTTP")
+    Rel(app, cloudVision, "gRPC (default OCR + face detection)")
+    Rel(app, machineLearning, "HTTP (sidecar fallback, KYC_OCR_DRIVER/KYC_FACE_DRIVER=sidecar)")
     Rel(app, resend, "SMTP/API")
     Rel(horizon, redis, "queue")
     Rel(scheduler, redis, "cache")
 ```
+
+### KYC OCR / face detection
+
+`App\Contracts\Kyc\OcrClientContract` and `FaceMatchClientContract` decouple the KYC jobs (`ProcessProfessionalApplication`, `ProcessAccountRetrievalRequest`) from the engine that implements them. `App\Providers\AppServiceProvider` binds each contract based on `config('kyc.ocr_driver')` / `config('kyc.face_driver')` (env: `KYC_OCR_DRIVER`, `KYC_FACE_DRIVER`):
+
+- **`google` (default)** — `App\Services\Kyc\GoogleVisionKycClient`, backed by the Google Cloud Vision API (`google/cloud-vision`), authenticated via a service-account key held as base64-encoded JSON in `GOOGLE_CLOUD_VISION_KEY_BASE64` (decoded straight into a `ServiceAccountCredentials` object in memory — no key file ever touches disk, locally or deployed; see `docs/DEPLOYMENT_SETUP.md` §8). OCR uses document text detection; face comparison and liveness are heuristics derived from `FaceAnnotation` landmark geometry and pose/exposure data, since Vision's Face Detection is not a purpose-built matching/liveness product.
+- **`sidecar`** — `App\Services\Kyc\HttpKycSidecarClient`, calling the `machine-learning` container (Tesseract OCR, OpenCV YuNet/SFace face-match and liveness). Kept in the repo and runnable as a fallback; not deleted, just no longer the default.
+
+Both drivers satisfy the same contracts, so switching between them (even independently per-feature) requires only an env change — no changes to the KYC jobs, ID field parsers, or database schema.
 
 ## Deployment
 

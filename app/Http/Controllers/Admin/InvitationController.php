@@ -63,6 +63,6 @@ class InvitationController extends Controller
             'message' => "Invitation sent to {$email}.",
         ]);
 
-        return redirect()->route('admin.users.index');
+        return redirect()->route('admin.invitations.index');
     }
 }

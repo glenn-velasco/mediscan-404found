@@ -9,8 +9,10 @@ class PrcIdVerifier implements IdVerifierContract
 {
     /**
      * Curated list of PRC profession titles that may appear as a standalone
-     * banner or as the value of a "Profession:" line.  Includes a demo/test
-     * entry (GOSURF50) for the sample PRC ID card used in demonstrations.
+     * banner or as the value of a "Profession:" line. Includes GOSURF50 - not
+     * a real profession, it's the promo text printed on a specific fake PRC
+     * ID used for testing this pipeline end-to-end (deliberately kept, not
+     * OCR noise - see conversation history if this looks out of place again).
      *
      * @var array<int, string>
      */
@@ -21,6 +23,20 @@ class PrcIdVerifier implements IdVerifierContract
         'Obstetrics and Gynecology', 'OB-GYN', 'Urology', 'Ophthalmology',
         'Otolaryngology', 'Nursing', 'Nurse', 'Midwifery', 'Physical Therapy',
         'Pharmacy', 'Medical Technology', 'Radiologic Technology', 'GOSURF50',
+    ];
+
+    /**
+     * Labels this card layout may print in a column, all together, with
+     * their values listed afterward in the same order in a second column
+     * (rather than each label sharing a line with its own value) - this is
+     * how Google Cloud Vision's DOCUMENT_TEXT_DETECTION reads some PRC card
+     * scans, since it groups text by visual column rather than row.
+     *
+     * @var array<int, string>
+     */
+    private const COLUMN_LABELS = [
+        'LAST NAME', 'FIRST NAME', 'MIDDLE NAME',
+        'REGISTRATION NO.', 'REGISTRATION DATE', 'VALID UNTIL',
     ];
 
     public function idType(): IdType
@@ -98,6 +114,15 @@ class PrcIdVerifier implements IdVerifierContract
             return $matches[1];
         }
 
+        // Fallback: column-layout value (see extractLabelValueBlock) may
+        // still carry a leading OCR bullet glyph (e.g. "► 10/01/2022"), so
+        // pull just the date substring rather than assuming a clean value.
+        $value = $this->extractLabelValueBlock($text)['VALID UNTIL'] ?? null;
+
+        if ($value !== null && preg_match('/([0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4})/', $value, $matches)) {
+            return $matches[1];
+        }
+
         return null;
     }
 
@@ -134,7 +159,81 @@ class PrcIdVerifier implements IdVerifierContract
             }
         }
 
+        // Fallback: column layout (see extractLabelValueBlock) - labels and
+        // values sit in two separate blocks rather than sharing a line.
+        $block = $this->extractLabelValueBlock($text);
+
+        if (isset($block['LAST NAME'], $block['FIRST NAME'])) {
+            $middle = isset($block['MIDDLE NAME']) ? ' '.$this->cleanName($block['MIDDLE NAME']) : '';
+            $full = trim($this->cleanName($block['FIRST NAME']).$middle.' '.$this->cleanName($block['LAST NAME']));
+
+            if ($full !== '') {
+                return $full;
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * Some PRC card scans get read by Vision column-by-column rather than
+     * row-by-row: every label appears first, then every value in the same
+     * order, as two separate blocks - e.g.
+     *   LAST NAME
+     *   FIRST NAME
+     *   VALID UNTIL
+     *   Dela Cruz
+     *   Juan
+     *   10/01/2022
+     * Detects a contiguous run of recognized COLUMN_LABELS lines and maps
+     * each to the value at the same offset in the following lines.
+     *
+     * @return array<string, string> label => value, using the canonical
+     *                               COLUMN_LABELS spelling as the key
+     */
+    private function extractLabelValueBlock(string $text): array
+    {
+        $lines = array_values(array_filter(array_map('trim', explode("\n", $text)), fn (string $line) => $line !== ''));
+
+        foreach ($lines as $startIndex => $line) {
+            $labels = [];
+
+            for ($i = $startIndex; $i < count($lines); $i++) {
+                $matchedLabel = null;
+
+                foreach (self::COLUMN_LABELS as $label) {
+                    if (preg_match('/^'.preg_quote($label, '/').'\.?$/i', $lines[$i])) {
+                        $matchedLabel = $label;
+                        break;
+                    }
+                }
+
+                if ($matchedLabel === null) {
+                    break;
+                }
+
+                $labels[] = $matchedLabel;
+            }
+
+            // Require at least 2 consecutive recognized labels before
+            // trusting this as a column block, so a single incidental
+            // label-shaped line elsewhere in the text doesn't misfire.
+            if (count($labels) < 2) {
+                continue;
+            }
+
+            $valuesStart = $startIndex + count($labels);
+
+            if ($valuesStart + count($labels) > count($lines)) {
+                continue;
+            }
+
+            $values = array_slice($lines, $valuesStart, count($labels));
+
+            return array_combine($labels, $values);
+        }
+
+        return [];
     }
 
     /**

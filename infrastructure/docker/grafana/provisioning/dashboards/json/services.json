@@ -34,7 +34,7 @@
           "title": "Error rate",
           "type": "timeseries",
           "datasource": { "type": "loki", "uid": "loki" },
-          "gridPos": { "h": 6, "w": 12, "x": 12, "y": 1 },
+          "gridPos": { "h": 6, "w": 24, "x": 0, "y": 1 },
           "targets": [
             {
               "refId": "A",

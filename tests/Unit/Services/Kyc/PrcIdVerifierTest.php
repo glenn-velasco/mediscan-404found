@@ -107,3 +107,35 @@ it('handles the nurse PRC ID layout with registration number', function () {
         ->and($fields['license_number'])->toBe('0012345')
         ->and($fields['license_expiry'])->toBe('11/25/2022');
 });
+
+it('returns a null profession when the card has no profession label or banner', function () {
+    $text = "Republic of the Philippines\nProfessional Regulation Commission\nName: Juan Dela Cruz\nRegistration No. 0012345\nSomeUnrecognizedPromoText99";
+
+    $fields = $this->verifier->extractFields($text);
+
+    expect($fields['profession'])->toBeNull();
+});
+
+it('recognizes GOSURF50 as the profession on the test PRC ID card', function () {
+    // Not a real profession - it's the promo text printed on a specific
+    // fake PRC ID card used to test this pipeline end-to-end.
+    $text = "Republic of the Philippines\nProfessional Regulation Commission\nName: Juan Dela Cruz\nRegistration No. 0012345\nGOSURF50";
+
+    $fields = $this->verifier->extractFields($text);
+
+    expect($fields['profession'])->toBe('GOSURF50');
+});
+
+it('extracts full name and license expiry from a column-layout card where all labels precede all values', function () {
+    // Google Cloud Vision's DOCUMENT_TEXT_DETECTION reads some PRC card
+    // scans column-by-column: every label first, then every value in the
+    // same order, rather than each label sharing a line with its value.
+    $text = "Republic of the Philippines\nPROFESSIONAL REGULATION COMMISSION\nPROFESSIONAL IDENTIFICATION CARD\nLAST NAME\nFIRST NAME\nMIDDLE NAME\nREGISTRATION NO.\nREGISTRATION DATE\nVALID UNTIL\nVelasco\nGlenn Luis\nGarin\n7392104\n07/12/2018\n► 10/01/2022\nGOSURF50";
+
+    $fields = $this->verifier->extractFields($text);
+
+    expect($fields['full_name'])->toBe('Glenn Luis Garin Velasco')
+        ->and($fields['license_number'])->toBe('7392104')
+        ->and($fields['license_expiry'])->toBe('10/01/2022')
+        ->and($fields['profession'])->toBe('GOSURF50');
+});

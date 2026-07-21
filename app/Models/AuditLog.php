@@ -15,12 +15,13 @@ use Illuminate\Support\Carbon;
  * @property int|null $actor_id
  * @property int|null $subject_id
  * @property string $action
+ * @property string|null $description
  * @property AuditLogType|null $type
  * @property string|null $channel
  * @property array<string, mixed>|null $metadata
  * @property Carbon $created_at
  */
-#[Fillable(['actor_id', 'subject_id', 'action', 'type', 'channel', 'metadata'])]
+#[Fillable(['actor_id', 'subject_id', 'action', 'description', 'type', 'channel', 'metadata'])]
 class AuditLog extends Model
 {
     /** @use HasFactory<AuditLogFactory> */

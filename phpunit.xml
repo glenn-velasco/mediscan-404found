@@ -26,6 +26,8 @@
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_DATABASE" value="testing"/>
         <env name="DB_URL" value=""/>
+        <env name="KYC_OCR_DRIVER" value="sidecar"/>
+        <env name="KYC_FACE_DRIVER" value="sidecar"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

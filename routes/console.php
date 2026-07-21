@@ -9,5 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('invitations:prune')->daily();
+Schedule::command('metrics:snapshot-users')->daily();
 Schedule::command('professional-applications:prune')->daily();
 Schedule::command('account-retrieval-requests:prune')->daily();

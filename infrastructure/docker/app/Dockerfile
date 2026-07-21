@@ -54,6 +54,8 @@ WORKDIR /app
 
 RUN install-php-extensions pdo_pgsql pgsql redis pcntl sockets gd intl zip bcmath opcache
 
+COPY infrastructure/docker/app/php-uploads.ini /usr/local/etc/php/conf.d/zz-uploads.ini
+
 RUN groupadd -g 1000 appuser && useradd -u 1000 -g appuser -m -s /usr/sbin/nologin appuser
 
 ENV HOME=/home/appuser XDG_CONFIG_HOME=/home/appuser/.config
