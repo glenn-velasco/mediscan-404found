@@ -33,4 +33,21 @@ return [
 
     'account_retrieval_face_match_floor' => (float) env('KYC_ACCOUNT_RETRIEVAL_FACE_MATCH_FLOOR', 0.4),
 
+    /*
+    |--------------------------------------------------------------------------
+    | OCR / Face Match Drivers
+    |--------------------------------------------------------------------------
+    |
+    | Which backend answers OcrClientContract / FaceMatchClientContract.
+    | 'google' uses Google Cloud Vision (default). 'sidecar' uses the
+    | self-hosted Tesseract/OpenCV machine-learning sidecar. The two are
+    | toggled independently so, e.g., face matching can fall back to the
+    | sidecar while OCR stays on Google Cloud Vision.
+    |
+    */
+
+    'ocr_driver' => env('KYC_OCR_DRIVER', 'google'),
+
+    'face_driver' => env('KYC_FACE_DRIVER', 'google'),
+
 ];

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\Kyc\FaceMatchClientContract;
 use App\Contracts\Kyc\OcrClientContract;
+use App\Services\Kyc\GoogleVisionKycClient;
 use App\Services\Kyc\HttpKycSidecarClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
@@ -18,8 +19,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(OcrClientContract::class, HttpKycSidecarClient::class);
-        $this->app->bind(FaceMatchClientContract::class, HttpKycSidecarClient::class);
+        $this->app->bind(OcrClientContract::class, fn () => match (config('kyc.ocr_driver')) {
+            'sidecar' => app(HttpKycSidecarClient::class),
+            default => app(GoogleVisionKycClient::class),
+        });
+
+        $this->app->bind(FaceMatchClientContract::class, fn () => match (config('kyc.face_driver')) {
+            'sidecar' => app(HttpKycSidecarClient::class),
+            default => app(GoogleVisionKycClient::class),
+        });
     }
 
     /**

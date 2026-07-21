@@ -45,4 +45,9 @@ return [
         'analytics_id' => env('GOOGLE_ANALYTICS_ID'),
     ],
 
+    'cloud_vision' => [
+        'key_base64' => env('GOOGLE_CLOUD_VISION_KEY_BASE64'),
+        'project_id' => env('GOOGLE_CLOUD_PROJECT'),
+    ],
+
 ];

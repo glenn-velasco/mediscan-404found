@@ -3,6 +3,7 @@
 use App\Contracts\Kyc\FaceMatchClientContract;
 use App\Contracts\Kyc\OcrClientContract;
 use App\Enums\WorkflowStatus;
+use App\Exceptions\KycSidecarUnavailableException;
 use App\Jobs\ProcessProfessionalApplication;
 use App\Models\ProfessionalApplication;
 use App\Models\User;
@@ -34,7 +35,6 @@ beforeEach(function () {
             'id_photo_path' => 'id.jpg',
             'selfie_path' => 'selfie-2.jpg',
             'selfie_frame_paths' => ['selfie-0.jpg', 'selfie-1.jpg', 'selfie-2.jpg'],
-            'coe_path' => 'coe.pdf',
             'status' => 'processing',
         ]);
     };
@@ -45,6 +45,22 @@ beforeEach(function () {
             app(FaceMatchClientContract::class),
             app(IdVerifierResolver::class),
         );
+    };
+
+    // A KYC-service failure now rethrows (so Laravel's own $tries/$backoff
+    // can retry a transient error) instead of degrading to pending review
+    // on the very first attempt - this mirrors what the queue worker does
+    // once retries are exhausted: handle() throws, then failed() runs.
+    $this->runToExhaustion = function (ProfessionalApplication $application) {
+        $job = new ProcessProfessionalApplication($application->id);
+
+        expect(fn () => $job->handle(
+            app(OcrClientContract::class),
+            app(FaceMatchClientContract::class),
+            app(IdVerifierResolver::class),
+        ))->toThrow(KycSidecarUnavailableException::class);
+
+        $job->failed(null);
     };
 });
 
@@ -58,7 +74,7 @@ it('auto rejects when the id has no readable text', function () {
         ->and($application->fresh()->rejection_reason)->toContain('unreadable');
 });
 
-it('auto rejects when profession or license number cannot be extracted', function () {
+it('auto rejects when license number cannot be extracted', function () {
     Http::fake(['*/ocr' => Http::response(['text' => 'Some unrelated ID text with no fields'])]);
 
     $application = ($this->application)();
@@ -66,6 +82,28 @@ it('auto rejects when profession or license number cannot be extracted', functio
 
     expect($application->fresh()->status)->toBe(WorkflowStatus::AutoRejected)
         ->and($application->fresh()->rejection_reason)->toContain('incomplete');
+});
+
+it('does not auto reject a blank profession as long as license number is present - liveness/face-match still run', function () {
+    // Some valid PRC card variants (see PrcIdVerifier::extractProfession())
+    // don't print a profession field at all - an admin judges profession
+    // from the ID photo during manual review instead of auto-rejecting.
+    Http::fake([
+        '*/ocr' => Http::response(['text' => 'Registration No. 123456']),
+        '*/liveness' => Http::response(passingLivenessResponse()),
+        '*/compare' => Http::response(['match' => true, 'score' => 0.92, 'faces_detected' => ['source' => 1, 'target' => 1]]),
+    ]);
+
+    $application = ($this->application)();
+    ($this->run)($application);
+
+    $fresh = $application->fresh();
+
+    expect($fresh->status)->toBe(WorkflowStatus::PendingReview)
+        ->and($fresh->profession)->toBeNull()
+        ->and($fresh->license_number)->toBe('123456')
+        ->and($fresh->liveness_score)->not->toBeNull()
+        ->and($fresh->face_match_score)->not->toBeNull();
 });
 
 it('does not auto reject a banner-only profession as long as a known profession keyword matches', function () {
@@ -158,7 +196,7 @@ it('degrades to pending review when the ocr service is unavailable', function ()
     Http::fake(['*/ocr' => Http::response('', 500)]);
 
     $application = ($this->application)();
-    ($this->run)($application);
+    ($this->runToExhaustion)($application);
 
     $fresh = $application->fresh();
 
@@ -206,7 +244,7 @@ it('degrades to pending review when the liveness service is unavailable', functi
     ]);
 
     $application = ($this->application)();
-    ($this->run)($application);
+    ($this->runToExhaustion)($application);
 
     $fresh = $application->fresh();
 
@@ -271,7 +309,7 @@ it('degrades to pending review when the face match service is unavailable', func
     ]);
 
     $application = ($this->application)();
-    ($this->run)($application);
+    ($this->runToExhaustion)($application);
 
     $fresh = $application->fresh();
 
