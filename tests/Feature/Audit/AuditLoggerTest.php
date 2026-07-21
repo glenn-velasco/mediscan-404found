@@ -5,6 +5,7 @@ use App\Enums\Role;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\UserInvitation;
+use App\Services\Audit\AuditLogger;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -19,6 +20,45 @@ beforeEach(function () {
 
         return $admin;
     };
+});
+
+it('auto-generates a human-readable description when none is provided', function () {
+    $admin = ($this->admin)();
+    $subject = User::factory()->create();
+
+    app(AuditLogger::class)->log(
+        action: 'test.action',
+        type: AuditLogType::Accepted,
+        actor: $admin,
+        subject: $subject,
+    );
+
+    $log = AuditLog::where('action', 'test.action')->firstOrFail();
+
+    expect($log->description)->toBe("{$admin->fullname} approved {$subject->fullname}");
+});
+
+it('uses an explicit description when provided instead of auto-generating one', function () {
+    app(AuditLogger::class)->log(
+        action: 'test.action',
+        type: AuditLogType::View,
+        description: 'A custom description.',
+    );
+
+    $log = AuditLog::where('action', 'test.action')->firstOrFail();
+
+    expect($log->description)->toBe('A custom description.');
+});
+
+it('falls back to System when there is no actor', function () {
+    app(AuditLogger::class)->log(
+        action: 'test.action',
+        type: AuditLogType::Authentication,
+    );
+
+    $log = AuditLog::where('action', 'test.action')->firstOrFail();
+
+    expect($log->description)->toBe('System performed test.action');
 });
 
 it('logs authentication on web login', function () {
@@ -226,6 +266,9 @@ it('logs professional application approval and rejection', function () {
         'action' => 'professional_application.approved',
         'type' => AuditLogType::Accepted->value,
     ]);
+    expect(AuditLog::where('action', 'professional_application.approved')->first()->description)
+        ->toContain($admin->fullname)
+        ->toContain($applicant->fullname);
 
     $secondApplicant = User::factory()->create();
 
@@ -251,6 +294,8 @@ it('logs professional application approval and rejection', function () {
         'action' => 'professional_application.rejected',
         'type' => AuditLogType::Denied->value,
     ]);
+    expect(AuditLog::where('action', 'professional_application.rejected')->first()->description)
+        ->toContain('Blurry ID photo.');
 });
 
 it('logs viewing a professional application file', function () {
