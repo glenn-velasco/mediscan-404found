@@ -22,13 +22,13 @@ class DatabaseSeeder extends Seeder
         $this->call(RoleAndPermissionSeeder::class);
 
         $admin = User::firstOrCreate(
-            ['email' => 'test@example.com'],
+            ['email' => 'admin@mediscan.cloud'],
             [
-                'first_name' => 'Test',
+                'first_name' => 'Admin',
                 'last_name' => 'Admin',
                 'dob' => '1990-01-15',
                 'gender' => Gender::Male,
-                'address' => '123 Admin Street, Manila',
+                'address' => '123 Admin Street, Admin',
                 'phone_number' => '+639171234567',
                 'password' => 'password',
                 'email_verified_at' => now(),
@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
                 'first_name' => $admin->first_name,
                 'last_name' => $admin->last_name,
                 'dob' => $admin->dob,
+
                 'gender' => Gender::Male->value,
                 'blood_type' => BloodType::O_POSITIVE->value,
             ]);
