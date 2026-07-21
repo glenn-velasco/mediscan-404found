@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AccountRetrievalRequestController as AdminAccount
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\InvitationController;
 use App\Http\Controllers\Admin\ProfessionalApplicationController as AdminProfessionalApplicationController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AcceptInvitationController;
 use App\Http\Controllers\Auth\VerifyApiEmailController;
@@ -105,6 +106,9 @@ Route::prefix('admin')->name('admin.')
             ->name('account-retrieval-requests.file');
         Route::patch('account-retrieval-requests/{accountRetrievalRequest}/approve', [AdminAccountRetrievalRequestController::class, 'approve'])->name('account-retrieval-requests.approve');
         Route::patch('account-retrieval-requests/{accountRetrievalRequest}/deny', [AdminAccountRetrievalRequestController::class, 'deny'])->name('account-retrieval-requests.deny');
+
+        Route::get('reports/{category}', [ReportController::class, 'index'])->name('reports.show');
+        Route::get('reports/{category}/users', [ReportController::class, 'searchUsers'])->name('reports.users.search');
     });
 
 require __DIR__.'/settings.php';
