@@ -14,6 +14,8 @@ use App\Jobs\ProcessProfessionalApplication;
 use App\Models\ProfessionalApplication;
 use App\Models\Role;
 use App\Models\User;
+use App\Notifications\ProfessionalApplicationApprovedNotification;
+use App\Notifications\ProfessionalApplicationDeniedNotification;
 use App\Repositories\Eloquent\ProfessionalApplicationRepository;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Database\QueryException;
@@ -222,7 +224,10 @@ class ProfessionalApplicationService
             subject: $application->user,
             metadata: ['professional_application_id' => $application->id],
             channel: 'web',
+            description: "{$admin->fullname} approved {$application->user->fullname}'s professional application and granted the {$application->role_granted} role.",
         );
+
+        $application->user->notify(new ProfessionalApplicationApprovedNotification($application->role_granted));
 
         $this->broadcastStatusChanged($application);
     }
@@ -254,7 +259,10 @@ class ProfessionalApplicationService
             subject: $applicant,
             metadata: ['professional_application_id' => $applicationId, 'reason' => $reason],
             channel: 'web',
+            description: "{$admin->fullname} denied {$applicant->fullname}'s professional application: {$reason}",
         );
+
+        $applicant->notify(new ProfessionalApplicationDeniedNotification($reason));
 
         $this->broadcastStatusChanged($application);
     }

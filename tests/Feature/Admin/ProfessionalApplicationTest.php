@@ -5,8 +5,11 @@ use App\Enums\Role;
 use App\Events\ProfessionalApplicationStatusChanged;
 use App\Models\ProfessionalApplication;
 use App\Models\User;
+use App\Notifications\ProfessionalApplicationApprovedNotification;
+use App\Notifications\ProfessionalApplicationDeniedNotification;
 use Database\Seeders\RoleAndPermissionSeeder;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
@@ -95,6 +98,7 @@ it('non admin cannot stream an application evidence file', function () {
 
 it('admin approving an application grants the profession role without removing the base user role', function () {
     Event::fake([ProfessionalApplicationStatusChanged::class]);
+    Notification::fake();
 
     $admin = ($this->admin)();
     $applicant = User::factory()->create();
@@ -123,10 +127,13 @@ it('admin approving an application grants the profession role without removing t
         ProfessionalApplicationStatusChanged::class,
         fn ($event) => $event->applicationId === $application->id
     );
+
+    Notification::assertSentTo($applicant, ProfessionalApplicationApprovedNotification::class);
 });
 
 it('admin denying an application soft deletes it and records the reason', function () {
     Event::fake([ProfessionalApplicationStatusChanged::class]);
+    Notification::fake();
 
     $admin = ($this->admin)();
     $applicant = User::factory()->create();
@@ -151,5 +158,10 @@ it('admin denying an application soft deletes it and records the reason', functi
     Event::assertDispatched(
         ProfessionalApplicationStatusChanged::class,
         fn ($event) => $event->applicationId === $application->id
+    );
+
+    Notification::assertSentTo(
+        $applicant,
+        ProfessionalApplicationDeniedNotification::class
     );
 });
