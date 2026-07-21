@@ -1,8 +1,8 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
-import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { CopyableField } from '@/components/copyable-field';
 import ImageViewerModal from '@/components/image-viewer-modal';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useClipboard } from '@/hooks/use-clipboard';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import admin from '@/routes/admin';
 import type { WorkflowStatus } from '@/types';
@@ -32,6 +31,7 @@ interface ApplicationDetail {
     issuing_country: string;
     profession: string | null;
     full_name_on_id: string | null;
+    date_of_birth: string | null;
     license_number: string | null;
     license_expiry: string | null;
     status: WorkflowStatus;
@@ -78,43 +78,61 @@ function Field({
 function PrcVerificationModal({
     open,
     onOpenChange,
-    licenseNumber,
+    application,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    licenseNumber: string | null;
+    application: ApplicationDetail;
 }) {
-    const [copiedText, copy] = useClipboard();
-    const CopyIcon = copiedText === licenseNumber ? Check : Copy;
-
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col gap-3">
+            <DialogContent className="flex h-[90vh] max-h-[90vh] w-[95vw] max-w-[95vw] flex-col gap-3 sm:max-w-[95vw]">
                 <DialogHeader>
                     <DialogTitle>PRC Verification</DialogTitle>
                 </DialogHeader>
 
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">
-                        Cross-check the license number against the PRC&apos;s
-                        own verification portal. If the embedded page below
-                        appears blank, PRC&apos;s site is blocking being framed
-                        — use the link instead.
-                    </p>
-                    <div className="flex shrink-0 items-center gap-2">
-                        {licenseNumber && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => copy(licenseNumber)}
-                            >
-                                <CopyIcon className="size-4" />
-                                {copiedText === licenseNumber
-                                    ? 'Copied'
-                                    : 'Copy license number'}
-                            </Button>
-                        )}
+                <div className="flex flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
+                    <div className="flex flex-col gap-3 lg:w-80 lg:shrink-0">
+                        <div className="grid grid-cols-2 gap-4 rounded-lg border p-4 lg:grid-cols-1">
+                            <CopyableField
+                                label="ID Type"
+                                value={
+                                    idTypeLabels[application.id_type] ??
+                                    application.id_type
+                                }
+                            />
+                            <CopyableField
+                                label="Issuing Country"
+                                value={application.issuing_country}
+                            />
+                            <CopyableField
+                                label="Profession"
+                                value={application.profession}
+                            />
+                            <CopyableField
+                                label="Full Name on ID"
+                                value={application.full_name_on_id}
+                            />
+                            <CopyableField
+                                label="Date of Birth"
+                                value={formatDate(application.date_of_birth)}
+                            />
+                            <CopyableField
+                                label="License Number"
+                                value={application.license_number}
+                            />
+                            <CopyableField
+                                label="License Expiry"
+                                value={formatDate(application.license_expiry)}
+                            />
+                        </div>
+
+                        <p className="text-xs text-muted-foreground">
+                            Cross-check the license number against the
+                            PRC&apos;s own verification portal. If the embedded
+                            page appears blank, PRC&apos;s site is blocking
+                            being framed — use the link instead.
+                        </p>
                         <a
                             href={PRC_VERIFICATION_URL}
                             target="_blank"
@@ -124,15 +142,15 @@ function PrcVerificationModal({
                             Open in new tab ↗
                         </a>
                     </div>
-                </div>
 
-                <iframe
-                    src={PRC_VERIFICATION_URL}
-                    title="PRC License Verification"
-                    className="h-[70vh] w-full rounded-lg border"
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                    referrerPolicy="no-referrer"
-                />
+                    <iframe
+                        src={PRC_VERIFICATION_URL}
+                        title="PRC License Verification"
+                        className="h-full min-h-[50vh] w-full flex-1 rounded-lg border"
+                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                        referrerPolicy="no-referrer"
+                    />
+                </div>
             </DialogContent>
         </Dialog>
     );
@@ -225,6 +243,10 @@ export default function Show({ application, files }: ShowProps) {
                             <Field
                                 label="Full Name on ID"
                                 value={application.full_name_on_id}
+                            />
+                            <Field
+                                label="Date of Birth"
+                                value={formatDate(application.date_of_birth)}
                             />
                             <Field
                                 label="License Number"
@@ -395,7 +417,7 @@ export default function Show({ application, files }: ShowProps) {
             <PrcVerificationModal
                 open={prcVerificationOpen}
                 onOpenChange={setPrcVerificationOpen}
-                licenseNumber={application.license_number}
+                application={application}
             />
         </>
     );
