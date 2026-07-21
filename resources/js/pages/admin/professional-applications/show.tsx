@@ -1,7 +1,9 @@
 import { Head, router, useForm } from '@inertiajs/react';
 import { useEcho } from '@laravel/echo-react';
+import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import ImageViewerModal from '@/components/image-viewer-modal';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,10 +17,13 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useClipboard } from '@/hooks/use-clipboard';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import admin from '@/routes/admin';
 import type { WorkflowStatus } from '@/types';
 import { workflowStatusBadgeVariant } from '@/types';
+
+const PRC_VERIFICATION_URL = 'https://verification.prc.gov.ph/';
 
 interface ApplicationDetail {
     id: number;
@@ -48,7 +53,7 @@ const idTypeLabels: Record<string, string> = {
 
 interface ShowProps {
     application: ApplicationDetail;
-    files: { id_photo: string; selfie: string; coe: string };
+    files: { id_photo: string; selfie: string };
 }
 
 function Field({
@@ -70,10 +75,80 @@ function Field({
     );
 }
 
+function PrcVerificationModal({
+    open,
+    onOpenChange,
+    licenseNumber,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    licenseNumber: string | null;
+}) {
+    const [copiedText, copy] = useClipboard();
+    const CopyIcon = copiedText === licenseNumber ? Check : Copy;
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col gap-3">
+                <DialogHeader>
+                    <DialogTitle>PRC Verification</DialogTitle>
+                </DialogHeader>
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">
+                        Cross-check the license number against the PRC&apos;s
+                        own verification portal. If the embedded page below
+                        appears blank, PRC&apos;s site is blocking being framed
+                        — use the link instead.
+                    </p>
+                    <div className="flex shrink-0 items-center gap-2">
+                        {licenseNumber && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => copy(licenseNumber)}
+                            >
+                                <CopyIcon className="size-4" />
+                                {copiedText === licenseNumber
+                                    ? 'Copied'
+                                    : 'Copy license number'}
+                            </Button>
+                        )}
+                        <a
+                            href={PRC_VERIFICATION_URL}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sm text-primary underline"
+                        >
+                            Open in new tab ↗
+                        </a>
+                    </div>
+                </div>
+
+                <iframe
+                    src={PRC_VERIFICATION_URL}
+                    title="PRC License Verification"
+                    className="h-[70vh] w-full rounded-lg border"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                    referrerPolicy="no-referrer"
+                />
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export default function Show({ application, files }: ShowProps) {
     const [rejectOpen, setRejectOpen] = useState(false);
+    const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+    const [prcVerificationOpen, setPrcVerificationOpen] = useState(false);
     const approveForm = useForm({});
     const rejectForm = useForm({ rejection_reason: '' });
+
+    const viewerImages = [
+        { src: files.id_photo, alt: 'Professional ID' },
+        { src: files.selfie, alt: 'Selfie' },
+    ];
 
     useEcho('admin-dashboard', '.ProfessionalApplicationStatusChanged', () =>
         router.reload(),
@@ -177,53 +252,53 @@ export default function Show({ application, files }: ShowProps) {
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 gap-4 px-6 py-4 sm:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-4 px-6 py-4 sm:grid-cols-2">
                             <div className="flex flex-col gap-2">
                                 <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                                     ID Photo
                                 </span>
-                                <a
-                                    href={files.id_photo}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                <button
+                                    type="button"
+                                    onClick={() => setViewerIndex(0)}
+                                    className="cursor-zoom-in"
                                 >
                                     <img
                                         src={files.id_photo}
                                         alt="Professional ID"
                                         className="rounded-lg border"
                                     />
-                                </a>
+                                </button>
                             </div>
                             <div className="flex flex-col gap-2">
                                 <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
                                     Selfie
                                 </span>
-                                <a
-                                    href={files.selfie}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                <button
+                                    type="button"
+                                    onClick={() => setViewerIndex(1)}
+                                    className="cursor-zoom-in"
                                 >
                                     <img
                                         src={files.selfie}
                                         alt="Selfie"
                                         className="rounded-lg border"
                                     />
-                                </a>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <span className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
-                                    Certificate of Employment
-                                </span>
-                                <a
-                                    href={files.coe}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-sm text-primary underline"
-                                >
-                                    View document
-                                </a>
+                                </button>
                             </div>
                         </div>
+
+                        {application.id_type === 'ph_prc' && (
+                            <div className="px-6 py-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setPrcVerificationOpen(true)}
+                                >
+                                    Verify against PRC
+                                </Button>
+                            </div>
+                        )}
 
                         {application.verification_notes && (
                             <div className="px-6 py-4">
@@ -309,6 +384,19 @@ export default function Show({ application, files }: ShowProps) {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <ImageViewerModal
+                images={viewerImages}
+                initialIndex={viewerIndex ?? 0}
+                open={viewerIndex !== null}
+                onOpenChange={(open) => !open && setViewerIndex(null)}
+            />
+
+            <PrcVerificationModal
+                open={prcVerificationOpen}
+                onOpenChange={setPrcVerificationOpen}
+                licenseNumber={application.license_number}
+            />
         </>
     );
 }
