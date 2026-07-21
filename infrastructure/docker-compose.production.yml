@@ -132,13 +132,16 @@ services:
       - rustfs_data:/data/rustfs
     networks: [internal]
 
-  machine-learning:
-    image: ghcr.io/${GHCR_OWNER}/mediscan-machine-learning:${IMAGE_TAG}
-    restart: unless-stopped
-    mem_limit: 1g
-    environment:
-      MACHINE_LEARNING_SHARED_SECRET: ${MACHINE_LEARNING_SHARED_SECRET}
-    networks: [internal]
+  # Disabled by default - Google Cloud Vision is now the default OCR/face
+  # driver (config/kyc.php ocr_driver/face_driver). Uncomment the whole
+  # block below to bring it back.
+  # machine-learning:
+  #   image: ghcr.io/${GHCR_OWNER}/mediscan-machine-learning:${IMAGE_TAG}
+  #   restart: unless-stopped
+  #   mem_limit: 1g
+  #   environment:
+  #     MACHINE_LEARNING_SHARED_SECRET: ${MACHINE_LEARNING_SHARED_SECRET}
+  #   networks: [internal]
 
   nginx:
     image: ghcr.io/${GHCR_OWNER}/mediscan-nginx:${IMAGE_TAG}

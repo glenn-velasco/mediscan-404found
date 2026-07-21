@@ -28,7 +28,6 @@ services:
             - rustfs
             - reverb
             - worker
-            - machine-learning
     pgsql:
         image: 'postgres:18-alpine'
         ports:
@@ -149,28 +148,31 @@ services:
             - pgsql
             - redis
             - reverb
-            - machine-learning
-    machine-learning:
-        build:
-            context: ./docker/machine-learning
-            dockerfile: Dockerfile
-        image: mediscan/machine-learning
-        environment:
-            MACHINE_LEARNING_SHARED_SECRET: '${MACHINE_LEARNING_SHARED_SECRET:-local-dev-secret}'
-        ports:
-            - '${FORWARD_MACHINE_LEARNING_PORT:-8500}:8500'
-        networks:
-            - sail
-        healthcheck:
-            test:
-                - CMD
-                - python
-                - -c
-                - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8500/health')"
-            interval: 30s
-            timeout: 10s
-            retries: 3
-            start_period: 40s
+    # Disabled by default - Google Cloud Vision is now the default OCR/face
+    # driver (config/kyc.php ocr_driver/face_driver). This sidecar is only
+    # needed when KYC_OCR_DRIVER/KYC_FACE_DRIVER=sidecar. Uncomment the whole
+    # block below to bring it back.
+    # machine-learning:
+    #     build:
+    #         context: ./docker/machine-learning
+    #         dockerfile: Dockerfile
+    #     image: mediscan/machine-learning
+    #     environment:
+    #         MACHINE_LEARNING_SHARED_SECRET: '${MACHINE_LEARNING_SHARED_SECRET:-local-dev-secret}'
+    #     ports:
+    #         - '${FORWARD_MACHINE_LEARNING_PORT:-8500}:8500'
+    #     networks:
+    #         - sail
+    #     healthcheck:
+    #         test:
+    #             - CMD
+    #             - python
+    #             - -c
+    #             - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8500/health')"
+    #         interval: 30s
+    #         timeout: 10s
+    #         retries: 3
+    #         start_period: 40s
 networks:
     sail:
         driver: bridge
