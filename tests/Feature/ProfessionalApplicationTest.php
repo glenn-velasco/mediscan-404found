@@ -14,6 +14,7 @@ beforeEach(function () {
 
     $this->payload = fn (array $overrides = []): array => array_merge([
         'id_type' => 'ph_prc',
+        'date_of_birth' => '1990-05-20',
         'id_photo' => UploadedFile::fake()->image('id.jpg'),
         'selfie_frames' => [
             UploadedFile::fake()->image('selfie-0.jpg'),
@@ -98,6 +99,24 @@ it('rejects submission with an invalid flash color', function () {
             'flash_colors' => ['red', 'green', 'purple'],
         ]))
         ->assertSessionHasErrors('flash_colors.2');
+});
+
+it('rejects submission with a missing date of birth', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('professional-application.store'), ($this->payload)(['date_of_birth' => null]))
+        ->assertSessionHasErrors('date_of_birth');
+});
+
+it('rejects submission when the applicant is under 18', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post(route('professional-application.store'), ($this->payload)([
+            'date_of_birth' => now()->subYears(10)->toDateString(),
+        ]))
+        ->assertSessionHasErrors('date_of_birth');
 });
 
 it('blocks a second submission while one is still active', function () {

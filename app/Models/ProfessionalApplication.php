@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $license_number
  * @property Carbon|null $license_expiry
  * @property string|null $full_name_on_id
+ * @property Carbon|null $date_of_birth
  * @property string $id_photo_path
  * @property string $selfie_path
  * @property array<int, string>|null $selfie_frame_paths
@@ -51,6 +52,7 @@ class ProfessionalApplication extends Model
             'id_type' => IdType::class,
             'status' => WorkflowStatus::class,
             'license_expiry' => 'date',
+            'date_of_birth' => 'date',
             'ocr_extracted_data' => 'encrypted:array',
             'ocr_raw_response' => 'encrypted:array',
             'license_number' => 'encrypted',

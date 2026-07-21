@@ -40,6 +40,7 @@ it('converts a unique-constraint race into the friendly already-pending exceptio
 
     $payload = [
         'id_type' => 'ph_prc',
+        'date_of_birth' => '1990-05-20',
         'id_photo' => UploadedFile::fake()->image('id.jpg'),
         'selfie_frames' => [
             UploadedFile::fake()->image('selfie-0.jpg'),

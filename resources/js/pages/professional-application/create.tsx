@@ -22,12 +22,14 @@ export default function Create() {
     const [step, setStep] = useState<Step>('face');
     const { data, setData, post, processing, errors } = useForm<{
         id_type: string;
+        date_of_birth: string;
         id_photo: File | null;
         selfie_frames: File[];
         flash_frames: File[];
         flash_colors: string[];
     }>({
         id_type: idTypeOptions[0]?.value ?? '',
+        date_of_birth: '',
         id_photo: null,
         selfie_frames: [],
         flash_frames: [],
@@ -139,6 +141,19 @@ export default function Create() {
                         </div>
 
                         <div className="grid gap-2">
+                            <Label htmlFor="date_of_birth">Date of birth</Label>
+                            <Input
+                                id="date_of_birth"
+                                type="date"
+                                value={data.date_of_birth}
+                                onChange={(e) =>
+                                    setData('date_of_birth', e.target.value)
+                                }
+                            />
+                            <InputError message={errors.date_of_birth} />
+                        </div>
+
+                        <div className="grid gap-2">
                             <Label htmlFor="id_photo">
                                 Professional ID photo
                             </Label>
@@ -160,6 +175,7 @@ export default function Create() {
                             type="submit"
                             disabled={
                                 processing ||
+                                data.date_of_birth === '' ||
                                 data.selfie_frames.length < 3 ||
                                 data.flash_frames.length < 3
                             }

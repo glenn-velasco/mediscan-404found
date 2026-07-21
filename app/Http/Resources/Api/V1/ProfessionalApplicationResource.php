@@ -22,6 +22,7 @@ class ProfessionalApplicationResource extends JsonResource
             'issuing_country' => $this->issuing_country,
             'profession' => $this->profession,
             'full_name_on_id' => $this->full_name_on_id,
+            'date_of_birth' => $this->date_of_birth?->toDateString(),
             'license_number' => $this->license_number,
             'license_expiry' => $this->license_expiry,
             'status' => $this->status->value,

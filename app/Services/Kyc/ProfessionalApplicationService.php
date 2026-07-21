@@ -127,11 +127,12 @@ class ProfessionalApplicationService
             ])
             ->all();
 
-        return DB::transaction(function () use ($user, $idType, $idPhotoPath, $frames, $livenessFlashFrames) {
+        return DB::transaction(function () use ($user, $data, $idType, $idPhotoPath, $frames, $livenessFlashFrames) {
             $application = $this->professionalApplicationRepository->create([
                 'user_id' => $user->id,
                 'id_type' => $idType->value,
                 'issuing_country' => $idType->issuingCountry(),
+                'date_of_birth' => $data['date_of_birth'],
                 'id_photo_path' => $idPhotoPath,
                 // The last captured frame is most likely to be past the
                 // blink prompt, so it doubles as the canonical face-match

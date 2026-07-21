@@ -33,12 +33,13 @@ class ProfessionalApplicationController extends Controller
      * nicety, never trusted as-is.
      *
      * @bodyParam id_type string required One of: ph_prc. Example: ph_prc
+     * @bodyParam date_of_birth date required The applicant's date of birth. Must be at least 18 years ago. Example: 1990-05-20
      * @bodyParam id_photo file required Photo of the professional ID. jpg/jpeg/png, max 5MB.
      * @bodyParam selfie_frames file[] required Burst of 3-10 selfie frames spanning at least one real blink. jpg/jpeg/png, max 3MB each.
      * @bodyParam flash_frames file[] required One selfie frame captured per entry in flash_colors, in the same order (3-10 frames). jpg/jpeg/png, max 3MB each.
      * @bodyParam flash_colors string[] required One of red/green/blue per entry, same length and order as flash_frames - the color that was on-screen when that frame was captured. Example: ["red","green","blue"]
      *
-     * @response 201 {"status":201,"message":"Application submitted.","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":null,"status":"processing","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}
+     * @response 201 {"status":201,"message":"Application submitted.","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":null,"date_of_birth":"1990-05-20","status":"processing","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}
      * @response 422 {"status":422,"message":"You already have a professional application being processed or under review.","errors":null}
      */
     public function store(SubmitProfessionalApplicationRequest $request): JsonResponse
@@ -49,7 +50,7 @@ class ProfessionalApplicationController extends Controller
     }
 
     /**
-     * @response 200 {"status":200,"message":"Success","data":[{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}]}
+     * @response 200 {"status":200,"message":"Success","data":[{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","date_of_birth":"1990-05-20","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}]}
      */
     public function index(Request $request): JsonResponse
     {
@@ -59,7 +60,7 @@ class ProfessionalApplicationController extends Controller
     }
 
     /**
-     * @response 200 {"status":200,"message":"Success","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}
+     * @response 200 {"status":200,"message":"Success","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":"Physician","date_of_birth":"1990-05-20","status":"pending_review","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}
      * @response status=404 scenario="Not found or not owned" {"status":404,"message":"Not found.","errors":null}
      */
     public function show(Request $request, ProfessionalApplication $professionalApplication): JsonResponse
