@@ -16,6 +16,8 @@ class LogSuccessfulLogin
         /** @var User $user */
         $user = $event->user;
 
+        metric('auth:logins')->hourly()->record();
+
         $this->auditLogger->log(
             action: 'auth.login',
             type: AuditLogType::Authentication,

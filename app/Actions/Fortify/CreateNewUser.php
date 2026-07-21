@@ -55,6 +55,8 @@ class CreateNewUser implements CreatesNewUsers
 
             $user->assignRole(Role::User->value);
 
+            metric('signups')->category(Role::User->value)->hourly()->record();
+
             $this->auditLogger->log(
                 action: 'user.registered',
                 type: AuditLogType::Create,

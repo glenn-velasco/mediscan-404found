@@ -76,6 +76,7 @@ class UserService
         if (! $active) {
             $user->tokens()->delete();
             event(new UserDeactivated($user));
+            metric('users:deactivated')->record();
         }
 
         $this->auditLogger->log(

@@ -30,6 +30,8 @@ class ScanController extends Controller
     {
         $subject = User::findOrFail((int) $request->validated('scanned_user_id'));
 
+        metric('qr:scanned')->hourly()->record();
+
         $auditLogger->log(
             action: 'qr.scanned',
             type: AuditLogType::View,
