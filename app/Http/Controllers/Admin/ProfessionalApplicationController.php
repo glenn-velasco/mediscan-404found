@@ -44,7 +44,6 @@ class ProfessionalApplicationController extends Controller
             'files' => [
                 'id_photo' => route('admin.professional-applications.file', [$professionalApplication, 'id-photo']),
                 'selfie' => route('admin.professional-applications.file', [$professionalApplication, 'selfie']),
-                'coe' => route('admin.professional-applications.file', [$professionalApplication, 'coe']),
             ],
         ]);
     }
@@ -54,7 +53,6 @@ class ProfessionalApplicationController extends Controller
         $path = match ($type) {
             'id-photo' => $professionalApplication->id_photo_path,
             'selfie' => $professionalApplication->selfie_path,
-            'coe' => $professionalApplication->coe_path,
             default => abort(404),
         };
 

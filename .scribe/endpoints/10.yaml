@@ -96,17 +96,6 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      coe:
-        custom: []
-        name: coe
-        description: 'Certificate of Employment. pdf/jpg/jpeg/png, max 10MB.'
-        required: true
-        example: null
-        type: file
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
     cleanBodyParameters:
       id_type: ph_prc
       flash_colors:
@@ -119,7 +108,6 @@ endpoints:
         - null
       flash_frames:
         - null
-      coe: null
     responses:
       -
         custom: []
@@ -207,14 +195,14 @@ endpoints:
         name: professionalApplication_id
         description: 'The ID of the professionalApplication.'
         required: true
-        example: 16
+        example: 3
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      professionalApplication_id: 16
+      professionalApplication_id: 3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []

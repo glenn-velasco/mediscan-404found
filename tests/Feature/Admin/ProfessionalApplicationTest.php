@@ -29,7 +29,6 @@ beforeEach(function () {
             'license_number' => '123456',
             'id_photo_path' => 'fixtures/id.jpg',
             'selfie_path' => 'fixtures/selfie.jpg',
-            'coe_path' => 'fixtures/coe.pdf',
             'status' => 'pending_review',
         ], $overrides));
     };
@@ -69,7 +68,6 @@ it('admin can stream each evidence file for an application', function () {
 
     Storage::disk('s3')->put('fixtures/id.jpg', 'id-bytes');
     Storage::disk('s3')->put('fixtures/selfie.jpg', 'selfie-bytes');
-    Storage::disk('s3')->put('fixtures/coe.pdf', 'coe-bytes');
     $application = ($this->pendingApplication)($applicant);
 
     $this->actingAs($admin)
@@ -81,11 +79,6 @@ it('admin can stream each evidence file for an application', function () {
         ->get(route('admin.professional-applications.file', [$application, 'selfie']))
         ->assertOk()
         ->assertStreamedContent('selfie-bytes');
-
-    $this->actingAs($admin)
-        ->get(route('admin.professional-applications.file', [$application, 'coe']))
-        ->assertOk()
-        ->assertStreamedContent('coe-bytes');
 });
 
 it('non admin cannot stream an application evidence file', function () {

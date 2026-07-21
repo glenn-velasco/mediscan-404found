@@ -11,7 +11,6 @@ it('shows the correct status for an approved application', function () {
         'profession' => 'Physician',
         'id_photo_path' => 'demo/id.jpg',
         'selfie_path' => 'demo/selfie.jpg',
-        'coe_path' => 'demo/coe.pdf',
         'status' => 'approved',
         'role_granted' => 'physician',
     ]);
@@ -34,7 +33,6 @@ it('shows the correct status and rejection reason for a denied application', fun
         'profession' => 'Physician',
         'id_photo_path' => 'demo/id.jpg',
         'selfie_path' => 'demo/selfie.jpg',
-        'coe_path' => 'demo/coe.pdf',
         'status' => 'denied',
         'rejection_reason' => 'Blurry ID photo.',
         'deleted_at' => now(),

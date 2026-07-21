@@ -25,7 +25,6 @@ beforeEach(function () {
             UploadedFile::fake()->image('flash-blue.jpg'),
         ],
         'flash_colors' => ['red', 'green', 'blue'],
-        'coe' => UploadedFile::fake()->create('coe.pdf', 100, 'application/pdf'),
     ], $overrides);
 });
 

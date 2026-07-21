@@ -37,7 +37,6 @@ class ProfessionalApplicationController extends Controller
      * @bodyParam selfie_frames file[] required Burst of 3-10 selfie frames spanning at least one real blink. jpg/jpeg/png, max 3MB each.
      * @bodyParam flash_frames file[] required One selfie frame captured per entry in flash_colors, in the same order (3-10 frames). jpg/jpeg/png, max 3MB each.
      * @bodyParam flash_colors string[] required One of red/green/blue per entry, same length and order as flash_frames - the color that was on-screen when that frame was captured. Example: ["red","green","blue"]
-     * @bodyParam coe file required Certificate of Employment. pdf/jpg/jpeg/png, max 10MB.
      *
      * @response 201 {"status":201,"message":"Application submitted.","data":{"id":1,"id_type":"ph_prc","issuing_country":"PH","profession":null,"status":"processing","rejection_reason":null,"role_granted":null,"created_at":"2026-07-06T00:00:00.000000Z"}}
      * @response 422 {"status":422,"message":"You already have a professional application being processed or under review.","errors":null}

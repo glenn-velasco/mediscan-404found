@@ -390,7 +390,6 @@ it('deleting a user cascades their professional application and invitations they
         'profession' => 'Physician',
         'id_photo_path' => 'demo/id.jpg',
         'selfie_path' => 'demo/selfie.jpg',
-        'coe_path' => 'demo/coe.pdf',
         'status' => 'pending_review',
     ]);
 
@@ -408,7 +407,6 @@ it('deleting a user cascades their professional application and invitations they
         'profession' => 'Physician',
         'id_photo_path' => 'demo/id2.jpg',
         'selfie_path' => 'demo/selfie2.jpg',
-        'coe_path' => 'demo/coe2.pdf',
         'status' => 'approved',
         'reviewed_by' => $target->id,
     ]);

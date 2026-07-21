@@ -24,8 +24,6 @@ use Illuminate\Support\Carbon;
  * @property string $selfie_path
  * @property array<int, string>|null $selfie_frame_paths
  * @property array<int, array{path: string, color: string}>|null $liveness_flash_frames
- * @property string $coe_path
- * @property string|null $coe_original_filename
  * @property array<string, mixed>|null $ocr_extracted_data
  * @property array<string, mixed>|null $ocr_raw_response
  * @property float|null $face_match_score

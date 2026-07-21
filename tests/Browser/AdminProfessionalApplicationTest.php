@@ -24,7 +24,6 @@ beforeEach(function () {
 
     Storage::disk('s3')->put('demo/id.jpg', 'fake-id-bytes');
     Storage::disk('s3')->put('demo/selfie.jpg', 'fake-selfie-bytes');
-    Storage::disk('s3')->put('demo/coe.pdf', 'fake-coe-bytes');
 
     $this->application = $applicant->professionalApplications()->create([
         'id_type' => 'ph_prc',
@@ -35,8 +34,6 @@ beforeEach(function () {
         'id_photo_path' => 'demo/id.jpg',
         'selfie_path' => 'demo/selfie.jpg',
         'selfie_frame_paths' => ['demo/selfie.jpg'],
-        'coe_path' => 'demo/coe.pdf',
-        'coe_original_filename' => 'coe.pdf',
         'face_match_score' => 0.87,
         'face_match_passed' => true,
         'liveness_score' => 1.0,

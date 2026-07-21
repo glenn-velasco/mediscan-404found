@@ -34,7 +34,6 @@ class SubmitProfessionalApplicationRequest extends FormRequest
                 },
             ],
             'flash_colors.*' => ['string', Rule::in(LivenessFlashColor::values())],
-            'coe' => ['required', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
         ];
     }
 }

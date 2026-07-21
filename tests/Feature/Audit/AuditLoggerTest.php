@@ -214,7 +214,6 @@ it('logs professional application approval and rejection', function () {
         'license_number' => '123456',
         'id_photo_path' => 'fixtures/id.jpg',
         'selfie_path' => 'fixtures/selfie.jpg',
-        'coe_path' => 'fixtures/coe.pdf',
         'status' => 'pending_review',
     ]);
 
@@ -238,7 +237,6 @@ it('logs professional application approval and rejection', function () {
         'license_number' => '654321',
         'id_photo_path' => 'fixtures/id2.jpg',
         'selfie_path' => 'fixtures/selfie2.jpg',
-        'coe_path' => 'fixtures/coe2.pdf',
         'status' => 'pending_review',
     ]);
 
@@ -268,7 +266,6 @@ it('logs viewing a professional application file', function () {
         'issuing_country' => 'PH',
         'id_photo_path' => 'fixtures/id.jpg',
         'selfie_path' => 'fixtures/selfie.jpg',
-        'coe_path' => 'fixtures/coe.pdf',
         'status' => 'pending_review',
     ]);
 

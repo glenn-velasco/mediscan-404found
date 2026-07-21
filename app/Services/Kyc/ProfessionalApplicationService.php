@@ -73,7 +73,7 @@ class ProfessionalApplicationService
     }
 
     /**
-     * @param  array<string, mixed>  $data  keys: id_type (string), id_photo/coe (UploadedFile), selfie_frames (UploadedFile[])
+     * @param  array<string, mixed>  $data  keys: id_type (string), id_photo (UploadedFile), selfie_frames (UploadedFile[])
      */
     public function submit(User $user, array $data): ProfessionalApplication
     {
@@ -110,7 +110,6 @@ class ProfessionalApplicationService
     private function insertApplication(User $user, array $data, IdType $idType, string $folder): ProfessionalApplication
     {
         $idPhotoPath = $this->storeOrFail($data['id_photo'], $folder);
-        $coePath = $this->storeOrFail($data['coe'], $folder);
 
         /** @var array<int, UploadedFile> $selfieFrames */
         $selfieFrames = array_values($data['selfie_frames']);
@@ -128,7 +127,7 @@ class ProfessionalApplicationService
             ])
             ->all();
 
-        return DB::transaction(function () use ($user, $data, $idType, $idPhotoPath, $coePath, $frames, $livenessFlashFrames) {
+        return DB::transaction(function () use ($user, $idType, $idPhotoPath, $frames, $livenessFlashFrames) {
             $application = $this->professionalApplicationRepository->create([
                 'user_id' => $user->id,
                 'id_type' => $idType->value,
@@ -140,8 +139,6 @@ class ProfessionalApplicationService
                 'selfie_path' => $frames->last(),
                 'selfie_frame_paths' => $frames->all(),
                 'liveness_flash_frames' => $livenessFlashFrames,
-                'coe_path' => $coePath,
-                'coe_original_filename' => $data['coe']->getClientOriginalName(),
                 'status' => WorkflowStatus::Processing->value,
             ]);
 
@@ -266,7 +263,7 @@ class ProfessionalApplicationService
      * applications (default: no state change for 5 days), including their
      * uploaded KYC files. All of an application's files live in one
      * per-application folder, so deleting the id photo's directory removes
-     * the selfie frames, flash frames, and CoE with it.
+     * the selfie frames and flash frames with it.
      */
     public function prune(int $days = 5): int
     {

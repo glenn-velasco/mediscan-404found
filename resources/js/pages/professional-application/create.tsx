@@ -26,14 +26,12 @@ export default function Create() {
         selfie_frames: File[];
         flash_frames: File[];
         flash_colors: string[];
-        coe: File | null;
     }>({
         id_type: idTypeOptions[0]?.value ?? '',
         id_photo: null,
         selfie_frames: [],
         flash_frames: [],
         flash_colors: [],
-        coe: null,
     });
 
     function submit(e: FormEvent) {
@@ -63,10 +61,9 @@ export default function Create() {
                         Professional Application
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Submit your professional ID, a selfie, and your
-                        Certificate of Employment. We&apos;ll automatically
-                        check your submission, then a MediScan admin will review
-                        it before it&apos;s approved.
+                        Submit your professional ID and a selfie. We&apos;ll
+                        automatically check your submission, then a MediScan
+                        admin will review it before it&apos;s approved.
                     </p>
                 </div>
 
@@ -157,21 +154,6 @@ export default function Create() {
                                 }
                             />
                             <InputError message={errors.id_photo} />
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="coe">
-                                Certificate of Employment
-                            </Label>
-                            <Input
-                                id="coe"
-                                type="file"
-                                accept="image/png,image/jpeg,application/pdf"
-                                onChange={(e) =>
-                                    setData('coe', e.target.files?.[0] ?? null)
-                                }
-                            />
-                            <InputError message={errors.coe} />
                         </div>
 
                         <Button

@@ -26,7 +26,6 @@ beforeEach(function () {
             UploadedFile::fake()->image('flash-blue.jpg'),
         ],
         'flash_colors' => ['red', 'green', 'blue'],
-        'coe' => UploadedFile::fake()->create('coe.pdf', 100, 'application/pdf'),
     ], $overrides);
 });
 
@@ -49,7 +48,6 @@ it('submits a professional application and dispatches the verification job', fun
 
     Storage::disk('s3')->assertExists($application->id_photo_path);
     Storage::disk('s3')->assertExists($application->selfie_path);
-    Storage::disk('s3')->assertExists($application->coe_path);
 
     expect($application->liveness_flash_frames)->toHaveCount(3);
     foreach ($application->liveness_flash_frames as $flashFrame) {
@@ -68,8 +66,8 @@ it('rejects submission with a missing required file', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->post(route('professional-application.store'), ($this->payload)(['coe' => null]))
-        ->assertSessionHasErrors('coe');
+        ->post(route('professional-application.store'), ($this->payload)(['id_photo' => null]))
+        ->assertSessionHasErrors('id_photo');
 });
 
 it('rejects submission with too few liveness capture frames', function () {
@@ -136,7 +134,6 @@ it('the owner sees their application status reflected correctly on the status pa
         'issuing_country' => 'PH',
         'id_photo_path' => 'demo/id.jpg',
         'selfie_path' => 'demo/selfie.jpg',
-        'coe_path' => 'demo/coe.pdf',
         'status' => $status,
         'rejection_reason' => $status === 'denied' ? 'Blurry ID photo.' : null,
         'deleted_at' => $status === 'denied' ? now() : null,
