@@ -17,6 +17,8 @@ The production database holds PHI (`medical_information` and related tables — 
 
 The command **skips cleanly** (exit 0, informational log line, not an error) if `BACKUP_GPG_RECIPIENT` isn't set — safe to leave scheduled on any environment, including ones (like a throwaway staging box) that haven't set up a backup key.
 
+A second command, `app/Console/Commands/CheckBackupFreshness.php` (`backup:check-freshness`, scheduled daily at 06:00, four hours after the backup job), verifies a recent, non-empty backup file actually landed on the disk — without ever touching the decryption key (see "Restoring" below for why an automated *restore* drill isn't possible here by design). Both scheduled commands call `Log::critical(...)` on failure (`routes/console.php`) — container logs already flow to Loki (`infrastructure/.env.production`'s logging comment), so a Grafana alert rule watching for these log lines is the intended alerting path; nothing else is wired up yet.
+
 ## The backup key
 
 **Deliberately a separate GPG keypair from `APP_KEY`**, not reused. `APP_KEY` encrypts live PHI at rest in the running database (`app/Models/MedicalInformation.php`'s `encrypted` casts — see `docs/ARCHITECTURE.md`); if it ever leaked, you'd want that to be a contained incident, not one that also hands over every historical backup. Keeping them separate means a leak of one doesn't compromise the other.
@@ -61,7 +63,11 @@ Until steps 3-4 are done, `backup:database` runs on schedule and no-ops harmless
 
 Not automated. If you ever need to rotate the backup key: generate a new keypair (steps above), re-encrypt any backups you want to keep readable under the new key (decrypt with the old private key, re-encrypt with the new public key), update `BACKUP_GPG_RECIPIENT` and the imported public key on the server, and retire the old keypair once you're confident nothing still needs it.
 
+This is a different key and a different procedure from rotating `APP_KEY` (the live-PHI encryption key) — see `docs/KEY_ROTATION.md` for that one.
+
 ## Restoring
+
+**This is a manual, off-server procedure by design — it cannot be automated.** The whole point of keeping the private key off the VPS (see "The backup key" above) is that nothing running on the server can decrypt a backup, which also means nothing running on the server can *verify* one by actually restoring it. `backup:check-freshness` (above) is the automated safety net for "did the job run and produce a real file" — it's not a substitute for actually testing a restore, which only you, locally, with the private key, can do.
 
 **Test this periodically — an untested backup is not a backup.** At minimum, run this once after initial setup and again any time the schema changes significantly.
 
