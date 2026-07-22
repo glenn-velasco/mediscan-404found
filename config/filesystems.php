@@ -60,6 +60,24 @@ return [
             'report' => false,
         ],
 
+        // Deliberately separate credentials/bucket from `s3` above - see
+        // docs/BACKUPS.md. Point this at a genuinely off-VPS provider
+        // (Backblaze B2, Cloudflare R2, etc.), not the app's own RustFS
+        // instance - a same-box backup doesn't protect against the VPS
+        // itself being lost, and it's a small amount of data that doesn't
+        // need self-hosting the way user-uploaded media does.
+        'backups' => [
+            'driver' => 's3',
+            'key' => env('BACKUP_AWS_ACCESS_KEY_ID'),
+            'secret' => env('BACKUP_AWS_SECRET_ACCESS_KEY'),
+            'region' => env('BACKUP_AWS_DEFAULT_REGION', 'us-east-1'),
+            'bucket' => env('BACKUP_AWS_BUCKET'),
+            'endpoint' => env('BACKUP_AWS_ENDPOINT'),
+            'use_path_style_endpoint' => env('BACKUP_AWS_USE_PATH_STYLE_ENDPOINT', true),
+            'throw' => true,
+            'report' => false,
+        ],
+
     ],
 
     /*

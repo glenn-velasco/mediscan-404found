@@ -207,14 +207,14 @@ endpoints:
         name: professionalApplication_id
         description: 'The ID of the professionalApplication.'
         required: true
-        example: 3
+        example: 16
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      professionalApplication_id: 3
+      professionalApplication_id: 16
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []

@@ -5,6 +5,8 @@ namespace App\Services\Audit;
 use App\Enums\AuditLogType;
 use App\Models\AuditLog;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class AuditLogger
 {
@@ -21,16 +23,32 @@ class AuditLogger
         array $metadata = [],
         ?string $channel = null,
         ?string $description = null,
+        ?Model $record = null,
+        ?string $ipAddress = null,
     ): AuditLog {
         return AuditLog::create([
             'actor_id' => $actor?->id,
             'subject_id' => $subject?->id,
+            'record_type' => $record ? $this->recordType($record) : null,
+            'record_id' => $record?->getKey(),
             'action' => $action,
             'description' => $description ?? $this->describe($action, $type, $actor, $subject),
             'type' => $type,
             'channel' => $channel,
+            'ip_address' => $ipAddress,
             'metadata' => empty($metadata) ? null : $metadata,
         ]);
+    }
+
+    /**
+     * Short, stable record-type label for `$record` (e.g. "allergy", not the
+     * full `App\Models\Allergy` class name) - kept independent of namespace
+     * so a future move/rename of the model class doesn't silently orphan
+     * historical audit rows from ones logged after the move.
+     */
+    private function recordType(Model $record): string
+    {
+        return Str::snake(class_basename($record));
     }
 
     /**

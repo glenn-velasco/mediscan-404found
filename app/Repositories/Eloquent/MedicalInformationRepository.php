@@ -28,17 +28,50 @@ class MedicalInformationRepository extends BaseRepository implements MedicalInfo
      * Confident match: normalized name + exact dob. Returns null when there's
      * no match or more than one (ambiguous) - name+dob alone is not proof of
      * identity (twins, common names), so an ambiguous result must never be
-     * treated as a match. See `MedicalInformationBuilder::matchingName()`.
+     * treated as a match.
+     *
+     * `first_name`/`middle_name`/`last_name`/`suffix`/`dob` are `encrypted`
+     * casts, so the DB can't filter on them - every row is fetched and
+     * compared after Eloquent decrypts it. Fine at this table's per-user
+     * scale; would need a blind-index (HMAC) column instead if this table
+     * ever grows large enough for a full scan per registration to matter.
      *
      * @param  array{first_name: string, middle_name: ?string, last_name: string, suffix: ?string}  $nameFields
      */
     public function findMatchingByName(array $nameFields, string $dob): ?MedicalInformation
     {
+        $normalized = $this->normalizeName($nameFields);
+
         $matches = $this->model->newQuery()
-            ->matchingName($nameFields, $dob)
-            ->limit(2)
-            ->get();
+            ->get()
+            ->filter(function (MedicalInformation $record) use ($normalized, $dob) {
+                $recordNormalized = $this->normalizeName([
+                    'first_name' => $record->first_name,
+                    'middle_name' => $record->middle_name,
+                    'last_name' => $record->last_name,
+                    'suffix' => $record->suffix,
+                ]);
+
+                return $recordNormalized === $normalized && $record->dob->toDateString() === $dob;
+            });
 
         return $matches->count() === 1 ? $matches->first() : null;
+    }
+
+    /**
+     * @param  array{first_name: ?string, middle_name: ?string, last_name: ?string, suffix: ?string}  $nameFields
+     */
+    private function normalizeName(array $nameFields): string
+    {
+        return mb_strtolower(trim(preg_replace(
+            '/\s+/',
+            ' ',
+            implode(' ', array_filter([
+                $nameFields['first_name'] ?? null,
+                $nameFields['middle_name'] ?? null,
+                $nameFields['last_name'] ?? null,
+                $nameFields['suffix'] ?? null,
+            ]))
+        )));
     }
 }

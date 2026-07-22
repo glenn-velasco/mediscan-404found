@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -50,13 +51,39 @@ class MedicalInformation extends Model
             // either (ProfileValidationRules::suffixRules() just allows any
             // string) - registration can forward arbitrary free text like
             // "Jr." here, so an enum cast would throw on real data.
-            'dob' => 'date',
+            'suffix' => 'encrypted',
+            'first_name' => 'encrypted',
+            'middle_name' => 'encrypted',
+            'last_name' => 'encrypted',
+            'national_id' => 'encrypted',
             'gender' => Gender::class,
             'blood_type' => BloodType::class,
             'religion' => Religion::class,
-            'address' => 'array',
+            'address' => 'encrypted:array',
             'no_blood_transfusion' => 'boolean',
         ];
+    }
+
+    /**
+     * DOB is a named HIPAA identifier, so it's encrypted at rest like the
+     * other PII fields - but `encrypted` doesn't compose with `date`, so the
+     * column stores an encrypted date string and this accessor parses it.
+     *
+     * Uses `Crypt::encryptString()`/`decryptString()`, not the `encrypt()`/
+     * `decrypt()` helpers - those serialize by default, which isn't what the
+     * `encrypted` cast on every other field here does, and isn't what the
+     * migration backfill for this column encrypts with either. Keeping this
+     * accessor on the same non-serializing scheme as everything else avoids
+     * a decrypt mismatch between this column and the rest.
+     *
+     * @return Attribute<Carbon, string>
+     */
+    protected function dob(): Attribute
+    {
+        return Attribute::make(
+            get: fn (string $value) => Carbon::parse(Crypt::decryptString($value)),
+            set: fn (Carbon|string $value) => Crypt::encryptString($value instanceof Carbon ? $value->toDateString() : $value),
+        );
     }
 
     /**
@@ -81,6 +108,38 @@ class MedicalInformation extends Model
     public function registrationMatches(): HasMany
     {
         return $this->hasMany(MedicalInformationRegistrationMatch::class, 'candidate_medical_information_id');
+    }
+
+    /**
+     * @return HasMany<Allergy, $this>
+     */
+    public function allergies(): HasMany
+    {
+        return $this->hasMany(Allergy::class);
+    }
+
+    /**
+     * @return HasMany<Diagnosis, $this>
+     */
+    public function diagnoses(): HasMany
+    {
+        return $this->hasMany(Diagnosis::class);
+    }
+
+    /**
+     * @return HasMany<Medication, $this>
+     */
+    public function medications(): HasMany
+    {
+        return $this->hasMany(Medication::class);
+    }
+
+    /**
+     * @return HasMany<EmergencyContact, $this>
+     */
+    public function emergencyContacts(): HasMany
+    {
+        return $this->hasMany(EmergencyContact::class);
     }
 
     /**

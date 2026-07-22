@@ -17,6 +17,9 @@ class StoreAllergyRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Client (mobile app)-generated UUID - see the `allergies`
+            // migration's comment on why this becomes the record's real id.
+            'id' => ['required', 'uuid', 'unique:allergies,id'],
             'allergen' => ['required', 'string', 'max:255'],
             'reaction' => ['nullable', 'string', 'max:1000'],
             'severity' => ['required', new Enum(AllergySeverity::class)],

@@ -1,18 +1,18 @@
-name: Allergies
+name: 'Emergency Contacts'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/allergies
+    uri: api/v1/emergency-contacts
     metadata:
       custom: []
-      groupName: Allergies
+      groupName: 'Emergency Contacts'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Lists every allergy on the authenticated user's own linked medical information record."
+      title: "Lists every emergency contact on the authenticated user's own linked medical information record."
       description: ''
       authenticated: true
       deprecated: false
@@ -31,7 +31,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":[{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}]}'
+        content: '{"status":200,"message":"Success","data":[{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Maria Dela Cruz","relationship":"spouse","phone_country_code":"63","phone":"9171234567","is_primary":true,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}]}'
         headers: []
         description: ''
     responseFields: []
@@ -46,14 +46,14 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/allergies
+    uri: api/v1/emergency-contacts
     metadata:
       custom: []
-      groupName: Allergies
+      groupName: 'Emergency Contacts'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Creates an allergy on the authenticated user's own linked medical information record."
+      title: "Creates an emergency contact on the authenticated user's own linked medical information record."
       description: ''
       authenticated: true
       deprecated: false
@@ -77,50 +77,74 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      allergen:
+      name:
         custom: []
-        name: allergen
+        name: name
         description: ''
         required: true
-        example: Peanuts
+        example: 'Maria Dela Cruz'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      reaction:
+      relationship:
         custom: []
-        name: reaction
+        name: relationship
+        description: 'One of: parent, spouse, sibling, child, guardian, friend, other.'
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      phone_country_code:
+        custom: []
+        name: phone_country_code
         description: ''
         required: false
-        example: Hives
+        example: '63'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: true
         deprecated: false
-      severity:
+      phone:
         custom: []
-        name: severity
-        description: 'One of: mild, moderate, severe, life-threatening.'
-        required: true
-        example: architecto
+        name: phone
+        description: ''
+        required: false
+        example: '9171234567'
         type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      is_primary:
+        custom: []
+        name: is_primary
+        description: ''
+        required: false
+        example: false
+        type: boolean
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanBodyParameters:
       id: 9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f
-      allergen: Peanuts
-      reaction: Hives
-      severity: architecto
+      name: 'Maria Dela Cruz'
+      relationship: architecto
+      phone_country_code: '63'
+      phone: '9171234567'
+      is_primary: false
     fileParameters: []
     responses:
       -
         custom: []
         status: 201
-        content: '{"status":201,"message":"Allergy created.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":201,"message":"Emergency contact created.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Maria Dela Cruz","relationship":"spouse","phone_country_code":"63","phone":"9171234567","is_primary":true,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
@@ -141,10 +165,10 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/allergies/{id}'
+    uri: 'api/v1/emergency-contacts/{emergencyContact_id}'
     metadata:
       custom: []
-      groupName: Allergies
+      groupName: 'Emergency Contacts'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -157,10 +181,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      id:
+      emergencyContact_id:
         custom: []
-        name: id
-        description: 'The ID of the allergy.'
+        name: emergencyContact_id
+        description: 'The ID of the emergencyContact.'
         required: true
         example: architecto
         type: string
@@ -169,7 +193,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: architecto
+      emergencyContact_id: architecto
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -179,7 +203,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":200,"message":"Success","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Maria Dela Cruz","relationship":"spouse","phone_country_code":"63","phone":"9171234567","is_primary":true,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
@@ -201,10 +225,10 @@ endpoints:
     httpMethods:
       - PUT
       - PATCH
-    uri: 'api/v1/allergies/{id}'
+    uri: 'api/v1/emergency-contacts/{emergencyContact_id}'
     metadata:
       custom: []
-      groupName: Allergies
+      groupName: 'Emergency Contacts'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -217,10 +241,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      id:
+      emergencyContact_id:
         custom: []
-        name: id
-        description: 'The ID of the allergy.'
+        name: emergencyContact_id
+        description: 'The ID of the emergencyContact.'
         required: true
         example: architecto
         type: string
@@ -229,53 +253,77 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: architecto
+      emergencyContact_id: architecto
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      allergen:
+      name:
         custom: []
-        name: allergen
+        name: name
         description: ''
         required: true
-        example: Peanuts
+        example: 'Maria Dela Cruz'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      reaction:
+      relationship:
         custom: []
-        name: reaction
+        name: relationship
+        description: 'One of: parent, spouse, sibling, child, guardian, friend, other.'
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      phone_country_code:
+        custom: []
+        name: phone_country_code
         description: ''
         required: false
-        example: Hives
+        example: '63'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: true
         deprecated: false
-      severity:
+      phone:
         custom: []
-        name: severity
-        description: 'One of: mild, moderate, severe, life-threatening.'
-        required: true
-        example: architecto
+        name: phone
+        description: ''
+        required: false
+        example: '9171234567'
         type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      is_primary:
+        custom: []
+        name: is_primary
+        description: ''
+        required: false
+        example: false
+        type: boolean
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      allergen: Peanuts
-      reaction: Hives
-      severity: architecto
+      name: 'Maria Dela Cruz'
+      relationship: architecto
+      phone_country_code: '63'
+      phone: '9171234567'
+      is_primary: false
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Allergy updated.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":200,"message":"Emergency contact updated.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Maria Dela Cruz","relationship":"spouse","phone_country_code":"63","phone":"9171234567","is_primary":true,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
@@ -296,10 +344,10 @@ endpoints:
     custom: []
     httpMethods:
       - DELETE
-    uri: 'api/v1/allergies/{id}'
+    uri: 'api/v1/emergency-contacts/{emergencyContact_id}'
     metadata:
       custom: []
-      groupName: Allergies
+      groupName: 'Emergency Contacts'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -312,10 +360,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      id:
+      emergencyContact_id:
         custom: []
-        name: id
-        description: 'The ID of the allergy.'
+        name: emergencyContact_id
+        description: 'The ID of the emergencyContact.'
         required: true
         example: architecto
         type: string
@@ -324,7 +372,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: architecto
+      emergencyContact_id: architecto
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -334,7 +382,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Allergy deleted.","data":null}'
+        content: '{"status":200,"message":"Emergency contact deleted.","data":null}'
         headers: []
         description: ''
       -

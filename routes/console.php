@@ -12,3 +12,4 @@ Schedule::command('invitations:prune')->daily();
 Schedule::command('metrics:snapshot-users')->daily();
 Schedule::command('professional-applications:prune')->daily();
 Schedule::command('account-retrieval-requests:prune')->daily();
+Schedule::command('backup:database')->dailyAt('02:00');

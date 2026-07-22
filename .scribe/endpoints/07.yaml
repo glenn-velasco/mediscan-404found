@@ -118,3 +118,78 @@ endpoints:
     controller: null
     method: null
     route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/sync
+    metadata:
+      custom: []
+      groupName: Sync
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: |-
+        Bulk pull of everything changed (created/updated/soft-deleted) across
+        medical information, allergies, diagnoses, medications, and emergency
+        contacts since `since`, for the authenticated user's own linked
+        record. Omit `since` to pull everything. See docs/SYNC.md.
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      since:
+        custom: []
+        name: since
+        description: 'ISO 8601 timestamp of the last successful sync.'
+        required: false
+        example: '2026-07-22T00:00:00Z'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      since: '2026-07-22T00:00:00Z'
+    bodyParameters:
+      since:
+        custom: []
+        name: since
+        description: 'Must be a valid date.'
+        required: false
+        example: '2026-07-22T04:47:01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      since: '2026-07-22T04:47:01'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Success","data":{"server_time":"2026-07-22T00:00:00+00:00","medical_information":null,"allergies":[],"diagnoses":[],"medications":[],"emergency_contacts":[]}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":422,"message":"The since field must be a valid date.","errors":{"since":["The since field must be a valid date."]}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

@@ -309,6 +309,23 @@ This just prints a `base64:...` key without writing it anywhere — run it twice
 
 Supabase's default daily backups (~7 day retention, free tier) cover the production DB reasonably. Staging's local Postgres container and RustFS object data in both environments have no off-VPS backup — worth a follow-up scheduled export (e.g. to Backblaze B2/Cloudflare R2) once things are otherwise stable.
 
+### 5.1 Enforcing TLS on the DB connection
+
+`config/database.php`'s `pgsql` connection reads `'sslmode' => env('DB_SSLMODE', 'prefer')` — `prefer` will silently fall back to plaintext if the server doesn't offer TLS, which isn't acceptable for a database holding PHI. `infrastructure/.env.production` sets `DB_SSLMODE=require`, forcing the connection to fail closed instead of downgrading if TLS isn't available.
+
+Supabase's pooler endpoints support TLS by default, so this should just work — but verify it after setting `DB_URL` (§5 above), don't assume:
+
+```sh
+# from the deployed app container
+docker compose exec app psql "$DB_URL&sslmode=require" -c "SELECT 1;"
+```
+
+If that fails, the pooler connection string needs adjusting before `DB_SSLMODE=require` will let the app connect at all.
+
+**`infrastructure/.env.dev.example` intentionally does *not* set this** — the local dev Postgres container (`docker-compose.dev.yml`) has no TLS certificate configured, so requiring SSL there would break local dev entirely. Dev traffic never leaves the isolated docker-compose network, so `prefer` (the default) is an acceptable gap locally; `require` is only enforced where it matters — production, where the connection crosses to Supabase's infrastructure over the internet.
+
+This is the DB-connection half of encryption in transit. The other half — Cloudflare ↔ origin, browser/mobile ↔ Cloudflare — is already covered by §1.4's **Full (Strict)** mode requirement; both need to hold for PHI to be protected end-to-end in transit.
+
 ---
 
 ## 6. Workflows

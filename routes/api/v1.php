@@ -3,16 +3,21 @@
 use App\Enums\Permission;
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AccountRetrievalRequestController;
+use App\Http\Controllers\Api\V1\AllergyController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\DeviceKeyController;
+use App\Http\Controllers\Api\V1\DiagnosisController;
 use App\Http\Controllers\Api\V1\EmailVerificationController;
+use App\Http\Controllers\Api\V1\EmergencyContactController;
 use App\Http\Controllers\Api\V1\EmergencyQrEventController;
 use App\Http\Controllers\Api\V1\MedicalInformationController;
+use App\Http\Controllers\Api\V1\MedicationController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PendingSyncController;
 use App\Http\Controllers\Api\V1\ProfessionalApplicationController;
 use App\Http\Controllers\Api\V1\ProfessionalSyncController;
 use App\Http\Controllers\Api\V1\ScanController;
+use App\Http\Controllers\Api\V1\SyncController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -31,7 +36,7 @@ Route::prefix('v1')->group(function () {
     // absent, requester_user_id is simply null.
     Route::post('/account-retrieval-requests', [AccountRetrievalRequestController::class, 'store'])->middleware('throttle:6,1');
 
-    Route::middleware(['auth:sanctum', 'api.active'])->group(function () {
+    Route::middleware(['auth:sanctum', 'api.active', 'throttle:api'])->group(function () {
         Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
@@ -68,6 +73,13 @@ Route::prefix('v1')->group(function () {
             Route::get('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'show']);
             Route::put('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'update']);
             Route::delete('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'destroy']);
+
+            Route::apiResource('allergies', AllergyController::class)->parameters(['allergies' => 'allergy']);
+            Route::apiResource('diagnoses', DiagnosisController::class)->parameters(['diagnoses' => 'diagnosis']);
+            Route::apiResource('medications', MedicationController::class)->parameters(['medications' => 'medication']);
+            Route::apiResource('emergency-contacts', EmergencyContactController::class)->parameters(['emergency-contacts' => 'emergencyContact']);
+
+            Route::get('/sync', [SyncController::class, 'index'])->middleware('throttle:sync');
 
             // Professional sync: patient public key lookup and envelope submission
             Route::middleware('abilities:'.Permission::VerifiedProfessional->value)
