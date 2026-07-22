@@ -15,6 +15,7 @@ enum AuditLogType: string
     case Delete = 'delete';
     case Accepted = 'accepted';
     case Denied = 'denied';
+    case Expired = 'expired';
 
     public function label(): string
     {
@@ -26,6 +27,7 @@ enum AuditLogType: string
             self::Delete => 'Delete',
             self::Accepted => 'Accepted',
             self::Denied => 'Denied',
+            self::Expired => 'Expired',
         };
     }
 }

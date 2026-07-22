@@ -9,12 +9,12 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
- * Self-broadcasts on the requester's own channel when a registration match
- * is accepted or denied by the record's primary user - metadata only (no
- * PHI), same shape as MedicalInformationUpdated. There is no admin-dashboard
- * broadcast here: this flow never involves an admin. See docs/BROADCASTING.md.
+ * Broadcasts on the candidate record's primary user's own channel when a
+ * registration match is created, so an already-open mobile session can
+ * surface a notification-bell entry immediately rather than waiting for
+ * the email. Metadata only (no PHI). See docs/BROADCASTING.md.
  */
-class MedicalInformationRegistrationMatchStatusChanged implements ShouldBroadcast
+class MedicalInformationRegistrationMatchCreated implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets;
 
@@ -22,19 +22,18 @@ class MedicalInformationRegistrationMatchStatusChanged implements ShouldBroadcas
 
     public function __construct(
         public readonly int $matchId,
-        public readonly int $requesterUserId,
-        public readonly string $status,
+        public readonly int $primaryUserId,
     ) {}
 
     /** @return array<int, Channel> */
     public function broadcastOn(): array
     {
-        return [new PrivateChannel("App.Models.User.{$this->requesterUserId}")];
+        return [new PrivateChannel("App.Models.User.{$this->primaryUserId}")];
     }
 
     public function broadcastAs(): string
     {
-        return 'MedicalInformationRegistrationMatchStatusChanged';
+        return 'MedicalInformationRegistrationMatchCreated';
     }
 
     /** @return array<string, mixed> */
@@ -42,7 +41,6 @@ class MedicalInformationRegistrationMatchStatusChanged implements ShouldBroadcas
     {
         return [
             'medical_information_registration_match_id' => $this->matchId,
-            'status' => $this->status,
         ];
     }
 }

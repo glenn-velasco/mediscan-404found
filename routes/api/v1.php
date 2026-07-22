@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\EmailVerificationController;
 use App\Http\Controllers\Api\V1\EmergencyContactController;
 use App\Http\Controllers\Api\V1\EmergencyQrEventController;
 use App\Http\Controllers\Api\V1\MedicalInformationController;
+use App\Http\Controllers\Api\V1\MedicalInformationRegistrationMatchController;
 use App\Http\Controllers\Api\V1\MedicationController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PendingSyncController;
@@ -59,6 +60,13 @@ Route::prefix('v1')->group(function () {
         Route::post('/emergency-qr/events', [EmergencyQrEventController::class, 'store']);
 
         Route::post('/scans', [ScanController::class, 'store']);
+
+        // No 'verified' requirement here, matching the pre-existing web signed-URL accept/deny
+        // flow (routes/web.php), which never gated on the primary user's own verification status
+        // either - deciding a match isn't PHI access, it's a yes/no about someone else's claim.
+        Route::get('/medical-information-registration-matches', [MedicalInformationRegistrationMatchController::class, 'index']);
+        Route::post('/medical-information-registration-matches/{registrationMatch}/accept', [MedicalInformationRegistrationMatchController::class, 'accept']);
+        Route::post('/medical-information-registration-matches/{registrationMatch}/deny', [MedicalInformationRegistrationMatchController::class, 'deny']);
 
         // Uploading a government ID + biometric selfie (or handling PHI) is
         // sensitive enough to also require a verified email, unlike the

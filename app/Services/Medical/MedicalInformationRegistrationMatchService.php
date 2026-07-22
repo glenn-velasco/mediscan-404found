@@ -3,13 +3,17 @@
 namespace App\Services\Medical;
 
 use App\Enums\AuditLogType;
+use App\Enums\Role;
 use App\Enums\WorkflowStatus;
-use App\Events\MedicalInformationRegistrationMatchStatusChanged;
+use App\Events\MedicalInformationRegistrationMatchCreated;
+use App\Models\MedicalInformation;
 use App\Models\MedicalInformationRegistrationMatch;
-use App\Models\User;
+use App\Models\PendingRegistration;
 use App\Notifications\MedicalInformationRegistrationMatchNotification;
+use App\Notifications\PendingRegistrationConfirmedNotification;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class MedicalInformationRegistrationMatchService
 {
@@ -19,26 +23,18 @@ class MedicalInformationRegistrationMatchService
     ) {}
 
     /**
-     * Called at the end of registration. Looks for a single, unambiguous
-     * name+dob match against an already-claimed (primary-owned) record and,
-     * if found, notifies that record's primary user out-of-band (email,
-     * signed accept/deny links - no admin in the loop). Deliberately silent
-     * (no return value) otherwise: no match, an ambiguous match, or a match
-     * against a record with no primary yet all leave the registrant on
-     * their fresh interim record with no visible difference.
-     *
-     * @param  array{first_name: string, middle_name: ?string, last_name: string, suffix: ?string}  $nameFields
+     * Called once CreateNewUser has already found an unambiguous name+dob
+     * match against an already-claimed (primary-owned) record - creates the
+     * match row referencing the held PendingRegistration (no User/
+     * MedicalInformation exists yet for this registrant) and notifies the
+     * candidate's primary user out-of-band (email, accept link only - see
+     * MedicalInformationRegistrationMatchNotification for why there's no
+     * deny link).
      */
-    public function detectAndNotify(User $requester, array $nameFields, string $dob): void
+    public function createForPendingRegistration(PendingRegistration $pendingRegistration, MedicalInformation $candidate): MedicalInformationRegistrationMatch
     {
-        $candidate = $this->medicalInformationService->findLinkCandidate($nameFields, $dob);
-
-        if ($candidate === null || $candidate->id === $requester->medical_information_id || $candidate->primary_user_id === null) {
-            return;
-        }
-
         $match = MedicalInformationRegistrationMatch::create([
-            'requester_user_id' => $requester->id,
+            'pending_registration_id' => $pendingRegistration->id,
             'candidate_medical_information_id' => $candidate->id,
             'status' => WorkflowStatus::Pending,
         ]);
@@ -46,20 +42,30 @@ class MedicalInformationRegistrationMatchService
         $primary = $candidate->primaryUser;
         $primary->notify(new MedicalInformationRegistrationMatchNotification($match));
 
+        MedicalInformationRegistrationMatchCreated::dispatch($match->id, $primary->id);
+
         $this->auditLogger->log(
             action: 'medical_information_registration_match.notified',
             type: AuditLogType::Create,
             actor: $primary,
-            subject: $requester,
-            metadata: ['medical_information_id' => $candidate->id, 'match_id' => $match->id],
+            metadata: [
+                'medical_information_id' => $candidate->id,
+                'match_id' => $match->id,
+                'pending_registration_id' => $pendingRegistration->id,
+            ],
             channel: 'api',
         );
+
+        return $match;
     }
 
     /**
      * The primary user confirming the registrant is legitimately them:
-     * repoints the requester's account onto the shared record and discards
-     * their interim record.
+     * materializes a real account directly onto the shared record (no
+     * interim record ever existed, so there's nothing to merge/discard -
+     * unlike repointUserToRecord(), used elsewhere for already-existing
+     * accounts). Since the new registrant has no session to notify in-app,
+     * emails them that they're confirmed and can now log in.
      */
     public function accept(MedicalInformationRegistrationMatch $match): void
     {
@@ -68,10 +74,13 @@ class MedicalInformationRegistrationMatchService
         }
 
         DB::transaction(function () use ($match) {
-            $requester = $match->requester;
             $candidate = $match->candidate;
+            $pendingRegistration = $match->pendingRegistration;
 
-            $this->medicalInformationService->repointUserToRecord($requester, $candidate);
+            $user = $this->medicalInformationService->materializeUserOntoRecord($pendingRegistration, $candidate);
+            $user->assignRole(Role::User->value);
+
+            metric('signups')->category(Role::User->value)->hourly()->record();
 
             $match->forceFill([
                 'status' => WorkflowStatus::Approved,
@@ -82,51 +91,81 @@ class MedicalInformationRegistrationMatchService
                 action: 'medical_information_registration_match.accepted',
                 type: AuditLogType::Accepted,
                 actor: $candidate->primaryUser,
-                subject: $requester,
+                subject: $user,
                 metadata: ['medical_information_id' => $candidate->id, 'match_id' => $match->id],
                 channel: 'web',
             );
 
-            MedicalInformationRegistrationMatchStatusChanged::dispatch(
-                $match->id,
-                $requester->id,
-                WorkflowStatus::Approved->value,
-            );
+            $email = $pendingRegistration->email;
+            $pendingRegistration->delete();
+
+            Notification::route('mail', $email)->notify(new PendingRegistrationConfirmedNotification);
         });
     }
 
-    /**
-     * The primary user denying the registrant is them: the requester
-     * silently keeps their interim record. No notification to the
-     * requester - that would confirm the matched record's existence to
-     * them, which is exactly what this whole flow is designed to avoid.
-     */
     public function deny(MedicalInformationRegistrationMatch $match): void
+    {
+        $this->resolveAsRejected($match, WorkflowStatus::Denied, 'medical_information_registration_match.denied');
+    }
+
+    /**
+     * Auto-resolves matches nobody ever acted on - the email only offers an
+     * accept action (see MedicalInformationRegistrationMatchNotification;
+     * there's no deny link to click, just "ignore this if it wasn't you"),
+     * so a registration that really was denied-by-inaction would otherwise
+     * sit staged forever. Called by the registration-matches:expire-stale
+     * scheduled command.
+     *
+     * @return int number of matches expired
+     */
+    public function expireStale(int $days): int
+    {
+        $stale = MedicalInformationRegistrationMatch::query()
+            ->where('status', WorkflowStatus::Pending)
+            ->where('created_at', '<=', now()->subDays($days))
+            ->get();
+
+        foreach ($stale as $match) {
+            $this->resolveAsRejected($match, WorkflowStatus::Expired, 'medical_information_registration_match.expired');
+        }
+
+        return $stale->count();
+    }
+
+    /**
+     * Shared terminal-resolution path for deny() and expireStale(): mark
+     * the match resolved and discard the staged registration data - no
+     * account/tokens/interim record was ever created, so there's nothing
+     * else to clean up. No notification is ever sent on this path - that
+     * would confirm the matched record's existence to whoever submitted
+     * the registration, which is exactly what this flow avoids.
+     */
+    private function resolveAsRejected(MedicalInformationRegistrationMatch $match, WorkflowStatus $status, string $auditAction): void
     {
         if ($match->isTerminal()) {
             return;
         }
 
         $candidate = $match->candidate;
+        $pendingRegistration = $match->pendingRegistration;
 
         $match->forceFill([
-            'status' => WorkflowStatus::Denied,
+            'status' => $status,
             'responded_at' => now(),
         ])->save();
 
         $this->auditLogger->log(
-            action: 'medical_information_registration_match.denied',
-            type: AuditLogType::Denied,
+            action: $auditAction,
+            type: $status === WorkflowStatus::Expired ? AuditLogType::Expired : AuditLogType::Denied,
             actor: $candidate->primaryUser,
-            subject: $match->requester,
-            metadata: ['medical_information_id' => $candidate->id, 'match_id' => $match->id],
+            metadata: [
+                'medical_information_id' => $candidate->id,
+                'match_id' => $match->id,
+                'pending_registration_id' => $pendingRegistration?->id,
+            ],
             channel: 'web',
         );
 
-        MedicalInformationRegistrationMatchStatusChanged::dispatch(
-            $match->id,
-            $match->requester_user_id,
-            WorkflowStatus::Denied->value,
-        );
+        $pendingRegistration?->delete();
     }
 }

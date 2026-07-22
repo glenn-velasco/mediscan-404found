@@ -12,5 +12,5 @@ interface MedicalInformationRepositoryContract extends BaseRepositoryContract
     /**
      * @param  array{first_name: string, middle_name: ?string, last_name: string, suffix: ?string}  $nameFields
      */
-    public function findMatchingByName(array $nameFields, string $dob): ?MedicalInformation;
+    public function findMatchingByName(array $nameFields, string $dob, ?int $excludeId = null): ?MedicalInformation;
 }

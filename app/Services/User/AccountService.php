@@ -52,12 +52,25 @@ class AccountService
         return $token;
     }
 
-    /** @param  array<string, mixed>  $data */
-    public function register(array $data): NewAccessToken
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{pending: true}|array{pending: false, token: NewAccessToken, user: User}
+     */
+    public function register(array $data): array
     {
-        $user = $this->createNewUser->create($data);
+        $outcome = $this->createNewUser->createOrStage($data);
 
-        return $user->createToken($data['device_name'], $user->tokenAbilities());
+        if ($outcome['pending']) {
+            return ['pending' => true];
+        }
+
+        $user = $outcome['user'];
+
+        return [
+            'pending' => false,
+            'token' => $user->createToken($data['device_name'], $user->tokenAbilities()),
+            'user' => $user,
+        ];
     }
 
     public function updateEmail(User $user, string $newEmail, string $origin = 'settings'): User

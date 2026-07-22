@@ -5,6 +5,7 @@ namespace App\Services\Medical;
 use App\Enums\AuditLogType;
 use App\Events\MedicalInformationUpdated;
 use App\Models\MedicalInformation;
+use App\Models\PendingRegistration;
 use App\Models\User;
 use App\Repositories\Eloquent\MedicalInformationRepository;
 use App\Repositories\Eloquent\UserRepository;
@@ -165,13 +166,16 @@ class MedicalInformationService
     /**
      * Finds a candidate record for matching flows (registration matches,
      * account retrieval) - name+dob (+national_id when present) match only,
-     * never a decision by itself.
+     * never a decision by itself. Pass the caller's own current
+     * medical_information_id as $excludeId so their own record (e.g. the
+     * interim one just created at registration) never counts as a second,
+     * ambiguity-causing match against itself.
      *
      * @param  array{first_name: string, middle_name: ?string, last_name: string, suffix: ?string}  $nameFields
      */
-    public function findLinkCandidate(array $nameFields, string $dob): ?MedicalInformation
+    public function findLinkCandidate(array $nameFields, string $dob, ?int $excludeId = null): ?MedicalInformation
     {
-        return $this->repository->findMatchingByName($nameFields, $dob);
+        return $this->repository->findMatchingByName($nameFields, $dob, $excludeId);
     }
 
     /**
@@ -190,6 +194,7 @@ class MedicalInformationService
             $user->forceFill(['medical_information_id' => $candidate->id])->save();
 
             if ($interimId && $interimId !== $candidate->id) {
+                $this->mergeChildRecords($interimId, $candidate->id);
                 MedicalInformation::query()->whereKey($interimId)->delete();
             }
 
@@ -203,6 +208,74 @@ class MedicalInformationService
             $this->flushCache($candidate, [$user->id]);
 
             $this->broadcastUpdated($candidate, array_values(array_unique([...$linkedUserIds, $user->id])));
+        });
+    }
+
+    /**
+     * Moves an interim record's patient-authored child rows onto the
+     * candidate record before the interim record itself gets deleted -
+     * otherwise its cascadeOnDelete children (allergies, diagnoses,
+     * medications, emergency contacts, plain contacts, transfusion
+     * consents) would simply vanish instead of merging into the shared
+     * record. Raw query-builder updates: only the plain-int FK column
+     * changes, no encrypted columns involved. `is_primary` is demoted on
+     * moved contacts/emergency-contacts so the candidate record never ends
+     * up with two rows both claiming to be primary.
+     */
+    private function mergeChildRecords(int $fromId, int $toId): void
+    {
+        $now = now();
+
+        foreach (['allergies', 'diagnoses', 'medications'] as $table) {
+            DB::table($table)->where('medical_information_id', $fromId)
+                ->update(['medical_information_id' => $toId, 'updated_at' => $now]);
+        }
+
+        foreach (['emergency_contacts', 'medical_information_contacts'] as $table) {
+            DB::table($table)->where('medical_information_id', $fromId)
+                ->update(['medical_information_id' => $toId, 'is_primary' => false, 'updated_at' => $now]);
+        }
+
+        DB::table('medical_information_transfusion_consents')->where('medical_information_id', $fromId)
+            ->update(['medical_information_id' => $toId, 'updated_at' => $now]);
+    }
+
+    /**
+     * Used by the registration-match accept flow when the requester was
+     * held as a PendingRegistration rather than given an account up front -
+     * unlike repointUserToRecord(), there's no interim record to merge or
+     * discard, since none was ever created. Creates the User directly with
+     * medical_information_id already pointing at the candidate. Role
+     * assignment, audit logging, and the signup metric are the caller's
+     * responsibility (mirrors how createInterim() callers handle those
+     * separately too).
+     */
+    public function materializeUserOntoRecord(PendingRegistration $pendingRegistration, MedicalInformation $candidate): User
+    {
+        return DB::transaction(function () use ($pendingRegistration, $candidate) {
+            $user = User::create([
+                'first_name' => $pendingRegistration->first_name,
+                'middle_name' => $pendingRegistration->middle_name,
+                'last_name' => $pendingRegistration->last_name,
+                'suffix' => $pendingRegistration->suffix,
+                'dob' => $pendingRegistration->dob,
+                'gender' => $pendingRegistration->gender,
+                'address' => $pendingRegistration->address,
+                'phone_number' => $pendingRegistration->phone_number,
+                'phone_country_code' => $pendingRegistration->phone_country_code,
+                'email' => $pendingRegistration->email,
+                'password' => $pendingRegistration->password,
+            ]);
+
+            // medical_information_id isn't in User's Fillable list (by design - it's only ever
+            // set programmatically after account creation, never via mass-assignable input).
+            $user->forceFill(['medical_information_id' => $candidate->id])->save();
+
+            $linkedUserIds = $candidate->users()->pluck('id')->all();
+            $this->flushCache($candidate, $linkedUserIds);
+            $this->broadcastUpdated($candidate, $linkedUserIds);
+
+            return $user;
         });
     }
 

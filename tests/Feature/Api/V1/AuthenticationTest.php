@@ -1,8 +1,12 @@
 <?php
 
 use App\Enums\Role;
+use App\Models\MedicalInformation;
+use App\Models\MedicalInformationRegistrationMatch;
 use App\Models\User;
+use App\Notifications\MedicalInformationRegistrationMatchNotification;
 use Database\Seeders\RoleAndPermissionSeeder;
+use Illuminate\Support\Facades\Notification;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
@@ -147,6 +151,31 @@ it('registration rejects an oversized suffix or address', function () {
     $this->postJson('/api/v1/register', ($this->validPayload)(['address' => str_repeat('a', 1001)]))
         ->assertUnprocessable()
         ->assertJsonValidationErrors('address');
+});
+
+it('holds a matched registration pending instead of creating an account', function () {
+    $this->seed(RoleAndPermissionSeeder::class);
+
+    $primary = User::factory()->create();
+    $record = MedicalInformation::factory()->create([
+        'first_name' => 'Juan',
+        'middle_name' => null,
+        'last_name' => 'dela Cruz',
+        'suffix' => null,
+        'dob' => '1990-01-15',
+        'primary_user_id' => $primary->id,
+    ]);
+    $primary->forceFill(['medical_information_id' => $record->id])->save();
+
+    Notification::fake();
+
+    $response = $this->postJson('/api/v1/register', ($this->validPayload)());
+
+    $response->assertStatus(202)->assertJson(['data' => ['pending' => true]]);
+    $this->assertDatabaseMissing('users', ['email' => 'test@example.com']);
+    $this->assertDatabaseHas('pending_registrations', ['email' => 'test@example.com']);
+    expect(MedicalInformationRegistrationMatch::count())->toBe(1);
+    Notification::assertSentTo($primary, MedicalInformationRegistrationMatchNotification::class);
 });
 
 it('registration rejects a malformed phone number', function () {

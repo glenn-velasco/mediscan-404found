@@ -42,11 +42,13 @@ class DatabaseSeeder extends Seeder
         if ($admin->medical_information_id === null) {
             $medicalInformation = MedicalInformation::factory()->create([
                 'first_name' => $admin->first_name,
+                'middle_name' => $admin->middle_name,
                 'last_name' => $admin->last_name,
+                'suffix' => $admin->suffix,
                 'dob' => $admin->dob,
-
                 'gender' => Gender::Male->value,
                 'blood_type' => BloodType::O_POSITIVE->value,
+                'primary_user_id' => $admin->id,
             ]);
 
             $admin->forceFill(['medical_information_id' => $medicalInformation->id])->save();

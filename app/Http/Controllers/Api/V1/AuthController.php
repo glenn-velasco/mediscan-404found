@@ -65,18 +65,29 @@ class AuthController extends Controller
      * @bodyParam password string required The account password. Example: Password123!
      * @bodyParam password_confirmation string required Must match password. Example: Password123!
      *
-     * @response 201 {"status":201,"message":"Registered.","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","phone_country_code":"PH","email":"jane.doe@example.com","email_verified_at":null,"is_active":true,"roles":["User"],"permissions":[]}}}
+     * @response 201 {"status":201,"message":"Registered.","data":{"pending":false,"token":"1|abcdEFGH12345token","user":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","phone_country_code":"PH","email":"jane.doe@example.com","email_verified_at":null,"is_active":true,"roles":["User"],"permissions":[]}}}
+     * @response 202 scenario="Name+dob matched an existing record - held pending its primary user's confirmation" {"status":202,"message":"Registration received. We just need to confirm this is you - check your email once it's approved.","data":{"pending":true}}
      * @response 422 {"status":422,"message":"The email field is required.","errors":{"email":["The email field is required."]}}
      */
     public function register(Request $request): JsonResponse
     {
         $request->validate(['device_name' => ['required', 'string']]);
 
-        $token = $this->accountService->register($request->all());
+        $outcome = $this->accountService->register($request->all());
 
+        if ($outcome['pending']) {
+            return $this->success(
+                ['pending' => true],
+                "Registration received. We just need to confirm this is you - check your email once it's approved.",
+                202,
+            );
+        }
+
+        $token = $outcome['token'];
         $user = $token->accessToken->tokenable->load(['roles', 'permissions']);
 
         return $this->success([
+            'pending' => false,
             'token' => $token->plainTextToken,
             'user' => new UserResource($user),
         ], 'Registered.', 201);

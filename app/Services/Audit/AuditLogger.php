@@ -75,6 +75,9 @@ class AuditLogger
             AuditLogType::Delete => $subjectName
                 ? "{$actorName} deleted a record for {$subjectName}"
                 : "{$actorName} deleted a record",
+            AuditLogType::Expired => $subjectName
+                ? "{$subjectName}'s request expired"
+                : 'A request expired',
             AuditLogType::Authentication => "{$actorName} performed {$action}",
         };
     }

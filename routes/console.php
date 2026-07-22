@@ -13,6 +13,7 @@ Schedule::command('invitations:prune')->daily();
 Schedule::command('metrics:snapshot-users')->daily();
 Schedule::command('professional-applications:prune')->daily();
 Schedule::command('account-retrieval-requests:prune')->daily();
+Schedule::command('registration-matches:expire-stale')->daily();
 
 // Container logs already go to stdout/stderr -> Promtail -> Loki (see
 // infrastructure/.env.production) - Log::critical here is what a Grafana

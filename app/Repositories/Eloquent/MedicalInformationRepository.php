@@ -30,6 +30,13 @@ class MedicalInformationRepository extends BaseRepository implements MedicalInfo
      * identity (twins, common names), so an ambiguous result must never be
      * treated as a match.
      *
+     * `$excludeId` matters because callers query this while the caller's own
+     * record already exists with the exact name+dob they're matching against
+     * (e.g. a fresh registrant's own brand-new interim record) - without
+     * excluding it, that record would count as a second "match" alongside
+     * the real candidate, making every genuine match look ambiguous and
+     * silently drop it.
+     *
      * `first_name`/`middle_name`/`last_name`/`suffix`/`dob` are `encrypted`
      * casts, so the DB can't filter on them - every row is fetched and
      * compared after Eloquent decrypts it. Fine at this table's per-user
@@ -38,11 +45,12 @@ class MedicalInformationRepository extends BaseRepository implements MedicalInfo
      *
      * @param  array{first_name: string, middle_name: ?string, last_name: string, suffix: ?string}  $nameFields
      */
-    public function findMatchingByName(array $nameFields, string $dob): ?MedicalInformation
+    public function findMatchingByName(array $nameFields, string $dob, ?int $excludeId = null): ?MedicalInformation
     {
         $normalized = $this->normalizeName($nameFields);
 
         $matches = $this->model->newQuery()
+            ->when($excludeId !== null, fn ($query) => $query->whereKeyNot($excludeId))
             ->get()
             ->filter(function (MedicalInformation $record) use ($normalized, $dob) {
                 $recordNormalized = $this->normalizeName([
