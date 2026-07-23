@@ -1,18 +1,18 @@
-name: Allergies
+name: 'Medical Information'
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/allergies
+    uri: api/v1/medical-information
     metadata:
       custom: []
-      groupName: Allergies
+      groupName: 'Medical Information'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Lists every allergy on the authenticated user's own linked medical information record."
+      title: "Returns the authenticated user's own linked medical information record, if any."
       description: ''
       authenticated: true
       deprecated: false
@@ -31,7 +31,13 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":[{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}]}'
+        content: '{"status":200,"message":"Success","data":{"id":1,"first_name":"Juan","last_name":"Dela Cruz","suffix":null,"dob":"1990-01-01","gender":"male","blood_type":"o_positive","religion":"catholic","address":{"province":"Metro Manila","street":"123 Rizal St","unit":null,"country":"PH","postal_code":"1000","city":"Manila"},"no_blood_transfusion":false,"avatar":null,"linked_user_count":1,"contacts":[],"transfusion_consents":[],"created_at":"2026-07-17T00:00:00.000000Z","updated_at":"2026-07-17T00:00:00.000000Z"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":404,"message":"Not found.","errors":null}'
         headers: []
         description: ''
     responseFields: []
@@ -46,14 +52,14 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/allergies
+    uri: api/v1/medical-information
     metadata:
       custom: []
-      groupName: Allergies
+      groupName: 'Medical Information'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Creates an allergy on the authenticated user's own linked medical information record."
+      title: 'Creates a new medical information record and links it to the authenticated user.'
       description: ''
       authenticated: true
       deprecated: false
@@ -66,43 +72,65 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      id:
+      first_name:
         custom: []
-        name: id
-        description: 'Client-generated UUID for this record.'
-        required: true
-        example: 9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      allergen:
-        custom: []
-        name: allergen
+        name: first_name
         description: ''
         required: true
-        example: Peanuts
+        example: Juan
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      reaction:
+      middle_name:
         custom: []
-        name: reaction
+        name: middle_name
         description: ''
         required: false
-        example: Hives
+        example: Santos
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: true
         deprecated: false
-      severity:
+      last_name:
         custom: []
-        name: severity
-        description: 'One of: mild, moderate, severe, life-threatening.'
+        name: last_name
+        description: ''
+        required: true
+        example: 'Dela Cruz'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      suffix:
+        custom: []
+        name: suffix
+        description: 'One of: junior, senior, the_second, the_third, the_forth, the_fifth.'
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      dob:
+        custom: []
+        name: dob
+        description: 'Date of birth.'
+        required: true
+        example: '1990-01-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      gender:
+        custom: []
+        name: gender
+        description: 'One of: male, female.'
         required: true
         example: architecto
         type: string
@@ -110,23 +138,281 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
+      blood_type:
+        custom: []
+        name: blood_type
+        description: 'One of: a_positive, a_negative, b_positive, b_negative, ab_positive, ab_negative, o_positive, o_negative.'
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      religion:
+        custom: []
+        name: religion
+        description: 'One of: catholic, christian, islam, buddhist, hindu, jewish, none, other.'
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      national_id:
+        custom: []
+        name: national_id
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: 'n'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address:
+        custom: []
+        name: address
+        description: ''
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      address.province:
+        custom: []
+        name: address.province
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address.street:
+        custom: []
+        name: address.street
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address.unit:
+        custom: []
+        name: address.unit
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address.country:
+        custom: []
+        name: address.country
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address.postal_code:
+        custom: []
+        name: address.postal_code
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address.city:
+        custom: []
+        name: address.city
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      no_blood_transfusion:
+        custom: []
+        name: no_blood_transfusion
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      contacts:
+        custom: []
+        name: contacts
+        description: ''
+        required: false
+        example:
+          - architecto
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      transfusion_consents:
+        custom: []
+        name: transfusion_consents
+        description: ''
+        required: false
+        example:
+          - architecto
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'contacts[].name':
+        custom: []
+        name: 'contacts[].name'
+        description: 'This field is required when <code>contacts</code> is present. Must not be greater than 255 characters.'
+        required: false
+        example: w
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'contacts[].relationship':
+        custom: []
+        name: 'contacts[].relationship'
+        description: ''
+        required: false
+        example: friend
+        type: string
+        enumValues:
+          - parent
+          - spouse
+          - sibling
+          - child
+          - guardian
+          - friend
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'contacts[].phone_number':
+        custom: []
+        name: 'contacts[].phone_number'
+        description: 'This field is required when <code>contacts</code> is present. Must not be greater than 32 characters.'
+        required: false
+        example: p
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'contacts[].phone_country_code':
+        custom: []
+        name: 'contacts[].phone_country_code'
+        description: 'This field is required when <code>contacts</code> is present. Must not be greater than 5 characters.'
+        required: false
+        example: w
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'contacts[].is_primary':
+        custom: []
+        name: 'contacts[].is_primary'
+        description: ''
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'transfusion_consents[].consenter_name':
+        custom: []
+        name: 'transfusion_consents[].consenter_name'
+        description: 'This field is required when <code>transfusion_consents</code> is present. Must not be greater than 255 characters.'
+        required: false
+        example: l
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'transfusion_consents[].relationship_to_patient':
+        custom: []
+        name: 'transfusion_consents[].relationship_to_patient'
+        description: ''
+        required: false
+        example: other
+        type: string
+        enumValues:
+          - parent
+          - spouse
+          - sibling
+          - child
+          - guardian
+          - friend
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'transfusion_consents[].consented_at':
+        custom: []
+        name: 'transfusion_consents[].consented_at'
+        description: 'This field is required when <code>transfusion_consents</code> is present. Must be a valid date.'
+        required: false
+        example: '2026-07-23T18:47:31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
     cleanBodyParameters:
-      id: 9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f
-      allergen: Peanuts
-      reaction: Hives
-      severity: architecto
+      first_name: Juan
+      middle_name: Santos
+      last_name: 'Dela Cruz'
+      suffix: architecto
+      dob: '1990-01-01'
+      gender: architecto
+      blood_type: architecto
+      religion: architecto
+      national_id: 'n'
+      address:
+        province: architecto
+        street: architecto
+        unit: architecto
+        country: architecto
+        postal_code: architecto
+        city: architecto
+      no_blood_transfusion: false
+      contacts:
+        - architecto
+      transfusion_consents:
+        - architecto
     fileParameters: []
     responses:
       -
         custom: []
         status: 201
-        content: '{"status":201,"message":"Allergy created.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 422
-        content: '{"status":422,"message":"No medical information record linked to this account.","errors":null}'
+        content: '{"status":201,"message":"Medical information created.","data":{"id":1,"first_name":"Juan","last_name":"Dela Cruz"}}'
         headers: []
         description: ''
     responseFields: []
@@ -141,10 +427,10 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/allergies/{id}'
+    uri: 'api/v1/medical-information/{medicalInformation_id}'
     metadata:
       custom: []
-      groupName: Allergies
+      groupName: 'Medical Information'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -157,19 +443,19 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      id:
+      medicalInformation_id:
         custom: []
-        name: id
-        description: 'The ID of the allergy.'
+        name: medicalInformation_id
+        description: 'The ID of the medicalInformation.'
         required: true
-        example: architecto
-        type: string
+        example: 1
+        type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: architecto
+      medicalInformation_id: 1
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -179,7 +465,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":200,"message":"Success","data":{"id":1,"first_name":"Juan","last_name":"Dela Cruz"}}'
         headers: []
         description: ''
       -
@@ -200,11 +486,10 @@ endpoints:
     custom: []
     httpMethods:
       - PUT
-      - PATCH
-    uri: 'api/v1/allergies/{id}'
+    uri: 'api/v1/medical-information/{medicalInformation_id}'
     metadata:
       custom: []
-      groupName: Allergies
+      groupName: 'Medical Information'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -217,65 +502,363 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      id:
+      medicalInformation_id:
         custom: []
-        name: id
-        description: 'The ID of the allergy.'
+        name: medicalInformation_id
+        description: 'The ID of the medicalInformation.'
         required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      medicalInformation_id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      first_name:
+        custom: []
+        name: first_name
+        description: ''
+        required: false
         example: architecto
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-    cleanUrlParameters:
-      id: architecto
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      allergen:
+      middle_name:
         custom: []
-        name: allergen
-        description: ''
-        required: true
-        example: Peanuts
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      reaction:
-        custom: []
-        name: reaction
+        name: middle_name
         description: ''
         required: false
-        example: Hives
+        example: architecto
         type: string
         enumValues: []
-        exampleWasSpecified: true
+        exampleWasSpecified: false
         nullable: true
         deprecated: false
-      severity:
+      last_name:
         custom: []
-        name: severity
-        description: 'One of: mild, moderate, severe, life-threatening.'
-        required: true
+        name: last_name
+        description: ''
+        required: false
         example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      suffix:
+        custom: []
+        name: suffix
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      dob:
+        custom: []
+        name: dob
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      gender:
+        custom: []
+        name: gender
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      blood_type:
+        custom: []
+        name: blood_type
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      religion:
+        custom: []
+        name: religion
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      national_id:
+        custom: []
+        name: national_id
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: 'n'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address:
+        custom: []
+        name: address
+        description: ''
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      address.province:
+        custom: []
+        name: address.province
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address.street:
+        custom: []
+        name: address.street
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address.unit:
+        custom: []
+        name: address.unit
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address.country:
+        custom: []
+        name: address.country
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address.postal_code:
+        custom: []
+        name: address.postal_code
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      address.city:
+        custom: []
+        name: address.city
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      no_blood_transfusion:
+        custom: []
+        name: no_blood_transfusion
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      contacts:
+        custom: []
+        name: contacts
+        description: ''
+        required: false
+        example:
+          - architecto
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      transfusion_consents:
+        custom: []
+        name: transfusion_consents
+        description: ''
+        required: false
+        example:
+          - architecto
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'contacts[].name':
+        custom: []
+        name: 'contacts[].name'
+        description: 'This field is required when <code>contacts</code> is present. Must not be greater than 255 characters.'
+        required: false
+        example: w
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'contacts[].relationship':
+        custom: []
+        name: 'contacts[].relationship'
+        description: ''
+        required: false
+        example: other
+        type: string
+        enumValues:
+          - parent
+          - spouse
+          - sibling
+          - child
+          - guardian
+          - friend
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'contacts[].phone_number':
+        custom: []
+        name: 'contacts[].phone_number'
+        description: 'This field is required when <code>contacts</code> is present. Must not be greater than 32 characters.'
+        required: false
+        example: p
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'contacts[].phone_country_code':
+        custom: []
+        name: 'contacts[].phone_country_code'
+        description: 'This field is required when <code>contacts</code> is present. Must not be greater than 5 characters.'
+        required: false
+        example: w
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'contacts[].is_primary':
+        custom: []
+        name: 'contacts[].is_primary'
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'transfusion_consents[].consenter_name':
+        custom: []
+        name: 'transfusion_consents[].consenter_name'
+        description: 'This field is required when <code>transfusion_consents</code> is present. Must not be greater than 255 characters.'
+        required: false
+        example: l
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      'transfusion_consents[].relationship_to_patient':
+        custom: []
+        name: 'transfusion_consents[].relationship_to_patient'
+        description: ''
+        required: false
+        example: spouse
+        type: string
+        enumValues:
+          - parent
+          - spouse
+          - sibling
+          - child
+          - guardian
+          - friend
+          - other
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      'transfusion_consents[].consented_at':
+        custom: []
+        name: 'transfusion_consents[].consented_at'
+        description: 'This field is required when <code>transfusion_consents</code> is present. Must be a valid date.'
+        required: false
+        example: '2026-07-23T18:47:31'
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanBodyParameters:
-      allergen: Peanuts
-      reaction: Hives
-      severity: architecto
+      first_name: architecto
+      middle_name: architecto
+      last_name: architecto
+      suffix: architecto
+      dob: architecto
+      gender: architecto
+      blood_type: architecto
+      religion: architecto
+      national_id: 'n'
+      address:
+        province: architecto
+        street: architecto
+        unit: architecto
+        country: architecto
+        postal_code: architecto
+        city: architecto
+      no_blood_transfusion: false
+      contacts:
+        - architecto
+      transfusion_consents:
+        - architecto
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Allergy updated.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":200,"message":"Medical information updated.","data":{"id":1,"first_name":"Juan","last_name":"Dela Cruz"}}'
         headers: []
         description: ''
       -
@@ -296,10 +879,10 @@ endpoints:
     custom: []
     httpMethods:
       - DELETE
-    uri: 'api/v1/allergies/{id}'
+    uri: 'api/v1/medical-information/{medicalInformation_id}'
     metadata:
       custom: []
-      groupName: Allergies
+      groupName: 'Medical Information'
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -312,19 +895,19 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      id:
+      medicalInformation_id:
         custom: []
-        name: id
-        description: 'The ID of the allergy.'
+        name: medicalInformation_id
+        description: 'The ID of the medicalInformation.'
         required: true
-        example: architecto
-        type: string
+        example: 1
+        type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: architecto
+      medicalInformation_id: 1
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -334,7 +917,80 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Allergy deleted.","data":null}'
+        content: '{"status":200,"message":"Medical information deleted.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":404,"message":"Not found.","errors":null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/medical-information/{medicalInformation_id}/avatar'
+    metadata:
+      custom: []
+      groupName: 'Medical Information'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: |-
+        Sets this record's avatar from an uploaded photo (gallery pick or plain selfie - no face
+        verification).
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: multipart/form-data
+      Accept: application/json
+    urlParameters:
+      medicalInformation_id:
+        custom: []
+        name: medicalInformation_id
+        description: 'The ID of the medicalInformation.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      medicalInformation_id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      avatar:
+        custom: []
+        name: avatar
+        description: 'The avatar image.'
+        required: true
+        example: null
+        type: file
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters: []
+    fileParameters:
+      avatar: null
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":200,"message":"Avatar updated.","data":{"id":1,"first_name":"Juan","last_name":"Dela Cruz","avatar":"https://example.com/storage/avatars/medical-information/1-abc123.jpg"}}'
         headers: []
         description: ''
       -

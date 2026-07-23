@@ -186,9 +186,15 @@ endpoints:
       -
         custom: []
         status: 201
-        content: '{"status":201,"message":"Registered.","data":{"token":"1|abcdEFGH12345token","user":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","phone_country_code":"PH","email":"jane.doe@example.com","email_verified_at":null,"is_active":true,"roles":["User"],"permissions":[]}}}'
+        content: '{"status":201,"message":"Registered.","data":{"pending":false,"token":"1|abcdEFGH12345token","user":{"id":1,"first_name":"Jane","middle_name":null,"last_name":"Doe","suffix":null,"fullname":"Jane Doe","dob":"1990-01-15","age":36,"gender":"female","address":"123 Main St","phone_number":"+639171234567","phone_country_code":"PH","email":"jane.doe@example.com","email_verified_at":null,"is_active":true,"roles":["User"],"permissions":[]}}}'
         headers: []
         description: ''
+      -
+        custom: []
+        status: 202
+        content: '{"status":202,"message":"Registration received. We just need to confirm this is you - check your email once it''s approved.","data":{"pending":true}}'
+        headers: []
+        description: "Name+dob matched an existing record - held pending its primary user's confirmation"
       -
         custom: []
         status: 422

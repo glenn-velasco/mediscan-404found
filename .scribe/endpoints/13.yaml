@@ -1,18 +1,18 @@
-name: Diagnoses
+name: Allergies
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/diagnoses
+    uri: api/v1/allergies
     metadata:
       custom: []
-      groupName: Diagnoses
+      groupName: Allergies
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Lists every diagnosis on the authenticated user's own linked medical information record."
+      title: "Lists every allergy on the authenticated user's own linked medical information record."
       description: ''
       authenticated: true
       deprecated: false
@@ -31,7 +31,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":[{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","condition":"Type 2 Diabetes","date_of_diagnosis":"2020-05-01","severity":"chronic","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}]}'
+        content: '{"status":200,"message":"Success","data":[{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}]}'
         headers: []
         description: ''
     responseFields: []
@@ -46,14 +46,14 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/diagnoses
+    uri: api/v1/allergies
     metadata:
       custom: []
-      groupName: Diagnoses
+      groupName: Allergies
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Creates a diagnosis on the authenticated user's own linked medical information record."
+      title: "Creates an allergy on the authenticated user's own linked medical information record."
       description: ''
       authenticated: true
       deprecated: false
@@ -77,23 +77,23 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      condition:
+      allergen:
         custom: []
-        name: condition
+        name: allergen
         description: ''
         required: true
-        example: 'Type 2 Diabetes'
+        example: Peanuts
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      date_of_diagnosis:
+      reaction:
         custom: []
-        name: date_of_diagnosis
+        name: reaction
         description: ''
         required: false
-        example: '2020-05-01'
+        example: Hives
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -102,25 +102,25 @@ endpoints:
       severity:
         custom: []
         name: severity
-        description: 'One of: chronic, ongoing, acute, critical.'
-        required: false
+        description: 'One of: mild, moderate, severe, life-threatening.'
+        required: true
         example: architecto
         type: string
         enumValues: []
         exampleWasSpecified: false
-        nullable: true
+        nullable: false
         deprecated: false
     cleanBodyParameters:
       id: 9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f
-      condition: 'Type 2 Diabetes'
-      date_of_diagnosis: '2020-05-01'
+      allergen: Peanuts
+      reaction: Hives
       severity: architecto
     fileParameters: []
     responses:
       -
         custom: []
         status: 201
-        content: '{"status":201,"message":"Diagnosis created.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","condition":"Type 2 Diabetes","date_of_diagnosis":"2020-05-01","severity":"chronic","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":201,"message":"Allergy created.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
@@ -141,10 +141,10 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/diagnoses/{id}'
+    uri: 'api/v1/allergies/{id}'
     metadata:
       custom: []
-      groupName: Diagnoses
+      groupName: Allergies
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -160,7 +160,7 @@ endpoints:
       id:
         custom: []
         name: id
-        description: 'The ID of the diagnosis.'
+        description: 'The ID of the allergy.'
         required: true
         example: architecto
         type: string
@@ -179,7 +179,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","condition":"Type 2 Diabetes","date_of_diagnosis":"2020-05-01","severity":"chronic","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":200,"message":"Success","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
@@ -201,10 +201,10 @@ endpoints:
     httpMethods:
       - PUT
       - PATCH
-    uri: 'api/v1/diagnoses/{id}'
+    uri: 'api/v1/allergies/{id}'
     metadata:
       custom: []
-      groupName: Diagnoses
+      groupName: Allergies
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -220,7 +220,7 @@ endpoints:
       id:
         custom: []
         name: id
-        description: 'The ID of the diagnosis.'
+        description: 'The ID of the allergy.'
         required: true
         example: architecto
         type: string
@@ -233,23 +233,23 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      condition:
+      allergen:
         custom: []
-        name: condition
+        name: allergen
         description: ''
         required: true
-        example: 'Type 2 Diabetes'
+        example: Peanuts
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      date_of_diagnosis:
+      reaction:
         custom: []
-        name: date_of_diagnosis
+        name: reaction
         description: ''
         required: false
-        example: '2020-05-01'
+        example: Hives
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -258,24 +258,24 @@ endpoints:
       severity:
         custom: []
         name: severity
-        description: 'One of: chronic, ongoing, acute, critical.'
-        required: false
+        description: 'One of: mild, moderate, severe, life-threatening.'
+        required: true
         example: architecto
         type: string
         enumValues: []
         exampleWasSpecified: false
-        nullable: true
+        nullable: false
         deprecated: false
     cleanBodyParameters:
-      condition: 'Type 2 Diabetes'
-      date_of_diagnosis: '2020-05-01'
+      allergen: Peanuts
+      reaction: Hives
       severity: architecto
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Diagnosis updated.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","condition":"Type 2 Diabetes","date_of_diagnosis":"2020-05-01","severity":"chronic","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":200,"message":"Allergy updated.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","allergen":"Peanuts","reaction":"Hives","severity":"severe","created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
@@ -296,10 +296,10 @@ endpoints:
     custom: []
     httpMethods:
       - DELETE
-    uri: 'api/v1/diagnoses/{id}'
+    uri: 'api/v1/allergies/{id}'
     metadata:
       custom: []
-      groupName: Diagnoses
+      groupName: Allergies
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -315,7 +315,7 @@ endpoints:
       id:
         custom: []
         name: id
-        description: 'The ID of the diagnosis.'
+        description: 'The ID of the allergy.'
         required: true
         example: architecto
         type: string
@@ -334,7 +334,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Diagnosis deleted.","data":null}'
+        content: '{"status":200,"message":"Allergy deleted.","data":null}'
         headers: []
         description: ''
       -
