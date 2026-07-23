@@ -114,6 +114,9 @@ export default function Account() {
                             unverified until you do.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
+
+                    <InputError message={form.errors.email} />
+
                     <AlertDialogFooter>
                         <AlertDialogCancel onClick={cancelSubmit}>
                             Cancel
