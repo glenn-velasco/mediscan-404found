@@ -75,3 +75,18 @@ it('returns 404 when viewing another users application', function () {
     $this->getJson("/api/v1/professional-applications/{$application->id}")
         ->assertNotFound();
 });
+
+it('still shows a denied (soft-deleted) application to its owner', function () {
+    $user = User::factory()->create();
+    Sanctum::actingAs($user, ['*']);
+
+    $this->postJson('/api/v1/professional-applications', ($this->payload)());
+    $application = ProfessionalApplication::where('user_id', $user->id)->firstOrFail();
+    $application->update(['status' => \App\Enums\WorkflowStatus::Denied, 'rejection_reason' => 'Blurry ID photo']);
+    $application->delete();
+
+    $this->getJson("/api/v1/professional-applications/{$application->id}")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'denied')
+        ->assertJsonPath('data.rejection_reason', 'Blurry ID photo');
+});

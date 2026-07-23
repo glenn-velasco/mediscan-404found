@@ -70,7 +70,9 @@ Route::prefix('v1')->group(function () {
 
         Route::post('/professional-applications', [ProfessionalApplicationController::class, 'store']);
         Route::get('/professional-applications', [ProfessionalApplicationController::class, 'index']);
-        Route::get('/professional-applications/{professionalApplication}', [ProfessionalApplicationController::class, 'show']);
+        // withTrashed: a denied application is soft-deleted (see ProfessionalApplicationService::reject())
+        // so the applicant can still be shown its status/rejection_reason until it's pruned.
+        Route::get('/professional-applications/{professionalApplication}', [ProfessionalApplicationController::class, 'show'])->withTrashed();
 
         Route::get('/medical-information', [MedicalInformationController::class, 'index']);
         Route::post('/medical-information', [MedicalInformationController::class, 'store']);
