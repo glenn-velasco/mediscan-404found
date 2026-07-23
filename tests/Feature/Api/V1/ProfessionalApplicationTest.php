@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\WorkflowStatus;
 use App\Models\ProfessionalApplication;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -82,7 +83,7 @@ it('still shows a denied (soft-deleted) application to its owner', function () {
 
     $this->postJson('/api/v1/professional-applications', ($this->payload)());
     $application = ProfessionalApplication::where('user_id', $user->id)->firstOrFail();
-    $application->update(['status' => \App\Enums\WorkflowStatus::Denied, 'rejection_reason' => 'Blurry ID photo']);
+    $application->update(['status' => WorkflowStatus::Denied, 'rejection_reason' => 'Blurry ID photo']);
     $application->delete();
 
     $this->getJson("/api/v1/professional-applications/{$application->id}")
