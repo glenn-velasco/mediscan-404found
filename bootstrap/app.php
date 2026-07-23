@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\MedicalInformationAvatarUploadFailedException;
 use App\Exceptions\ProfessionalApplicationAlreadyPendingException;
 use App\Exceptions\ProfessionalApplicationAlreadyReviewedException;
 use App\Exceptions\ProfessionalApplicationUploadFailedException;
@@ -127,6 +128,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ),
                 $e instanceof ProfessionalApplicationAlreadyPendingException => ApiController::error($e->getMessage(), 422),
                 $e instanceof ProfessionalApplicationUploadFailedException => ApiController::error($e->getMessage(), 422),
+                $e instanceof MedicalInformationAvatarUploadFailedException => ApiController::error($e->getMessage(), 422),
                 $e instanceof AuthenticationException => ApiController::error('Unauthenticated.', 401),
                 $e instanceof MethodNotAllowedHttpException => ApiController::error('Method not allowed.', 405),
                 $e instanceof NotFoundHttpException => ApiController::error('Not found.', 404),

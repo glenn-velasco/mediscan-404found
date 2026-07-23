@@ -4,18 +4,32 @@ namespace App\Services\Medical;
 
 use App\Enums\AuditLogType;
 use App\Events\MedicalInformationUpdated;
+use App\Exceptions\MedicalInformationAvatarUploadFailedException;
 use App\Models\MedicalInformation;
 use App\Models\PendingRegistration;
 use App\Models\User;
 use App\Repositories\Eloquent\MedicalInformationRepository;
 use App\Repositories\Eloquent\UserRepository;
 use App\Services\Audit\AuditLogger;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Encoders\JpegEncoder;
+use Intervention\Image\ImageManager;
 
 class MedicalInformationService
 {
     private const CACHE_TTL_HOURS = 6;
+
+    // Mirrors ProfessionalApplicationService's downscale/quality settings
+    // for the same reason: file size should depend on these constants, not
+    // on the client's camera resolution.
+    private const AVATAR_MAX_IMAGE_DIMENSION = 1600;
+
+    private const AVATAR_IMAGE_QUALITY = 90;
 
     public function __construct(
         private MedicalInformationRepository $repository,
@@ -25,11 +39,14 @@ class MedicalInformationService
 
     public function find(int $id, ?User $actor = null): MedicalInformation
     {
-        $medicalInformation = Cache::remember(
-            $this->cacheKey($id),
-            now()->addHours(self::CACHE_TTL_HOURS),
-            fn () => $this->repository->findOrFail($id)
-        );
+        // Not cached: findOrFail() eager-loads relations, so caching its
+        // result would mean serializing the full model + relation +
+        // enum-cast object graph into Redis via PHP's native serialize().
+        // That's fragile across any drift in the app's class graph between
+        // the write and the read (a deploy, a container restart) and
+        // previously surfaced as "incomplete object" 500s on unserialize().
+        // This isn't a hot path, so correctness wins over a 6h cache here.
+        $medicalInformation = $this->repository->findOrFail($id);
 
         $this->auditLogger->log(
             action: 'medical_information.viewed',
@@ -277,6 +294,37 @@ class MedicalInformationService
 
             return $user;
         });
+    }
+
+    /**
+     * Stores an avatar photo picked from the gallery or taken as a plain
+     * selfie - no face verification, just an upload.
+     */
+    public function updateAvatar(MedicalInformation $medicalInformation, UploadedFile $avatar, User $actor): MedicalInformation
+    {
+        $avatarPath = $this->storeAvatarImage($medicalInformation, $avatar);
+
+        return $this->syncAvatar($medicalInformation, $avatarPath, $actor);
+    }
+
+    /**
+     * Downscales/re-encodes the capture as JPEG and stores it on the public
+     * disk, mirroring ProfessionalApplicationService::storeResizedImageOrFail().
+     */
+    private function storeAvatarImage(MedicalInformation $medicalInformation, UploadedFile $frame): string
+    {
+        $path = 'avatars/medical-information/'.$medicalInformation->id.'-'.Str::random(12).'.jpg';
+
+        $encoded = (new ImageManager(new Driver))
+            ->decodePath($frame->getRealPath())
+            ->scaleDown(width: self::AVATAR_MAX_IMAGE_DIMENSION, height: self::AVATAR_MAX_IMAGE_DIMENSION)
+            ->encode(new JpegEncoder(quality: self::AVATAR_IMAGE_QUALITY));
+
+        if (! Storage::disk('public')->put($path, (string) $encoded)) {
+            throw new MedicalInformationAvatarUploadFailedException;
+        }
+
+        return $path;
     }
 
     /**

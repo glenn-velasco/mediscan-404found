@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\Controller;
+use App\Http\Requests\StoreMedicalInformationAvatarRequest;
 use App\Http\Requests\StoreMedicalInformationRequest;
 use App\Http\Requests\UpdateMedicalInformationRequest;
 use App\Http\Resources\Api\V1\MedicalInformationResource;
@@ -121,5 +122,27 @@ class MedicalInformationController extends Controller
         $this->medicalInformationService->delete($medicalInformation, $request->user());
 
         return $this->success(null, 'Medical information deleted.');
+    }
+
+    /**
+     * Sets this record's avatar from an uploaded photo (gallery pick or plain selfie - no face
+     * verification).
+     *
+     * @bodyParam avatar file required The avatar image.
+     *
+     * @response 200 {"status":200,"message":"Avatar updated.","data":{"id":1,"first_name":"Juan","last_name":"Dela Cruz","avatar":"https://example.com/storage/avatars/medical-information/1-abc123.jpg"}}
+     * @response 404 {"status":404,"message":"Not found.","errors":null}
+     */
+    public function updateAvatar(StoreMedicalInformationAvatarRequest $request, MedicalInformation $medicalInformation): JsonResponse
+    {
+        abort_unless($request->user()->can('update', $medicalInformation), 404);
+
+        $updated = $this->medicalInformationService->updateAvatar(
+            $medicalInformation,
+            $request->file('avatar'),
+            $request->user(),
+        );
+
+        return $this->success(new MedicalInformationResource($updated), 'Avatar updated.');
     }
 }

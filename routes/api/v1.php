@@ -79,6 +79,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'show']);
         Route::put('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'update']);
         Route::delete('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'destroy']);
+        Route::post('/medical-information/{medicalInformation}/avatar', [MedicalInformationController::class, 'updateAvatar']);
 
         Route::apiResource('allergies', AllergyController::class)->parameters(['allergies' => 'allergy']);
         Route::apiResource('diagnoses', DiagnosisController::class)->parameters(['diagnoses' => 'diagnosis']);
