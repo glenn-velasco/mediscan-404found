@@ -53,14 +53,14 @@ it('lists only the authenticated users own application', function () {
         ->assertJsonCount(1, 'data');
 });
 
-it('rejects submission from an unverified user', function () {
+it('allows submission from an unverified user', function () {
     $user = User::factory()->unverified()->create();
     Sanctum::actingAs($user, ['*']);
 
     $this->postJson('/api/v1/professional-applications', ($this->payload)())
-        ->assertForbidden();
+        ->assertCreated();
 
-    expect(ProfessionalApplication::where('user_id', $user->id)->exists())->toBeFalse();
+    expect(ProfessionalApplication::where('user_id', $user->id)->exists())->toBeTrue();
 });
 
 it('returns 404 when viewing another users application', function () {

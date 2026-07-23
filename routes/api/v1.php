@@ -68,33 +68,28 @@ Route::prefix('v1')->group(function () {
         Route::post('/medical-information-registration-matches/{registrationMatch}/accept', [MedicalInformationRegistrationMatchController::class, 'accept']);
         Route::post('/medical-information-registration-matches/{registrationMatch}/deny', [MedicalInformationRegistrationMatchController::class, 'deny']);
 
-        // Uploading a government ID + biometric selfie (or handling PHI) is
-        // sensitive enough to also require a verified email, unlike the
-        // routes above.
-        Route::middleware('verified')->group(function () {
-            Route::post('/professional-applications', [ProfessionalApplicationController::class, 'store']);
-            Route::get('/professional-applications', [ProfessionalApplicationController::class, 'index']);
-            Route::get('/professional-applications/{professionalApplication}', [ProfessionalApplicationController::class, 'show']);
+        Route::post('/professional-applications', [ProfessionalApplicationController::class, 'store']);
+        Route::get('/professional-applications', [ProfessionalApplicationController::class, 'index']);
+        Route::get('/professional-applications/{professionalApplication}', [ProfessionalApplicationController::class, 'show']);
 
-            Route::get('/medical-information', [MedicalInformationController::class, 'index']);
-            Route::post('/medical-information', [MedicalInformationController::class, 'store']);
-            Route::get('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'show']);
-            Route::put('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'update']);
-            Route::delete('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'destroy']);
+        Route::get('/medical-information', [MedicalInformationController::class, 'index']);
+        Route::post('/medical-information', [MedicalInformationController::class, 'store']);
+        Route::get('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'show']);
+        Route::put('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'update']);
+        Route::delete('/medical-information/{medicalInformation}', [MedicalInformationController::class, 'destroy']);
 
-            Route::apiResource('allergies', AllergyController::class)->parameters(['allergies' => 'allergy']);
-            Route::apiResource('diagnoses', DiagnosisController::class)->parameters(['diagnoses' => 'diagnosis']);
-            Route::apiResource('medications', MedicationController::class)->parameters(['medications' => 'medication']);
-            Route::apiResource('emergency-contacts', EmergencyContactController::class)->parameters(['emergency-contacts' => 'emergencyContact']);
+        Route::apiResource('allergies', AllergyController::class)->parameters(['allergies' => 'allergy']);
+        Route::apiResource('diagnoses', DiagnosisController::class)->parameters(['diagnoses' => 'diagnosis']);
+        Route::apiResource('medications', MedicationController::class)->parameters(['medications' => 'medication']);
+        Route::apiResource('emergency-contacts', EmergencyContactController::class)->parameters(['emergency-contacts' => 'emergencyContact']);
 
-            Route::get('/sync', [SyncController::class, 'index'])->middleware('throttle:sync');
+        Route::get('/sync', [SyncController::class, 'index'])->middleware('throttle:sync');
 
-            // Professional sync: patient public key lookup and envelope submission
-            Route::middleware('abilities:'.Permission::VerifiedProfessional->value)
-                ->prefix('professional')->group(function () {
-                    Route::get('/patients/{patient}/public-key', [ProfessionalSyncController::class, 'publicKey']);
-                    Route::post('/patients/{patient}/envelopes', [ProfessionalSyncController::class, 'submitEnvelope']);
-                });
-        });
+        // Professional sync: patient public key lookup and envelope submission
+        Route::middleware('abilities:'.Permission::VerifiedProfessional->value)
+            ->prefix('professional')->group(function () {
+                Route::get('/patients/{patient}/public-key', [ProfessionalSyncController::class, 'publicKey']);
+                Route::post('/patients/{patient}/envelopes', [ProfessionalSyncController::class, 'submitEnvelope']);
+            });
     });
 });

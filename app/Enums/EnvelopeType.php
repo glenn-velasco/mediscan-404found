@@ -13,6 +13,7 @@ enum EnvelopeType: string
     case GeneralNote = 'general_note';
     case DiagnosisVerification = 'diagnosis_verification';
     case MedicalInformationUpdate = 'medical_information_update';
+    case EmergencyContactVerification = 'emergency_contact_verification';
 
     public function label(): string
     {
@@ -22,6 +23,7 @@ enum EnvelopeType: string
             self::GeneralNote => 'General Note',
             self::DiagnosisVerification => 'Diagnosis Verification',
             self::MedicalInformationUpdate => 'Medical Information Update',
+            self::EmergencyContactVerification => 'Emergency Contact Verification',
         };
     }
 }

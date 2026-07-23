@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
@@ -69,9 +70,32 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             'deactivated_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
-            'dob' => 'date',
             'gender' => Gender::class,
+            'first_name' => 'encrypted',
+            'middle_name' => 'encrypted',
+            'last_name' => 'encrypted',
+            'suffix' => 'encrypted',
+            'address' => 'encrypted',
+            'phone_number' => 'encrypted',
         ];
+    }
+
+    /**
+     * DOB is a named HIPAA identifier, so it's encrypted at rest like the
+     * other PII fields - but `encrypted` doesn't compose with `date`, so the
+     * column stores an encrypted date string and this accessor parses it.
+     * Mirrors MedicalInformation::dob().
+     *
+     * @return Attribute<Carbon|null, string|null>
+     */
+    protected function dob(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $value !== null ? Carbon::parse(Crypt::decryptString($value)) : null,
+            set: fn (Carbon|string|null $value) => $value !== null
+                ? Crypt::encryptString($value instanceof Carbon ? $value->toDateString() : $value)
+                : null,
+        );
     }
 
     /**

@@ -426,16 +426,24 @@ it('accepts invitation with every optional field filled and persists them', func
         'phone_number' => '+639171234567',
     ]))->assertRedirect(route('professional-application.show'));
 
+    // Name/address/phone are encrypted at rest, so they can't be asserted
+    // via assertDatabaseHas (raw ciphertext) - assert the plaintext/country
+    // code column separately, then confirm the encrypted fields via the
+    // decrypted model.
     $this->assertDatabaseHas('users', [
         'email' => 'invited@example.com',
-        'first_name' => 'Juan',
-        'middle_name' => 'Santos',
-        'last_name' => 'dela Cruz',
-        'suffix' => 'Jr.',
-        'address' => '123 Main St',
-        'phone_number' => '+639171234567',
         'phone_country_code' => 'PH',
     ]);
+
+    $user = User::where('email', 'invited@example.com')->firstOrFail();
+
+    expect($user)
+        ->first_name->toBe('Juan')
+        ->middle_name->toBe('Santos')
+        ->last_name->toBe('dela Cruz')
+        ->suffix->toBe('Jr.')
+        ->address->toBe('123 Main St')
+        ->phone_number->toBe('+639171234567');
 });
 
 it('accepting an invitation flushes the admin dashboard stats cache', function () {

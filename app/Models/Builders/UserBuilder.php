@@ -10,18 +10,33 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class UserBuilder extends Builder
 {
-    public function search(string $term): static
+    /**
+     * Name fields are `encrypted` casts, so the DB can't filter/ilike on
+     * them - every row (subject to constraints already on the query) is
+     * fetched and compared in PHP after Eloquent decrypts it, then narrowed
+     * back down to a `whereIn` so the rest of the builder chain (further
+     * filters, pagination) keeps working normally. Mirrors
+     * MedicalInformationRepository::findMatchingByName().
+     */
+    public function search(string $term): self
     {
-        return $this->where(function ($q) use ($term) {
-            $q->where('users.email', 'ilike', "%{$term}%")
-                ->orWhere('users.first_name', 'ilike', "%{$term}%")
-                ->orWhere('users.middle_name', 'ilike', "%{$term}%")
-                ->orWhere('users.last_name', 'ilike', "%{$term}%")
-                ->orWhereRaw(
-                    "trim(regexp_replace(coalesce(users.first_name, '') || ' ' || coalesce(users.middle_name, '') || ' ' || coalesce(users.last_name, '') || ' ' || coalesce(users.suffix, ''), '\\s+', ' ', 'g')) ilike ?",
-                    ["%{$term}%"]
-                );
-        });
+        $needle = mb_strtolower($term);
+
+        $matchingIds = $this->clone()->get()
+            ->filter(function (User $user) use ($needle) {
+                if (str_contains(mb_strtolower($user->email), $needle)) {
+                    return true;
+                }
+
+                $fullName = collect([$user->first_name, $user->middle_name, $user->last_name, $user->suffix])
+                    ->filter()
+                    ->implode(' ');
+
+                return str_contains(mb_strtolower($fullName), $needle);
+            })
+            ->pluck('id');
+
+        return $this->whereIn('users.id', $matchingIds);
     }
 
     public function filterByRole(string $role): static
@@ -43,14 +58,25 @@ class UserBuilder extends Builder
         return $this->whereNull('deactivated_at');
     }
 
-    public function filterByAge(int $min, ?int $max = null): static
+    /**
+     * `dob` is encrypted at rest (via a manual accessor, since `encrypted`
+     * doesn't compose with a date column), so age can't be computed in SQL -
+     * filtered in PHP instead, same approach as search() above.
+     */
+    public function filterByAge(int $min, ?int $max = null): self
     {
-        $this->whereRaw('extract(year from age(users.dob)) >= ?', [$min]);
+        $matchingIds = $this->clone()->get()
+            ->filter(function (User $user) use ($min, $max) {
+                $age = $user->dob?->age;
 
-        if ($max !== null) {
-            $this->whereRaw('extract(year from age(users.dob)) <= ?', [$max]);
-        }
+                if ($age === null) {
+                    return false;
+                }
 
-        return $this;
+                return $age >= $min && ($max === null || $age <= $max);
+            })
+            ->pluck('id');
+
+        return $this->whereIn('users.id', $matchingIds);
     }
 }

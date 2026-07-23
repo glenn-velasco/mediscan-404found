@@ -43,16 +43,19 @@ class AuditLogRepository extends BaseRepository
             ->filter()
             ->unique();
 
+        // `first_name`/`last_name` are `encrypted` casts, so the DB can't
+        // filter on them - candidates (already narrowed to $userIds) are
+        // fetched and compared in PHP after Eloquent decrypts them.
+        $needle = mb_strtolower($query);
+
         return User::query()
             ->whereIn('id', $userIds)
-            ->where(function (Builder $userQuery) use ($query) {
-                $userQuery
-                    ->where('first_name', 'like', '%'.$query.'%')
-                    ->orWhere('last_name', 'like', '%'.$query.'%')
-                    ->orWhere('email', 'like', '%'.$query.'%');
-            })
-            ->limit($limit)
-            ->get(['id', 'first_name', 'middle_name', 'last_name', 'suffix', 'email']);
+            ->get(['id', 'first_name', 'middle_name', 'last_name', 'suffix', 'email'])
+            ->filter(fn (User $user) => str_contains(mb_strtolower($user->first_name ?? ''), $needle)
+                || str_contains(mb_strtolower($user->last_name ?? ''), $needle)
+                || str_contains(mb_strtolower($user->email), $needle))
+            ->take($limit)
+            ->values();
     }
 
     /**

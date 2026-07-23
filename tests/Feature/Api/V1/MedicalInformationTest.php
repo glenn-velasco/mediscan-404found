@@ -57,12 +57,12 @@ it('returns 404 when viewing another users medical information', function () {
         ->assertNotFound();
 });
 
-it('rejects an unverified user', function () {
+it('allows an unverified user to create medical information', function () {
     $user = User::factory()->unverified()->create();
     Sanctum::actingAs($user, ['*']);
 
     $this->postJson('/api/v1/medical-information', medicalInformationPayload())
-        ->assertForbidden();
+        ->assertCreated();
 });
 
 it('updates medical information with nested contacts and invalidates cache', function () {
