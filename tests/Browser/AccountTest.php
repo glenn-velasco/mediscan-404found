@@ -13,6 +13,7 @@ it('sends a verification email after changing account email', function () {
     visit(route('account.edit'))
         ->type('email', 'changed@example.com')
         ->press('Save')
+        ->assertSee('Change email address?')
         ->press('Continue')
         ->assertNoJavascriptErrors();
 

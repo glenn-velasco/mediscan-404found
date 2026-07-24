@@ -134,8 +134,8 @@ class ProfessionalSyncController extends Controller
         $this->professionalSyncService->trackVerification(
             professional: $request->user(),
             patient: $patient,
-            envelopeType: $request->validated('envelope_type'),
-            itemIdentifier: $request->validated('item_identifier'),
+            envelopeType: $request->input('envelope_type'),
+            itemIdentifier: $request->input('item_identifier'),
             verified: $request->boolean('verified'),
         );
 
