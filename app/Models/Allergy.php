@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AllergySeverity;
+use App\Models\Traits\HasVerifications;
 use Database\Factories\AllergyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property string $allergen
  * @property string|null $reaction
  * @property AllergySeverity $severity
+ * @property array|null $verified_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -23,7 +25,7 @@ use Illuminate\Support\Carbon;
 class Allergy extends Model
 {
     /** @use HasFactory<AllergyFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasVerifications, SoftDeletes;
 
     public $incrementing = false;
 
@@ -33,7 +35,7 @@ class Allergy extends Model
     // (the mobile app's own record identity, see the migration comment) and
     // must be mass-assignable on create, unlike the auto-increment `id` on
     // most other models in this app.
-    protected $fillable = ['id', 'medical_information_id', 'allergen', 'reaction', 'severity'];
+    protected $fillable = ['id', 'medical_information_id', 'allergen', 'reaction', 'severity', 'verified_by'];
 
     protected function casts(): array
     {
@@ -41,6 +43,7 @@ class Allergy extends Model
             'allergen' => 'encrypted',
             'reaction' => 'encrypted',
             'severity' => AllergySeverity::class,
+            'verified_by' => 'array',
         ];
     }
 
