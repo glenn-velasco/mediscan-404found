@@ -90,7 +90,6 @@ jobs:
           sparse-checkout: |
             infrastructure/docker-compose.staging.yml
             infrastructure/docker-compose.production.yml
-            infrastructure/docker/nginx/staging-proxy.conf
           sparse-checkout-cone-mode: false
 
       - name: Load deploy SSH key
@@ -109,12 +108,14 @@ jobs:
             && ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cat > $REMOTE_DIR/docker-compose.yml" \
               < infrastructure/docker-compose.$ENV_NAME.yml
 
-      - name: Ship staging proxy config
-        if: needs.prep.outputs.environment == 'production'
-        run: |
-          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo mkdir -p /etc/mediscan/nginx" \
-            && ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo tee /etc/mediscan/nginx/staging-proxy.conf > /dev/null" \
-              < infrastructure/docker/nginx/staging-proxy.conf
+      # Staging proxy disabled — production nginx no longer routes
+      # staging hostnames (was broken: bridge network can't reach host:8443).
+      # - name: Ship staging proxy config
+      #   if: needs.prep.outputs.environment == 'production'
+      #   run: |
+      #     ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo mkdir -p /etc/mediscan/nginx" \
+      #       && ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo tee /etc/mediscan/nginx/staging-proxy.conf > /dev/null" \
+      #         < infrastructure/docker/nginx/staging-proxy.conf
 
       - name: Generate and ship .env
         run: |
