@@ -243,6 +243,8 @@ Then fill in its own secrets/variables (its own **Environment secrets**/**Enviro
 | `VITE_REVERB_SCHEME` | variable | `https` |
 | `MACHINE_LEARNING_SHARED_SECRET` | secret | self-issued, e.g. `openssl rand -hex 32` — only needs to match between `app` and `machine-learning` *within* staging, nowhere else |
 | `GRAFANA_ADMIN_PASSWORD` | secret | pick a password for staging's Grafana login |
+| `ADMIN_EMAIL` | variable | email for the admin account, e.g. `admin@mediscan.cloud` |
+| `ADMIN_PASSWORD` | secret | password for the admin account |
 
 Leave `DB_URL` **unset** — Laravel falls back to `DB_PASSWORD`/`DB_DATABASE`/`DB_USERNAME` above when it's empty (§5 explains why staging uses a local container instead). `DB_HOST` doesn't need an entry here — the deploy workflow hardcodes it to `postgres` (the compose service name) in the shipped `.env`.
 
@@ -271,6 +273,8 @@ Same secrets/variables pattern:
 | `VITE_REVERB_SCHEME` | variable | `https` |
 | `MACHINE_LEARNING_SHARED_SECRET` | secret | self-issued, separate from staging's |
 | `GRAFANA_ADMIN_PASSWORD` | secret | pick a password for production's Grafana login |
+| `ADMIN_EMAIL` | variable | email for the admin account, e.g. `admin@mediscan.cloud` |
+| `ADMIN_PASSWORD` | secret | password for the admin account |
 
 `DB_PASSWORD`/`DB_DATABASE`/`DB_USERNAME` aren't needed here — production has no local Postgres container, and they're ignored once `DB_URL` is set.
 
