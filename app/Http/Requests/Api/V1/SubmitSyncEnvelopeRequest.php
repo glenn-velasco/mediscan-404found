@@ -27,6 +27,23 @@ class SubmitSyncEnvelopeRequest extends FormRequest
         return [
             'ciphertext' => ['required', 'string'],
             'envelope_type' => ['required', new Enum(EnvelopeType::class)],
+            'item_identifier' => [
+                'nullable',
+                'string',
+                'max:500',
+                'required_if:envelope_type,allergy_verification,condition_verification,diagnosis_verification,medication_verification',
+            ],
+            'verified' => ['nullable', 'boolean'],
+        ];
+    }
+
+    /**
+     * Get custom messages for validation errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'item_identifier.required_if' => 'The item identifier is required for verification envelopes.',
         ];
     }
 }

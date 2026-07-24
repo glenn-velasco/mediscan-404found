@@ -8,9 +8,16 @@ use Illuminate\Validation\Rules\Enum;
 
 class UpdateAllergyRequest extends FormRequest
 {
+    use DecodesVerifiedBy;
+
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->prepareForVerifiedByDecoding();
     }
 
     /** @return array<string, mixed> */
@@ -20,6 +27,7 @@ class UpdateAllergyRequest extends FormRequest
             'allergen' => ['required', 'string', 'max:255'],
             'reaction' => ['nullable', 'string', 'max:1000'],
             'severity' => ['required', new Enum(AllergySeverity::class)],
+            'verified_by' => ['nullable', 'array'],
         ];
     }
 }

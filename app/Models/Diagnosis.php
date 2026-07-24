@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DiagnosisSeverity;
+use App\Models\Traits\HasVerifications;
 use Database\Factories\DiagnosisFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $condition
  * @property Carbon|null $date_of_diagnosis
  * @property DiagnosisSeverity|null $severity
+ * @property array<int, array{user_id: int, name: string, verified_at: string}>|null $verified_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -24,14 +26,14 @@ use Illuminate\Support\Carbon;
 class Diagnosis extends Model
 {
     /** @use HasFactory<DiagnosisFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasVerifications, SoftDeletes;
 
     public $incrementing = false;
 
     protected $keyType = 'string';
 
     // See Allergy::$fillable for why `id` is included here.
-    protected $fillable = ['id', 'medical_information_id', 'diagnosed_by', 'condition', 'date_of_diagnosis', 'severity'];
+    protected $fillable = ['id', 'medical_information_id', 'diagnosed_by', 'condition', 'date_of_diagnosis', 'severity', 'verified_by'];
 
     protected function casts(): array
     {
@@ -39,6 +41,7 @@ class Diagnosis extends Model
             'condition' => 'encrypted',
             'date_of_diagnosis' => 'date',
             'severity' => DiagnosisSeverity::class,
+            'verified_by' => 'array',
         ];
     }
 

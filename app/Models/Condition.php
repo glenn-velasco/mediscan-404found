@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\HasVerifications;
 use Database\Factories\ConditionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $id
  * @property int $medical_information_id
  * @property string $description
+ * @property array<int, array{user_id: int, name: string, verified_at: string}>|null $verified_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
@@ -24,19 +26,20 @@ use Illuminate\Support\Carbon;
 class Condition extends Model
 {
     /** @use HasFactory<ConditionFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasVerifications, SoftDeletes;
 
     public $incrementing = false;
 
     protected $keyType = 'string';
 
     // See Allergy::$fillable for why `id` is included here.
-    protected $fillable = ['id', 'medical_information_id', 'description'];
+    protected $fillable = ['id', 'medical_information_id', 'description', 'verified_by'];
 
     protected function casts(): array
     {
         return [
             'description' => 'encrypted',
+            'verified_by' => 'array',
         ];
     }
 

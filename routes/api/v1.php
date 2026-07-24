@@ -96,6 +96,8 @@ Route::prefix('v1')->group(function () {
             ->prefix('professional')->group(function () {
                 Route::get('/patients/{patient}/public-key', [ProfessionalSyncController::class, 'publicKey']);
                 Route::post('/patients/{patient}/envelopes', [ProfessionalSyncController::class, 'submitEnvelope']);
+                Route::get('/patients/{patient}/verifications', [ProfessionalSyncController::class, 'verifications']);
+                Route::post('/patients/{patient}/verifications', [ProfessionalSyncController::class, 'trackVerification']);
             });
     });
 });

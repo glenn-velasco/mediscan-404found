@@ -64,7 +64,7 @@ it('lets a verified professional linked to the record create a diagnosis', funct
     expect($diagnosis->diagnosed_by)->toBe($professional->id);
 });
 
-it('forbids a plain linked user (non-professional) from creating a diagnosis', function () {
+it('allows a plain linked user to upload a diagnosis to their own record', function () {
     $medicalInformation = MedicalInformation::factory()->create();
     $patient = makeLinkedUser($medicalInformation);
     Sanctum::actingAs($patient, ['*']);
@@ -72,7 +72,7 @@ it('forbids a plain linked user (non-professional) from creating a diagnosis', f
     $this->postJson("/api/v1/medical-information/{$medicalInformation->id}/diagnoses", [
         'id' => (string) Str::uuid(),
         'condition' => 'Type 2 Diabetes',
-    ])->assertNotFound();
+    ])->assertCreated();
 });
 
 it('forbids a verified professional not linked to the record from creating a diagnosis', function () {
@@ -121,13 +121,13 @@ it('lets a linked verified professional update a diagnosis', function () {
     ])->assertOk()->assertJsonPath('data.condition', 'Hypertension');
 });
 
-it('forbids a plain linked patient from updating a diagnosis', function () {
+it('allows a plain linked patient to update a diagnosis on their own record', function () {
     $user = actingAsDiagnosisOwner();
     $diagnosis = Diagnosis::factory()->create(['medical_information_id' => $user->medical_information_id]);
 
     $this->putJson("/api/v1/diagnoses/{$diagnosis->id}", [
         'condition' => 'Hypertension',
-    ])->assertNotFound();
+    ])->assertOk();
 });
 
 it('lets a linked verified professional delete a diagnosis', function () {
@@ -142,11 +142,11 @@ it('lets a linked verified professional delete a diagnosis', function () {
     expect(Diagnosis::query()->whereKey($diagnosis->id)->exists())->toBeFalse();
 });
 
-it('forbids a plain linked patient from deleting a diagnosis', function () {
+it('allows a plain linked patient to delete a diagnosis on their own record', function () {
     $user = actingAsDiagnosisOwner();
     $diagnosis = Diagnosis::factory()->create(['medical_information_id' => $user->medical_information_id]);
 
-    $this->deleteJson("/api/v1/diagnoses/{$diagnosis->id}")->assertNotFound();
+    $this->deleteJson("/api/v1/diagnoses/{$diagnosis->id}")->assertOk();
 });
 
 it('encrypts condition at rest', function () {
