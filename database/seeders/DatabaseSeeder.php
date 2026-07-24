@@ -19,8 +19,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $email = env('ADMIN_EMAIL', 'admin@mediscan.cloud');
-        $password = env('ADMIN_PASSWORD');
+        $email = config('app.admin_email', 'admin@mediscan.cloud');
+        $password = config('app.admin_password');
 
         if (! $password) {
             $this->command->error('ADMIN_PASSWORD env var is not set — skipping admin seed.');
