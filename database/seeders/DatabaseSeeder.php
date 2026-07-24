@@ -9,6 +9,7 @@ use App\Models\MedicalInformation;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Env;
 
 class DatabaseSeeder extends Seeder
 {
@@ -19,10 +20,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(RoleAndPermissionSeeder::class);
+        $email = Env::get('ADMIN_EMAIL', 'admin@mediscan.cloud');
+        $password = Env::get('ADMIN_PASSWORD');
+
+        if (! $password) {
+            $this->command?->error('ADMIN_PASSWORD env var is not set — skipping admin seed.');
+
+            return;
+        }
 
         $admin = User::firstOrCreate(
-            ['email' => 'admin@mediscan.cloud'],
+            ['email' => $email],
             [
                 'first_name' => 'Admin',
                 'last_name' => 'Admin',
@@ -30,7 +38,7 @@ class DatabaseSeeder extends Seeder
                 'gender' => Gender::Male,
                 'address' => '123 Admin Street, Admin',
                 'phone_number' => '+639171234567',
-                'password' => 'password',
+                'password' => $password,
                 'email_verified_at' => now(),
             ],
         );
