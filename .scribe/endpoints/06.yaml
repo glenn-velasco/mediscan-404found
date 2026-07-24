@@ -102,14 +102,14 @@ endpoints:
         name: deviceKey_id
         description: 'The ID of the deviceKey.'
         required: true
-        example: 1
+        example: 16
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      deviceKey_id: 1
+      deviceKey_id: 16
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
