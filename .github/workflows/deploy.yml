@@ -186,8 +186,12 @@ jobs:
 
       - name: Health check
         run: |
+          HEALTH_PORT=80
+          if [ "$ENV_NAME" = "staging" ]; then
+            HEALTH_PORT=8080
+          fi
           for i in $(seq 1 30); do
-            if ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "curl -sf http://127.0.0.1/up" > /dev/null 2>&1; then
+            if ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "curl -sf http://127.0.0.1:${HEALTH_PORT}/up" > /dev/null 2>&1; then
               echo "Healthy."
               exit 0
             fi
