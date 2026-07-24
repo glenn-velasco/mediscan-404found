@@ -90,6 +90,7 @@ jobs:
           sparse-checkout: |
             infrastructure/docker-compose.staging.yml
             infrastructure/docker-compose.production.yml
+            infrastructure/docker/nginx/staging-proxy.conf
           sparse-checkout-cone-mode: false
 
       - name: Load deploy SSH key
@@ -107,6 +108,12 @@ jobs:
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p $REMOTE_DIR" \
             && ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cat > $REMOTE_DIR/docker-compose.yml" \
               < infrastructure/docker-compose.$ENV_NAME.yml
+
+      - name: Ship staging proxy config
+        run: |
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "mkdir -p /etc/mediscan/nginx" \
+            && ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "cat > /etc/mediscan/nginx/staging-proxy.conf" \
+              < infrastructure/docker/nginx/staging-proxy.conf
 
       - name: Generate and ship .env
         run: |

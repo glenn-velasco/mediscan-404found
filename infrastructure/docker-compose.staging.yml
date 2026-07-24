@@ -178,8 +178,8 @@ services:
       NGINX_CDN_HOST: cdnstaging.mediscan.cloud
       NGINX_MONITOR_HOST: monitorstaging.mediscan.cloud
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "8443:443"
     volumes:
       - /etc/mediscan/tls:/etc/nginx/tls:ro
     depends_on:
