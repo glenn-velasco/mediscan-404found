@@ -69,6 +69,9 @@ abstract class PatientRecordService
         return $record;
     }
 
+    /**
+     * @param  array<int, string>  $fields
+     */
     protected function recordCreatedAuditAndBroadcast(Model $record, User $actor, array $fields): void
     {
         $this->auditLogger->log(

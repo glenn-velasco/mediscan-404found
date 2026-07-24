@@ -18,7 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $id
  * @property int $medical_information_id
  * @property string $description
- * @property array|null $verified_by
+ * @property array<int, array{user_id: int, name: string, verified_at: string}>|null $verified_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at

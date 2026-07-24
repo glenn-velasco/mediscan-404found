@@ -32,6 +32,7 @@ trait HasVerifications
             return $value;
         }
 
+        // @phpstan-ignore function.impossibleType
         if (is_string($value)) {
             $decoded = json_decode($value, true);
             if (is_array($decoded)) {
@@ -53,13 +54,13 @@ trait HasVerifications
 
     /**
      * Get the verification entry for a specific user.
+     *
+     * @return array{user_id: int, name: string, verified_at: string}|null
      */
-    public function getVerificationFor(int $userId): ?object
+    public function getVerificationFor(int $userId): ?array
     {
-        $entry = collect($this->getVerifiedByArray())
+        return collect($this->getVerifiedByArray())
             ->firstWhere('user_id', $userId);
-
-        return $entry ? (object) $entry : null;
     }
 
     /**

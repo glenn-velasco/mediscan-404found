@@ -17,7 +17,7 @@ use Illuminate\Support\Carbon;
  * @property string $allergen
  * @property string|null $reaction
  * @property AllergySeverity $severity
- * @property array|null $verified_by
+ * @property array<int, array{user_id: int, name: string, verified_at: string}>|null $verified_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at

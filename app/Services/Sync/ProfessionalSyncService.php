@@ -15,6 +15,7 @@ use App\Models\UserDeviceKey;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ProfessionalSyncService
 {
@@ -95,6 +96,8 @@ class ProfessionalSyncService
 
     /**
      * Get verification status for a professional's view of a patient.
+     *
+     * @return array{allergies: list<array{item: string, verified: bool, verified_at: string|null}>, conditions: list<array{item: string, verified: bool, verified_at: string|null}>, diagnoses: list<array{item: string, verified: bool, verified_at: string|null}>, medications: list<array{item: string, verified: bool, verified_at: string|null}>}
      */
     public function getVerifications(User $professional, User $patient): array
     {
@@ -114,7 +117,7 @@ class ProfessionalSyncService
             ->map(fn (Allergy $a) => [
                 'item' => $a->allergen,
                 'verified' => $a->isVerifiedBy($professional->id),
-                'verified_at' => $a->getVerificationFor($professional->id)?->verified_at,
+                'verified_at' => ($a->getVerificationFor($professional->id) ?? [])['verified_at'] ?? null,
             ])
             ->filter(fn ($v) => $v['verified'] || $v['verified_at'] !== null)
             ->values()
@@ -125,7 +128,7 @@ class ProfessionalSyncService
             ->map(fn (Condition $c) => [
                 'item' => $c->description,
                 'verified' => $c->isVerifiedBy($professional->id),
-                'verified_at' => $c->getVerificationFor($professional->id)?->verified_at,
+                'verified_at' => ($c->getVerificationFor($professional->id) ?? [])['verified_at'] ?? null,
             ])
             ->filter(fn ($v) => $v['verified'] || $v['verified_at'] !== null)
             ->values()
@@ -136,7 +139,7 @@ class ProfessionalSyncService
             ->map(fn (Diagnosis $d) => [
                 'item' => $d->condition,
                 'verified' => $d->isVerifiedBy($professional->id),
-                'verified_at' => $d->getVerificationFor($professional->id)?->verified_at,
+                'verified_at' => ($d->getVerificationFor($professional->id) ?? [])['verified_at'] ?? null,
             ])
             ->filter(fn ($v) => $v['verified'] || $v['verified_at'] !== null)
             ->values()
@@ -147,13 +150,19 @@ class ProfessionalSyncService
             ->map(fn (Medication $m) => [
                 'item' => $m->name,
                 'verified' => $m->isVerifiedBy($professional->id),
-                'verified_at' => $m->getVerificationFor($professional->id)?->verified_at,
+                'verified_at' => ($m->getVerificationFor($professional->id) ?? [])['verified_at'] ?? null,
             ])
             ->filter(fn ($v) => $v['verified'] || $v['verified_at'] !== null)
             ->values()
             ->toArray();
 
-        return compact('allergies', 'conditions', 'diagnoses', 'medications');
+        // @phpstan-ignore-next-line toArray() loses generic types but shape is correct per @return annotation
+        return [
+            'allergies' => $allergies,
+            'conditions' => $conditions,
+            'diagnoses' => $diagnoses,
+            'medications' => $medications,
+        ];
     }
 
     /**
@@ -217,25 +226,25 @@ class ProfessionalSyncService
 
             $data = match ($envelopeType) {
                 EnvelopeType::AllergyVerification->value => [
-                    'id' => \Illuminate\Support\Str::uuid(),
+                    'id' => Str::uuid(),
                     'medical_information_id' => $medicalInformationId,
                     'allergen' => $itemIdentifier,
                     'severity' => 'mild',
                 ],
                 EnvelopeType::ConditionVerification->value => [
-                    'id' => \Illuminate\Support\Str::uuid(),
+                    'id' => Str::uuid(),
                     'medical_information_id' => $medicalInformationId,
                     'description' => $itemIdentifier,
                 ],
                 EnvelopeType::DiagnosisVerification->value => [
-                    'id' => \Illuminate\Support\Str::uuid(),
+                    'id' => Str::uuid(),
                     'medical_information_id' => $medicalInformationId,
                     'condition' => $itemIdentifier,
                     'diagnosed_by' => $professional->id,
                     'severity' => 'chronic',
                 ],
                 EnvelopeType::MedicationVerification->value => [
-                    'id' => \Illuminate\Support\Str::uuid(),
+                    'id' => Str::uuid(),
                     'medical_information_id' => $medicalInformationId,
                     'name' => $itemIdentifier,
                     'dosage' => '',
@@ -251,7 +260,7 @@ class ProfessionalSyncService
             $record = $modelClass::create($data);
 
             $this->auditLogger->log(
-                action: strtolower(class_basename($modelClass)) . '.created_by_verification',
+                action: strtolower(class_basename($modelClass)).'.created_by_verification',
                 type: AuditLogType::Create,
                 actor: $professional,
                 subject: $professional,

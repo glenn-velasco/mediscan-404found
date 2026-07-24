@@ -31,6 +31,8 @@ return new class extends Migration
      * Recursively decode verified_by until we have a proper array.
      *
      * Handles: raw array, single-encoded JSON string, double-encoded JSON string.
+     *
+     * @return array<int, array{user_id: int, name: string, verified_at: string}>|null
      */
     private function decodeVerifiedBy(mixed $value): ?array
     {

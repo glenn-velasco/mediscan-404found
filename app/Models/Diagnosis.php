@@ -18,7 +18,7 @@ use Illuminate\Support\Carbon;
  * @property string $condition
  * @property Carbon|null $date_of_diagnosis
  * @property DiagnosisSeverity|null $severity
- * @property array|null $verified_by
+ * @property array<int, array{user_id: int, name: string, verified_at: string}>|null $verified_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at

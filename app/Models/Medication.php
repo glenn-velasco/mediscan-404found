@@ -17,7 +17,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $dosage
  * @property string|null $frequency
  * @property string|null $notes
- * @property array|null $verified_by
+ * @property array<int, array{user_id: int, name: string, verified_at: string}>|null $verified_by
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
