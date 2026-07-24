@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-use App\Enums\DiagnosisSeverity;
-use Database\Factories\DiagnosisFactory;
+use Database\Factories\ConditionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,19 +10,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 /**
+ * A patient-authored free-text note on their general health state - distinct
+ * from `Diagnosis`, which is the professional-authored formal identification
+ * of a specific condition. See docs/DIAGNOSES.md.
+ *
  * @property string $id
  * @property int $medical_information_id
- * @property int|null $diagnosed_by
- * @property string $condition
- * @property Carbon|null $date_of_diagnosis
- * @property DiagnosisSeverity|null $severity
+ * @property string $description
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
  */
-class Diagnosis extends Model
+class Condition extends Model
 {
-    /** @use HasFactory<DiagnosisFactory> */
+    /** @use HasFactory<ConditionFactory> */
     use HasFactory, SoftDeletes;
 
     public $incrementing = false;
@@ -31,14 +31,12 @@ class Diagnosis extends Model
     protected $keyType = 'string';
 
     // See Allergy::$fillable for why `id` is included here.
-    protected $fillable = ['id', 'medical_information_id', 'diagnosed_by', 'condition', 'date_of_diagnosis', 'severity'];
+    protected $fillable = ['id', 'medical_information_id', 'description'];
 
     protected function casts(): array
     {
         return [
-            'condition' => 'encrypted',
-            'date_of_diagnosis' => 'date',
-            'severity' => DiagnosisSeverity::class,
+            'description' => 'encrypted',
         ];
     }
 
@@ -48,13 +46,5 @@ class Diagnosis extends Model
     public function medicalInformation(): BelongsTo
     {
         return $this->belongsTo(MedicalInformation::class);
-    }
-
-    /**
-     * @return BelongsTo<User, $this>
-     */
-    public function diagnosedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'diagnosed_by');
     }
 }

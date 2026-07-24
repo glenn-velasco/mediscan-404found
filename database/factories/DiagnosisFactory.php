@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\DiagnosisSeverity;
 use App\Models\Diagnosis;
 use App\Models\MedicalInformation;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -23,6 +24,7 @@ class DiagnosisFactory extends Factory
         return [
             'id' => (string) Str::uuid(),
             'medical_information_id' => MedicalInformation::factory(),
+            'diagnosed_by' => User::factory(),
             'condition' => fake()->randomElement(['Type 2 Diabetes', 'Hypertension', 'Asthma', 'Hypothyroidism']),
             'date_of_diagnosis' => fake()->optional()->date(),
             'severity' => fake()->randomElement(DiagnosisSeverity::cases())->value,

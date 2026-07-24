@@ -12,6 +12,8 @@ enum EnvelopeType: string
     case TransfusionWitness = 'transfusion_witness';
     case GeneralNote = 'general_note';
     case DiagnosisVerification = 'diagnosis_verification';
+    case MedicationVerification = 'medication_verification';
+    case ConditionVerification = 'condition_verification';
     case MedicalInformationUpdate = 'medical_information_update';
     case EmergencyContactVerification = 'emergency_contact_verification';
 
@@ -22,6 +24,8 @@ enum EnvelopeType: string
             self::TransfusionWitness => 'Transfusion Witness',
             self::GeneralNote => 'General Note',
             self::DiagnosisVerification => 'Diagnosis Verification',
+            self::MedicationVerification => 'Medication Verification',
+            self::ConditionVerification => 'Condition Verification',
             self::MedicalInformationUpdate => 'Medical Information Update',
             self::EmergencyContactVerification => 'Emergency Contact Verification',
         };

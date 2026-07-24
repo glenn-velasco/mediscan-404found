@@ -21,6 +21,10 @@ class DiagnosisResource extends JsonResource
             'condition' => $this->condition,
             'date_of_diagnosis' => $this->date_of_diagnosis?->toDateString(),
             'severity' => $this->severity?->value,
+            'diagnosed_by' => $this->diagnosedBy === null ? null : [
+                'id' => $this->diagnosedBy->id,
+                'fullname' => $this->diagnosedBy->fullname,
+            ],
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

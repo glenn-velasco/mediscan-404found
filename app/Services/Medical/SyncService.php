@@ -3,6 +3,7 @@
 namespace App\Services\Medical;
 
 use App\Models\Allergy;
+use App\Models\Condition;
 use App\Models\Diagnosis;
 use App\Models\EmergencyContact;
 use App\Models\MedicalInformation;
@@ -29,6 +30,7 @@ class SyncService
                 'server_time' => now()->toIso8601String(),
                 'medical_information' => null,
                 'allergies' => [],
+                'conditions' => [],
                 'diagnoses' => [],
                 'medications' => [],
                 'emergency_contacts' => [],
@@ -39,6 +41,7 @@ class SyncService
             'server_time' => now()->toIso8601String(),
             'medical_information' => $this->pullMedicalInformation($medicalInformationId, $since),
             'allergies' => $this->pullResource(Allergy::class, $medicalInformationId, $since),
+            'conditions' => $this->pullResource(Condition::class, $medicalInformationId, $since),
             'diagnoses' => $this->pullResource(Diagnosis::class, $medicalInformationId, $since),
             'medications' => $this->pullResource(Medication::class, $medicalInformationId, $since),
             'emergency_contacts' => $this->pullResource(EmergencyContact::class, $medicalInformationId, $since),
@@ -78,7 +81,7 @@ class SyncService
     }
 
     /**
-     * @param  class-string<Allergy|Diagnosis|Medication|EmergencyContact>  $modelClass
+     * @param  class-string<Allergy|Condition|Diagnosis|Medication|EmergencyContact>  $modelClass
      * @return array<int, array<string, mixed>>
      */
     private function pullResource(string $modelClass, int $medicalInformationId, ?Carbon $since): array

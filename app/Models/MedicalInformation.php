@@ -119,6 +119,14 @@ class MedicalInformation extends Model
     }
 
     /**
+     * @return HasMany<Condition, $this>
+     */
+    public function conditions(): HasMany
+    {
+        return $this->hasMany(Condition::class);
+    }
+
+    /**
      * @return HasMany<Diagnosis, $this>
      */
     public function diagnoses(): HasMany

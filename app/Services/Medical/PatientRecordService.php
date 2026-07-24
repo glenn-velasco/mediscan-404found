@@ -10,8 +10,10 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Shared CRUD/audit/broadcast plumbing for the four patient-authored
- * resources (Allergy, Diagnosis, Medication, EmergencyContact) - structurally
+ * Shared CRUD/audit/broadcast plumbing for the patient-authored resources
+ * (Allergy, Condition, Medication, EmergencyContact - Diagnosis also extends
+ * this for its shared list/audit/broadcast logic, but overrides create() to
+ * require a verified professional; see docs/DIAGNOSES.md) - structurally
  * identical: each belongs to the actor's own medical_information record,
  * each gets the same audit-log shape, each fires the same
  * `PatientRecordUpdated` broadcast. See docs/SYNC.md.
@@ -26,6 +28,12 @@ abstract class PatientRecordService
     /** Short label used in audit actions and the broadcast payload, e.g. "allergy". */
     abstract protected function recordType(): string;
 
+    /** @return array<int, string> Relations to eager-load when listing/returning records. */
+    protected function eagerLoad(): array
+    {
+        return [];
+    }
+
     /** @return Collection<int, Model> */
     public function listForUser(User $user): Collection
     {
@@ -37,6 +45,7 @@ abstract class PatientRecordService
 
         return $modelClass::query()
             ->where('medical_information_id', $user->medical_information_id)
+            ->with($this->eagerLoad())
             ->get();
     }
 
@@ -55,19 +64,24 @@ abstract class PatientRecordService
             'medical_information_id' => $actor->medical_information_id,
         ]);
 
+        $this->recordCreatedAuditAndBroadcast($record, $actor, array_keys($data));
+
+        return $record;
+    }
+
+    protected function recordCreatedAuditAndBroadcast(Model $record, User $actor, array $fields): void
+    {
         $this->auditLogger->log(
             action: "{$this->recordType()}.created",
             type: AuditLogType::Create,
             actor: $actor,
             subject: $actor,
-            metadata: ['fields' => array_keys($data)],
+            metadata: ['fields' => $fields],
             channel: 'api',
             record: $record,
         );
 
         $this->broadcast($record, $actor);
-
-        return $record;
     }
 
     /**

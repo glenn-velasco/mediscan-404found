@@ -1,18 +1,18 @@
-name: 'Emergency Contacts'
+name: Medications
 description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/emergency-contacts
+    uri: api/v1/medications
     metadata:
       custom: []
-      groupName: 'Emergency Contacts'
+      groupName: Medications
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Lists every emergency contact on the authenticated user's own linked medical information record."
+      title: "Lists every medication on the authenticated user's own linked medical information record."
       description: ''
       authenticated: true
       deprecated: false
@@ -31,7 +31,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":[{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Maria Dela Cruz","relationship":"spouse","phone_country_code":"63","phone":"9171234567","is_primary":true,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}]}'
+        content: '{"status":200,"message":"Success","data":[{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Metformin","dosage":"500mg","frequency":"Twice daily","notes":null,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}]}'
         headers: []
         description: ''
     responseFields: []
@@ -46,14 +46,14 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/emergency-contacts
+    uri: api/v1/medications
     metadata:
       custom: []
-      groupName: 'Emergency Contacts'
+      groupName: Medications
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: "Creates an emergency contact on the authenticated user's own linked medical information record."
+      title: "Creates a medication on the authenticated user's own linked medical information record."
       description: ''
       authenticated: true
       deprecated: false
@@ -82,16 +82,38 @@ endpoints:
         name: name
         description: ''
         required: true
-        example: 'Maria Dela Cruz'
+        example: Metformin
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      relationship:
+      dosage:
         custom: []
-        name: relationship
-        description: 'One of: parent, spouse, sibling, child, guardian, friend, other.'
+        name: dosage
+        description: ''
+        required: false
+        example: 500mg
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      frequency:
+        custom: []
+        name: frequency
+        description: ''
+        required: false
+        example: 'Twice daily'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: ''
         required: false
         example: architecto
         type: string
@@ -99,52 +121,18 @@ endpoints:
         exampleWasSpecified: false
         nullable: true
         deprecated: false
-      phone_country_code:
-        custom: []
-        name: phone_country_code
-        description: ''
-        required: false
-        example: '63'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      phone:
-        custom: []
-        name: phone
-        description: ''
-        required: false
-        example: '9171234567'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      is_primary:
-        custom: []
-        name: is_primary
-        description: ''
-        required: false
-        example: false
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
     cleanBodyParameters:
       id: 9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f
-      name: 'Maria Dela Cruz'
-      relationship: architecto
-      phone_country_code: '63'
-      phone: '9171234567'
-      is_primary: false
+      name: Metformin
+      dosage: 500mg
+      frequency: 'Twice daily'
+      notes: architecto
     fileParameters: []
     responses:
       -
         custom: []
         status: 201
-        content: '{"status":201,"message":"Emergency contact created.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Maria Dela Cruz","relationship":"spouse","phone_country_code":"63","phone":"9171234567","is_primary":true,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":201,"message":"Medication created.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Metformin","dosage":"500mg","frequency":"Twice daily","notes":null,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
@@ -165,10 +153,10 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/emergency-contacts/{emergencyContact_id}'
+    uri: 'api/v1/medications/{id}'
     metadata:
       custom: []
-      groupName: 'Emergency Contacts'
+      groupName: Medications
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -181,10 +169,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      emergencyContact_id:
+      id:
         custom: []
-        name: emergencyContact_id
-        description: 'The ID of the emergencyContact.'
+        name: id
+        description: 'The ID of the medication.'
         required: true
         example: architecto
         type: string
@@ -193,7 +181,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      emergencyContact_id: architecto
+      id: architecto
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -203,7 +191,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Success","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Maria Dela Cruz","relationship":"spouse","phone_country_code":"63","phone":"9171234567","is_primary":true,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":200,"message":"Success","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Metformin","dosage":"500mg","frequency":"Twice daily","notes":null,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
@@ -225,10 +213,10 @@ endpoints:
     httpMethods:
       - PUT
       - PATCH
-    uri: 'api/v1/emergency-contacts/{emergencyContact_id}'
+    uri: 'api/v1/medications/{id}'
     metadata:
       custom: []
-      groupName: 'Emergency Contacts'
+      groupName: Medications
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -241,10 +229,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      emergencyContact_id:
+      id:
         custom: []
-        name: emergencyContact_id
-        description: 'The ID of the emergencyContact.'
+        name: id
+        description: 'The ID of the medication.'
         required: true
         example: architecto
         type: string
@@ -253,7 +241,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      emergencyContact_id: architecto
+      id: architecto
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
@@ -262,16 +250,38 @@ endpoints:
         name: name
         description: ''
         required: true
-        example: 'Maria Dela Cruz'
+        example: Metformin
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      relationship:
+      dosage:
         custom: []
-        name: relationship
-        description: 'One of: parent, spouse, sibling, child, guardian, friend, other.'
+        name: dosage
+        description: ''
+        required: false
+        example: 500mg
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      frequency:
+        custom: []
+        name: frequency
+        description: ''
+        required: false
+        example: 'Twice daily'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      notes:
+        custom: []
+        name: notes
+        description: ''
         required: false
         example: architecto
         type: string
@@ -279,51 +289,17 @@ endpoints:
         exampleWasSpecified: false
         nullable: true
         deprecated: false
-      phone_country_code:
-        custom: []
-        name: phone_country_code
-        description: ''
-        required: false
-        example: '63'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      phone:
-        custom: []
-        name: phone
-        description: ''
-        required: false
-        example: '9171234567'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: true
-        deprecated: false
-      is_primary:
-        custom: []
-        name: is_primary
-        description: ''
-        required: false
-        example: false
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
     cleanBodyParameters:
-      name: 'Maria Dela Cruz'
-      relationship: architecto
-      phone_country_code: '63'
-      phone: '9171234567'
-      is_primary: false
+      name: Metformin
+      dosage: 500mg
+      frequency: 'Twice daily'
+      notes: architecto
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Emergency contact updated.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Maria Dela Cruz","relationship":"spouse","phone_country_code":"63","phone":"9171234567","is_primary":true,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
+        content: '{"status":200,"message":"Medication updated.","data":{"id":"9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f","name":"Metformin","dosage":"500mg","frequency":"Twice daily","notes":null,"created_at":"2026-07-22T00:00:00.000000Z","updated_at":"2026-07-22T00:00:00.000000Z"}}'
         headers: []
         description: ''
       -
@@ -344,10 +320,10 @@ endpoints:
     custom: []
     httpMethods:
       - DELETE
-    uri: 'api/v1/emergency-contacts/{emergencyContact_id}'
+    uri: 'api/v1/medications/{id}'
     metadata:
       custom: []
-      groupName: 'Emergency Contacts'
+      groupName: Medications
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
@@ -360,10 +336,10 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      emergencyContact_id:
+      id:
         custom: []
-        name: emergencyContact_id
-        description: 'The ID of the emergencyContact.'
+        name: id
+        description: 'The ID of the medication.'
         required: true
         example: architecto
         type: string
@@ -372,7 +348,7 @@ endpoints:
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      emergencyContact_id: architecto
+      id: architecto
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -382,7 +358,7 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":200,"message":"Emergency contact deleted.","data":null}'
+        content: '{"status":200,"message":"Medication deleted.","data":null}'
         headers: []
         description: ''
       -

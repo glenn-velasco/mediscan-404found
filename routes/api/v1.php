@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AccountRetrievalRequestController;
 use App\Http\Controllers\Api\V1\AllergyController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\ConditionController;
 use App\Http\Controllers\Api\V1\DeviceKeyController;
 use App\Http\Controllers\Api\V1\DiagnosisController;
 use App\Http\Controllers\Api\V1\EmailVerificationController;
@@ -82,7 +83,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/medical-information/{medicalInformation}/avatar', [MedicalInformationController::class, 'updateAvatar']);
 
         Route::apiResource('allergies', AllergyController::class)->parameters(['allergies' => 'allergy']);
-        Route::apiResource('diagnoses', DiagnosisController::class)->parameters(['diagnoses' => 'diagnosis']);
+        Route::apiResource('conditions', ConditionController::class)->parameters(['conditions' => 'condition']);
+        Route::post('/medical-information/{medicalInformation}/diagnoses', [DiagnosisController::class, 'store']);
+        Route::apiResource('diagnoses', DiagnosisController::class)->parameters(['diagnoses' => 'diagnosis'])->except(['store']);
         Route::apiResource('medications', MedicationController::class)->parameters(['medications' => 'medication']);
         Route::apiResource('emergency-contacts', EmergencyContactController::class)->parameters(['emergency-contacts' => 'emergencyContact']);
 

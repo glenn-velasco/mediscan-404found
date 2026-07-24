@@ -414,18 +414,11 @@ class MedicalInformationService
      */
     private function flushCache(MedicalInformation $medicalInformation, ?array $linkedUserIds = null): void
     {
-        Cache::forget($this->cacheKey($medicalInformation->id));
-
         $linkedUserIds ??= $medicalInformation->users()->pluck('id')->all();
 
         foreach ($linkedUserIds as $userId) {
             Cache::forget($this->byUserCacheKey($userId));
         }
-    }
-
-    private function cacheKey(int $id): string
-    {
-        return "medical_information.{$id}";
     }
 
     private function byUserCacheKey(int $userId): string

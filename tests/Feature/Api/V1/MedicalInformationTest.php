@@ -65,16 +65,20 @@ it('allows an unverified user to create medical information', function () {
         ->assertCreated();
 });
 
-it('updates medical information with nested contacts and invalidates cache', function () {
+it('updates medical information with nested contacts and invalidates the by-user cache', function () {
     $user = User::factory()->create(['email_verified_at' => now()]);
     Sanctum::actingAs($user, ['*']);
 
     $this->postJson('/api/v1/medical-information', medicalInformationPayload());
     $medicalInformation = MedicalInformation::query()->firstOrFail();
 
-    // warm the cache
-    $this->getJson("/api/v1/medical-information/{$medicalInformation->id}")->assertOk();
-    expect(Cache::has("medical_information.{$medicalInformation->id}"))->toBeTrue();
+    // warm the cache - GET /medical-information (index) resolves the caller's own
+    // record via findForUser(), which caches the medical_information_id lookup
+    // by user id (see MedicalInformationService::findForUser/byUserCacheKey).
+    // GET /medical-information/{id} (show) intentionally isn't cached - see the
+    // comment on MedicalInformationService::find().
+    $this->getJson('/api/v1/medical-information')->assertOk();
+    expect(Cache::has("medical_information.by_user.{$user->id}"))->toBeTrue();
 
     $this->putJson("/api/v1/medical-information/{$medicalInformation->id}", [
         'contacts' => [
@@ -84,7 +88,7 @@ it('updates medical information with nested contacts and invalidates cache', fun
         ->assertOk()
         ->assertJsonCount(1, 'data.contacts');
 
-    expect(Cache::has("medical_information.{$medicalInformation->id}"))->toBeFalse();
+    expect(Cache::has("medical_information.by_user.{$user->id}"))->toBeFalse();
 });
 
 it('validates blood type against the enum', function () {
