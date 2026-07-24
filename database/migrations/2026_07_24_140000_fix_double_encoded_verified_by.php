@@ -11,7 +11,7 @@ return new class extends Migration
 
         foreach ($tables as $table) {
             $rows = DB::select(
-                "SELECT id, verified_by::text AS verified_by FROM {$table} WHERE verified_by IS NOT NULL"
+                "SELECT id, verified_by FROM {$table} WHERE verified_by IS NOT NULL"
             );
 
             foreach ($rows as $row) {
