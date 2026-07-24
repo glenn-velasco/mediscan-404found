@@ -25,6 +25,8 @@ class DiagnosisResource extends JsonResource
                 'id' => $this->diagnosedBy->id,
                 'fullname' => $this->diagnosedBy->fullname,
             ],
+            'verified_by' => $this->verified_by,
+            'verified_count' => $this->getVerifiedCount(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

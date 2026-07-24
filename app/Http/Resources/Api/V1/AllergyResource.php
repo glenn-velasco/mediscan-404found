@@ -21,6 +21,8 @@ class AllergyResource extends JsonResource
             'allergen' => $this->allergen,
             'reaction' => $this->reaction,
             'severity' => $this->severity->value,
+            'verified_by' => $this->verified_by,
+            'verified_count' => $this->getVerifiedCount(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

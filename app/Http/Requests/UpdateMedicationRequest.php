@@ -6,9 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateMedicationRequest extends FormRequest
 {
+    use DecodesVerifiedBy;
+
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->prepareForVerifiedByDecoding();
     }
 
     /** @return array<string, mixed> */
@@ -19,6 +26,7 @@ class UpdateMedicationRequest extends FormRequest
             'dosage' => ['nullable', 'string', 'max:255'],
             'frequency' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'verified_by' => ['nullable', 'array'],
         ];
     }
 }
