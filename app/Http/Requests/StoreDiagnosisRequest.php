@@ -28,6 +28,9 @@ class StoreDiagnosisRequest extends FormRequest
             'condition' => ['required', 'string', 'max:255'],
             'date_of_diagnosis' => ['nullable', 'date', 'before_or_equal:today'],
             'severity' => ['nullable', new Enum(DiagnosisSeverity::class)],
+            'diagnosed_by' => ['nullable', 'array'],
+            'diagnosed_by.id' => ['required_with:diagnosed_by', 'integer', 'exists:users,id'],
+            'diagnosed_by.fullname' => ['required_with:diagnosed_by', 'string', 'max:255'],
             'verified_by' => ['nullable', 'array'],
         ];
     }
