@@ -93,7 +93,7 @@ trait ProfileValidationRules
      */
     protected function phoneNumberRules(): array
     {
-        return ['nullable', 'string', (new Phone)->international()];
+        return ['nullable', 'string', (new Phone)->international()->countryField('phone_country_code')];
     }
 
     /**

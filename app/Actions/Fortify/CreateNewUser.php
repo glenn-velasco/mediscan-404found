@@ -121,7 +121,7 @@ class CreateNewUser implements CreatesNewUsers
         return [
             ...$this->profileRules(),
             'address' => ['required', 'string', 'max:1000'],
-            'phone_number' => ['required', 'string', (new Phone)->international()],
+            'phone_number' => ['required', 'string', (new Phone)->international()->countryField('phone_country_code')],
             'phone_country_code' => ['required', 'string', 'max:5'],
             'password' => $this->passwordRules(),
         ];
