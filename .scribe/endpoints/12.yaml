@@ -299,7 +299,7 @@ endpoints:
         name: 'contacts[].relationship'
         description: ''
         required: false
-        example: parent
+        example: sibling
         type: string
         enumValues:
           - parent
@@ -361,7 +361,7 @@ endpoints:
         name: 'transfusion_consents[].relationship_to_patient'
         description: ''
         required: false
-        example: spouse
+        example: parent
         type: string
         enumValues:
           - parent
@@ -379,7 +379,7 @@ endpoints:
         name: 'transfusion_consents[].consented_at'
         description: 'This field is required when <code>transfusion_consents</code> is present. Must be a valid date.'
         required: false
-        example: '2026-07-24T05:52:20'
+        example: '2026-07-26T05:29:07'
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -745,7 +745,7 @@ endpoints:
         name: 'contacts[].relationship'
         description: ''
         required: false
-        example: sibling
+        example: spouse
         type: string
         enumValues:
           - parent
@@ -785,7 +785,7 @@ endpoints:
         name: 'contacts[].is_primary'
         description: ''
         required: false
-        example: true
+        example: false
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -807,7 +807,7 @@ endpoints:
         name: 'transfusion_consents[].relationship_to_patient'
         description: ''
         required: false
-        example: other
+        example: parent
         type: string
         enumValues:
           - parent
@@ -825,7 +825,7 @@ endpoints:
         name: 'transfusion_consents[].consented_at'
         description: 'This field is required when <code>transfusion_consents</code> is present. Must be a valid date.'
         required: false
-        example: '2026-07-24T05:52:20'
+        example: '2026-07-26T05:29:07'
         type: string
         enumValues: []
         exampleWasSpecified: false

@@ -110,6 +110,17 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         deprecated: false
+      verified_by:
+        custom: []
+        name: verified_by
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
     cleanBodyParameters:
       id: 9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f
       allergen: Peanuts
@@ -265,6 +276,17 @@ endpoints:
         enumValues: []
         exampleWasSpecified: false
         nullable: false
+        deprecated: false
+      verified_by:
+        custom: []
+        name: verified_by
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
         deprecated: false
     cleanBodyParameters:
       allergen: Peanuts

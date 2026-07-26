@@ -267,3 +267,88 @@ endpoints:
     controller: null
     method: null
     route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/professional/patients/{patient_id}/verifications'
+    metadata:
+      custom: []
+      groupName: Professional
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Track a verification directly (without an envelope).'
+      description: |-
+        Used by the mobile app to update verified_by when a professional
+        toggles verification status locally and syncs to the server.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      patient_id:
+        custom: []
+        name: patient_id
+        description: 'The ID of the patient.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      patient_id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      envelope_type:
+        custom: []
+        name: envelope_type
+        description: 'Type of verification.'
+        required: true
+        example: allergy_verification
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      item_identifier:
+        custom: []
+        name: item_identifier
+        description: 'The item identifier (e.g., allergen name).'
+        required: true
+        example: Penicillin
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      verified:
+        custom: []
+        name: verified
+        description: 'Whether the item is verified.'
+        required: true
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      envelope_type: allergy_verification
+      item_identifier: Penicillin
+      verified: true
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null

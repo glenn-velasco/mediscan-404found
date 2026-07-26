@@ -83,11 +83,58 @@ endpoints:
         exampleWasSpecified: false
         nullable: true
         deprecated: false
+      diagnosed_by:
+        custom: []
+        name: diagnosed_by
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      diagnosed_by.id:
+        custom: []
+        name: diagnosed_by.id
+        description: 'This field is required when <code>diagnosed_by</code> is present. Must match an existing stored value.'
+        required: false
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      diagnosed_by.fullname:
+        custom: []
+        name: diagnosed_by.fullname
+        description: 'This field is required when <code>diagnosed_by</code> is present. Must not be greater than 255 characters.'
+        required: false
+        example: 'n'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      verified_by:
+        custom: []
+        name: verified_by
+        description: ''
+        required: false
+        example: null
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
     cleanBodyParameters:
       id: 9b1f1c2e-6b7a-4c3a-9c2e-1a2b3c4d5e6f
       condition: 'Type 2 Diabetes'
       date_of_diagnosis: '2020-05-01'
       severity: architecto
+      diagnosed_by:
+        id: 16
+        fullname: 'n'
     fileParameters: []
     responses:
       -
@@ -278,6 +325,17 @@ endpoints:
         required: false
         example: architecto
         type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      verified_by:
+        custom: []
+        name: verified_by
+        description: ''
+        required: false
+        example: null
+        type: object
         enumValues: []
         exampleWasSpecified: false
         nullable: true
