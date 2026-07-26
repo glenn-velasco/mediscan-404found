@@ -122,9 +122,18 @@ Real usages:
 - `resources/js/pages/admin/dashboard.tsx` — listens on `admin-dashboard` for `.UserRegistered` and updates local stats state from the payload.
 - `resources/js/layouts/user-layout.tsx` — listens on the current user's own `App.Models.User.{id}` channel for `.UserDeactivated`/`.UserDeleted` and force-logs the user out (`router.post(logout.url())`) so a deactivated/deleted user's open tab reacts immediately instead of waiting for their next request to hit `CheckUserActive`/`EnsureApiUserActive` middleware. It also listens for `.EmailChanged` on the same channel and does a partial `router.reload({ only: ['auth'] })` so `useAuth()`-driven UI (e.g. the email shown on `resources/js/components/user-info.tsx`) reflects an email change made elsewhere without a full page reload.
 - `resources/js/pages/admin/professional-applications/index.tsx` and `.../show.tsx` — listen on `admin-dashboard` for `.ProfessionalApplicationStatusChanged` and `router.reload()`, so the list/detail view picks up automatic-verification results and other admins' approve/deny actions live.
-- `resources/js/pages/professional-application/show.tsx` — listens on the applicant's own `App.Models.User.{id}` channel for `.ProfessionalApplicationStatusChanged` and `router.reload()`, so the status page updates the moment the background job or an admin decision changes it, without the applicant needing to refresh.
+- `resources/js/pages/professional-application/show.tsx` — listens on the applicant's own `App.Models.User.{id}` channel for `.ProfessionalApplicationStatusChanged` and `router.reload()`, so the status page updates the moment the background job or an admin decision changes it, without the applicant needing to refresh. Also uses a `visibilitychange` listener as a fallback: when the tab regains focus, it reloads the `application` prop so missed WebSocket events (connection drops, auth expiry) don't leave the page stale.
+- `resources/js/layouts/user-layout.tsx` — listens on the current user's own `App.Models.User.{id}` channel for `.ProfessionalApplicationStatusChanged` and `router.reload()`, so the user menu's "Professional Application" link and any status-dependent UI elsewhere in the layout reflect the updated status without requiring a manual page visit.
 - `resources/js/pages/admin/account-retrieval-requests/index.tsx` and `.../show.tsx` — listen on `admin-dashboard` for `.AccountRetrievalRequestStatusChanged` and `router.reload()`, so the queue picks up other admins' approve/deny actions live.
 Note: `EmailVerified`, `MedicalInformationRegistrationMatchCreated`, and `PatientRecordUpdated` are broadcast on `App.Models.User.{id}` but currently have **no frontend consumer** in this repo — this app's frontend is the admin panel; the end-user (requester/primary) experience lives in an external (mobile) client that has yet to be built against these channels.
+
+### Mobile fallback mechanisms
+
+The mobile client (`mediscan-mobile`) has two additional resilience mechanisms for when realtime events are missed:
+
+1. **Subscription diagnostics** (`src/realtime/channels/user-channel.ts`): Binds `pusher:subscription_succeeded` and `pusher:subscription_error` handlers so channel auth failures are visible in console logs. Also logs every received event with `[UserChannel] RECEIVED`.
+
+2. **Foreground refetch** (`src/app/account/index.tsx`, `src/app/professional-application/[id].tsx`): Listens for `AppState` changes and invalidates the relevant React Query caches (`myProfessionalApplicationQueryKey` and `professionalApplicationQueryKey`) when the app returns to the foreground. This ensures the UI updates even if the Pusher WebSocket was disconnected while the app was backgrounded.
 
 ## Testing
 
