@@ -142,6 +142,7 @@ class ProfessionalApplicationService
                 'selfie_path' => $frames->last(),
                 'selfie_frame_paths' => $frames->all(),
                 'liveness_flash_frames' => $livenessFlashFrames,
+                'client_blink_detected' => $data['blink_detected'] ?? false,
                 'status' => WorkflowStatus::Processing->value,
             ]);
 

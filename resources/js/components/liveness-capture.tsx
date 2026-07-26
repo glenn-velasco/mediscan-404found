@@ -4,16 +4,14 @@ import { Button } from '@/components/ui/button';
 
 const MODEL_URL = '/face-api-models';
 const DETECTION_INTERVAL_MS = 150;
-// A reading this far below the recent peak EAR counts as "eyes closed".
-// Relative-to-peak rather than a fixed absolute EAR cutoff, since the tiny
-// landmark model's eye-corner placement is less precise than the full
-// dlib-style model the usual ~0.2 absolute threshold assumes - an absolute
-// cutoff can sit on the wrong side of this model's actual open/closed range
-// entirely, which is what was preventing blinks from ever registering.
-const EAR_DROP_RATIO = 0.85;
-const REQUIRED_BLINKS = 3;
+// --- Blink detection constants (commented out — server-side Google Vision now handles blink detection) ---
+// const EAR_DROP_RATIO = 0.85;
+// const REQUIRED_BLINKS = 3;
 const POSITIONING_TIMEOUT_MS = 12_000;
-const BLINKING_TIMEOUT_MS = 30_000;
+// --- Burst capture constants (replaces client-side blink detection) ---
+const BURST_FRAME_COUNT = 12;
+const BURST_INTERVAL_MS = 250;
+const BURST_TIMEOUT_MS = 5_000;
 const FLASH_COLORS = ['red', 'green', 'blue'] as const;
 const FLASH_DWELL_MS = 700;
 const FLASH_BACKGROUND: Record<(typeof FLASH_COLORS)[number], string> = {
@@ -21,9 +19,7 @@ const FLASH_BACKGROUND: Record<(typeof FLASH_COLORS)[number], string> = {
     green: '#16a34a',
     blue: '#2563eb',
 };
-// Stateless options object - built once and reused across every detection
-// tick instead of being reallocated ~7 times a second during positioning
-// and blinking.
+
 const TINY_FACE_DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({
     scoreThreshold: 0.3,
     inputSize: 160,
@@ -34,7 +30,7 @@ type CaptureStatus =
     | 'loading'
     | 'requesting'
     | 'positioning'
-    | 'blinking'
+    | 'capturing'
     | 'flashing'
     | 'done'
     | 'error';
@@ -64,18 +60,19 @@ async function ensureModelsLoaded(): Promise<void> {
     modelsLoaded = true;
 }
 
-function distance(
-    a: { x: number; y: number },
-    b: { x: number; y: number },
-): number {
-    return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-function eyeAspectRatio(eye: { x: number; y: number }[]): number {
-    const [p1, p2, p3, p4, p5, p6] = eye;
-
-    return (distance(p2, p6) + distance(p3, p5)) / (2 * distance(p1, p4));
-}
+// --- Blink detection helpers (commented out — server-side Google Vision now handles blink detection) ---
+// function distance(
+//     a: { x: number; y: number },
+//     b: { x: number; y: number },
+// ): number {
+//     return Math.hypot(a.x - b.x, a.y - b.y);
+// }
+//
+// function eyeAspectRatio(eye: { x: number; y: number }[]): number {
+//     const [p1, p2, p3, p4, p5, p6] = eye;
+//
+//     return (distance(p2, p6) + distance(p3, p5)) / (2 * distance(p1, p4));
+// }
 
 function wait(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -96,7 +93,6 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
     const [status, setStatus] = useState<CaptureStatus>('idle');
     const [error, setError] = useState<string | null>(null);
     const [faceDetected, setFaceDetected] = useState(false);
-    const [blinkCount, setBlinkCount] = useState(0);
     const [flashIndex, setFlashIndex] = useState<number | null>(null);
 
     function stopDetectionLoop() {
@@ -117,7 +113,6 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
                 clearInterval(detectionTimerRef.current);
             }
         };
-        // Intentionally empty deps: unmount-only cleanup operating on refs.
     }, []);
 
     function fail(message: string) {
@@ -132,7 +127,6 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
         setError(null);
         stoppedRef.current = false;
         selfieFramesRef.current = [];
-        setBlinkCount(0);
         setFlashIndex(null);
 
         try {
@@ -159,7 +153,6 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
         }
     }
 
-    // Step 1: look at the camera until a face is consistently detected.
     function runPositioning() {
         setStatus('positioning');
 
@@ -171,9 +164,6 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
                 return;
             }
 
-            // Computed lazily on the first tick (inside this callback, not
-            // the surrounding handler) so the React Compiler doesn't flag
-            // this render-adjacent function as calling an impure API.
             deadline ??= Date.now() + POSITIONING_TIMEOUT_MS;
 
             if (Date.now() > deadline) {
@@ -182,9 +172,9 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
                 return;
             }
 
-            const result = await detectFace();
+            const detected = await detectFace();
 
-            if (!result) {
+            if (!detected) {
                 consecutiveDetections = 0;
 
                 return;
@@ -201,74 +191,46 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
                     selfieFramesRef.current.push(frame);
                 }
 
-                runBlinking();
+                runBurstCapture();
             }
         }, DETECTION_INTERVAL_MS);
     }
 
-    // Step 2: require 3 real blinks (open -> closed -> open cycles) before
-    // proceeding - a user who never blinks cannot continue.
-    function runBlinking() {
-        setStatus('blinking');
+    function runBurstCapture() {
+        setStatus('capturing');
 
+        let frameIndex = 0;
         let deadline: number | null = null;
-        let completedBlinks = 0;
-        let eyeState: 'open' | 'closed' = 'open';
-        let peakEar = 0;
 
         detectionTimerRef.current = setInterval(async () => {
             if (stoppedRef.current) {
                 return;
             }
 
-            deadline ??= Date.now() + BLINKING_TIMEOUT_MS;
+            deadline ??= Date.now() + BURST_TIMEOUT_MS;
 
-            if (Date.now() > deadline) {
-                fail(
-                    `We only detected ${completedBlinks} of ${REQUIRED_BLINKS} blinks. Please try again and blink naturally.`,
-                );
+            if (Date.now() > deadline || frameIndex >= BURST_FRAME_COUNT) {
+                stopDetectionLoop();
+
+                if (selfieFramesRef.current.length < 3) {
+                    fail('Capture failed — please try again.');
+
+                    return;
+                }
+
+                void runFlashSequence();
 
                 return;
             }
 
-            const result = await detectFace();
+            const frame = captureFrame(`selfie-burst-${frameIndex}.jpg`);
 
-            if (!result) {
-                return;
+            if (frame) {
+                selfieFramesRef.current.push(frame);
             }
 
-            peakEar = Math.max(peakEar, result.ear);
-            const threshold = peakEar * EAR_DROP_RATIO;
-            const isClosed = peakEar > 0 && result.ear <= threshold;
-
-            if (isClosed && eyeState === 'open') {
-                eyeState = 'closed';
-                const frame = captureFrame(
-                    `selfie-blink-${completedBlinks}-closed.jpg`,
-                );
-
-                if (frame) {
-                    selfieFramesRef.current.push(frame);
-                }
-            } else if (!isClosed && eyeState === 'closed') {
-                eyeState = 'open';
-                completedBlinks += 1;
-                setBlinkCount(completedBlinks);
-
-                const frame = captureFrame(
-                    `selfie-blink-${completedBlinks}-open.jpg`,
-                );
-
-                if (frame) {
-                    selfieFramesRef.current.push(frame);
-                }
-
-                if (completedBlinks >= REQUIRED_BLINKS) {
-                    stopDetectionLoop();
-                    void runFlashSequence();
-                }
-            }
-        }, DETECTION_INTERVAL_MS);
+            frameIndex += 1;
+        }, BURST_INTERVAL_MS);
     }
 
     // Step 3: flash red/green/blue in sequence and capture one frame per
@@ -313,15 +275,15 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
         });
     }
 
-    async function detectFace(): Promise<{ ear: number } | null> {
+    async function detectFace(): Promise<boolean> {
         if (detectionBusyRef.current) {
-            return null;
+            return false;
         }
 
         const video = videoRef.current;
 
         if (!video || video.videoWidth === 0) {
-            return null;
+            return false;
         }
 
         detectionBusyRef.current = true;
@@ -331,28 +293,68 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
                 .detectSingleFace(video, TINY_FACE_DETECTOR_OPTIONS)
                 .withFaceLandmarks(true);
 
-            setFaceDetected(!!result);
+            const detected = !!result;
+            setFaceDetected(detected);
 
             if (!result) {
                 clearOverlayBox();
 
-                return null;
+                return false;
             }
 
             drawOverlayBox(result.detection.box, video);
 
-            const leftEar = eyeAspectRatio(result.landmarks.getLeftEye());
-            const rightEar = eyeAspectRatio(result.landmarks.getRightEye());
-
-            return { ear: (leftEar + rightEar) / 2 };
+            return true;
         } catch (e) {
             console.error('Face detection error:', e);
 
-            return null;
+            return false;
         } finally {
             detectionBusyRef.current = false;
         }
     }
+
+    // --- Blink-detecting detectFace (commented out — server-side Google Vision now handles blink detection) ---
+    // async function detectFace(): Promise<{ ear: number } | null> {
+    //     if (detectionBusyRef.current) {
+    //         return null;
+    //     }
+    //
+    //     const video = videoRef.current;
+    //
+    //     if (!video || video.videoWidth === 0) {
+    //         return null;
+    //     }
+    //
+    //     detectionBusyRef.current = true;
+    //
+    //     try {
+    //         const result = await faceapi
+    //             .detectSingleFace(video, TINY_FACE_DETECTOR_OPTIONS)
+    //             .withFaceLandmarks(true);
+    //
+    //         setFaceDetected(!!result);
+    //
+    //         if (!result) {
+    //             clearOverlayBox();
+    //
+    //             return null;
+    //         }
+    //
+    //         drawOverlayBox(result.detection.box, video);
+    //
+    //         const leftEar = eyeAspectRatio(result.landmarks.getLeftEye());
+    //         const rightEar = eyeAspectRatio(result.landmarks.getRightEye());
+    //
+    //         return { ear: (leftEar + rightEar) / 2 };
+    //     } catch (e) {
+    //         console.error('Face detection error:', e);
+    //
+    //         return null;
+    //     } finally {
+    //         detectionBusyRef.current = false;
+    //     }
+    // }
 
     function clearOverlayBox() {
         const canvas = overlayCanvasRef.current;
@@ -429,7 +431,6 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
         setStatus('idle');
         setError(null);
         setFaceDetected(false);
-        setBlinkCount(0);
         setFlashIndex(null);
         onReset();
     }
@@ -437,7 +438,7 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
     const isLive =
         status === 'requesting' ||
         status === 'positioning' ||
-        status === 'blinking' ||
+        status === 'capturing' ||
         status === 'flashing';
 
     return (
@@ -480,8 +481,7 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
                     <div className="absolute bottom-2 left-2 flex flex-wrap gap-1.5">
                         <span className="rounded-full bg-black/60 px-3 py-1 text-xs text-white">
                             {status === 'positioning' && 'Look at the camera…'}
-                            {status === 'blinking' &&
-                                `Blink naturally… ${blinkCount}/${REQUIRED_BLINKS}`}
+                            {status === 'capturing' && 'Hold still…'}
                             {status === 'requesting' && 'Starting camera…'}
                         </span>
                         <span className="rounded-full bg-black/60 px-3 py-1 text-xs text-white">
@@ -516,7 +516,7 @@ export function LivenessCapture({ onCaptured, onReset }: LivenessCaptureProps) {
                     {status === 'loading' && 'Loading face tracking…'}
                     {status === 'requesting' && 'Requesting camera…'}
                     {status === 'positioning' && 'Positioning…'}
-                    {status === 'blinking' && 'Waiting for blinks…'}
+                    {status === 'capturing' && 'Capturing frames…'}
                     {status === 'flashing' && 'Flashing…'}
                 </Button>
             )}

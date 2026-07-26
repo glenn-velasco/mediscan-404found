@@ -35,6 +35,7 @@ class SubmitProfessionalApplicationRequest extends FormRequest
                 },
             ],
             'flash_colors.*' => ['string', Rule::in(LivenessFlashColor::values())],
+            'blink_detected' => ['sometimes', 'boolean'],
         ];
     }
 }
