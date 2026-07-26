@@ -25,9 +25,10 @@ interface FaceMatchClientContract
      *
      * @param  array<int, string>  $frameContents  blink-detection burst, raw bytes
      * @param  array<int, array{contents: string, color: string}>  $flashFrames  one frame per on-screen flash color, raw bytes
+     * @param  bool  $clientBlinkDetected  when true, the server trusts the client's blink detection (e.g. ML Kit) and skips its own
      * @return array{live: bool, score: float, blink_detected: bool, color_reflection_passed: bool}
      *
      * @throws KycSidecarUnavailableException when the sidecar cannot be reached after retries
      */
-    public function checkLiveness(array $frameContents, array $flashFrames): array;
+    public function checkLiveness(array $frameContents, array $flashFrames, bool $clientBlinkDetected = false): array;
 }

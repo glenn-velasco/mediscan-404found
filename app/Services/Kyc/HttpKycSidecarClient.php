@@ -58,9 +58,10 @@ class HttpKycSidecarClient implements FaceMatchClientContract, OcrClientContract
     /**
      * @param  array<int, string>  $frameContents
      * @param  array<int, array{contents: string, color: string}>  $flashFrames
+     * @param  bool  $clientBlinkDetected  ignored — the Python sidecar performs its own blink detection
      * @return array{live: bool, score: float, blink_detected: bool, color_reflection_passed: bool}
      */
-    public function checkLiveness(array $frameContents, array $flashFrames): array
+    public function checkLiveness(array $frameContents, array $flashFrames, bool $clientBlinkDetected = false): array
     {
         $response = $this->post('/liveness', function (PendingRequest $request) use ($frameContents, $flashFrames) {
             foreach ($frameContents as $index => $contents) {

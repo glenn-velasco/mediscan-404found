@@ -117,7 +117,11 @@ class ProcessProfessionalApplication implements ShouldQueue
             }
 
             try {
-                $liveness = $faceMatchClient->checkLiveness($frameContentsByPath->values()->all(), $flashFrameContents);
+                $liveness = $faceMatchClient->checkLiveness(
+                    $frameContentsByPath->values()->all(),
+                    $flashFrameContents,
+                    $application->client_blink_detected,
+                );
             } catch (KycSidecarUnavailableException $e) {
                 $this->logKycFailure($application, 'liveness check', $e);
                 $this->recordFailureNote($application, 'Liveness check service unavailable; manual review required.');

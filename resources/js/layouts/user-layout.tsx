@@ -47,6 +47,10 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
         router.reload({ only: ['auth'] }),
     );
 
+    useEcho(`App.Models.User.${user?.id}`, '.ProfessionalApplicationStatusChanged', () =>
+        router.reload(),
+    );
+
     return (
         <div className="min-h-screen bg-muted/30">
             {/* Top navbar */}
