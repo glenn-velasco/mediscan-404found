@@ -14,8 +14,10 @@ use App\Http\Controllers\BroadcastingDocsController;
 use App\Http\Controllers\MedicalInformationRegistrationMatchController;
 use App\Http\Controllers\ProfessionalApplicationController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\WellKnownController;
 use App\Http\Middleware\CheckUserActive;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 

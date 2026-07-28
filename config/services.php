@@ -50,4 +50,27 @@ return [
         'project_id' => env('GOOGLE_CLOUD_PROJECT'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mobile App Links / Universal Links
+    |--------------------------------------------------------------------------
+    |
+    | These values are used to serve the /.well-known files that Android and
+    | iOS use to verify domain-to-app associations. When configured, clicking
+    | a link to app.mediscan.cloud will show an "Open with MediScan" prompt
+    | on the user's phone instead of opening the browser.
+    |
+    | android_sha256: The SHA-256 fingerprint of the signing certificate.
+    |   Get it with: eas credentials --platform android
+    |
+    | ios_team_id: Your Apple Developer Team ID (10 characters).
+    |   Find it at https://developer.apple.com/account → Membership
+    |
+    */
+
+    'app_links' => [
+        'android_sha256' => env('ANDROID_SHA256_FINGERPRINT'),
+        'ios_team_id' => env('IOS_TEAM_ID'),
+    ],
+
 ];

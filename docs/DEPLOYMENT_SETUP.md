@@ -454,6 +454,84 @@ If Vision access isn't set up yet, or you want to temporarily revert: SSH in and
 
 ---
 
-## 9. Notes for public repo
+## 9. Mobile app deep linking (App Links / Universal Links)
+
+When users click the email verification link on their phone, the OS can show an "Open with MediScan" prompt instead of opening the browser. This requires serving two verification files on the `app.mediscan.cloud` domain.
+
+### 9.1 How it works
+
+1. User receives verification email on their phone
+2. Email contains: `https://app.mediscan.cloud/api/v1/verify-email/{id}/{hash}?signature=...`
+3. OS checks if the app is installed and the domain is verified
+4. If verified: "Open with MediScan" prompt appears → app opens directly
+5. If not verified (or app not installed): browser opens → server redirects to `mediscanmobile://email-verified`
+
+### 9.2 Server-side files
+
+The Laravel app serves the verification files at:
+
+- `/.well-known/assetlinks.json` — Android App Links
+- `/.well-known/apple-app-site-association` — iOS Universal Links
+
+Both are served by `WellKnownController` (`app/Http/Controllers/WellKnownController.php`) and return 404 if the config values are missing (safe for local dev).
+
+### 9.3 Configuration
+
+Add these to your production `.env`:
+
+```bash
+# Android: SHA-256 fingerprint of the signing certificate
+# Get it with: eas credentials --platform android
+ANDROID_SHA256_FINGERPRINT=AA:BB:CC:...
+
+# iOS: Apple Developer Team ID (10 characters)
+# Find it at https://developer.apple.com/account -> Membership
+IOS_TEAM_ID=ABC1234567
+```
+
+These are read by `config/services.php` → `app_links` section.
+
+### 9.4 Getting the SHA-256 fingerprint
+
+```bash
+# From EAS (production builds)
+eas credentials --platform android
+
+# From local keystore (debug builds)
+keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android
+
+# From installed APK
+keytool -printcert -jarfile app.apk
+```
+
+### 9.5 Mobile app configuration
+
+The Expo app (`app.json`) is already configured with:
+
+- **Android**: `intentFilters` for `https://app.mediscan.cloud/api/v1/verify-email`
+- **iOS**: `associatedDomains` for `applinks:app.mediscan.cloud`
+
+These only take effect in production builds (EAS). Development builds use the custom scheme (`mediscanmobile://`) as a fallback.
+
+### 9.6 Verifying it worked
+
+After deploying with the config values set:
+
+1. **Android**: Open `https://app.mediscan.cloud/.well-known/assetlinks.json` in a browser — should return JSON with your package name and SHA-256 fingerprint
+2. **iOS**: Open `https://app.mediscan.cloud/.well-known/apple-app-site-association` in a browser — should return JSON with your Team ID and app ID
+3. **Test on device**: Send a verification email, tap the link on your phone — should show "Open with MediScan" (Android) or open the app directly (iOS)
+
+### 9.7 Troubleshooting
+
+| Issue | Cause | Fix |
+|---|---|---|
+| No "Open with" prompt | `ANDROID_SHA256_FINGERPRINT` not set | Set in production `.env` and redeploy |
+| Browser opens instead of app | App not installed or domain not verified | Install the app, check `assetlinks.json` is served correctly |
+| 404 on `.well-known` files | Config values are empty | Set `ANDROID_SHA256_FINGERPRINT` and/or `IOS_TEAM_ID` in `.env` |
+| Deep link opens app but shows wrong screen | Route not registered in `_layout.tsx` | Check `email-verified` is in the `guard={ready}` block |
+
+---
+
+## 10. Notes for public repo
 
 The repo is currently private; if/when it goes public, run a one-time git-history secret scan first (e.g. `gitleaks detect` or `trufflehog` over the **full history**, not just the current tree) — going public exposes every past commit, not just HEAD. `infrastructure/.env`/`.env.production` are blank-value templates and should stay that way forever; real values only ever go into the GitHub secrets/variables above, never into a tracked file. After going public, verify GitHub secret scanning + push protection are enabled as an ongoing safety net.
