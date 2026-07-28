@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(RoleAndPermissionSeeder::class);
-        
+
         $email = config('app.admin_email', 'admin@mediscan.cloud');
         $password = config('app.admin_password');
 
