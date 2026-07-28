@@ -22,12 +22,13 @@ These are modeled as two separate tables: `Condition`/`conditions` (a single fre
 
 ## Professional verification tracking
 
-When a professional verifies a patient's allergy, condition, diagnosis, or medication, the verification status is tracked directly on the record via a `verified_by` JSON column. This applies equally to all four medical record types:
+When a professional verifies a patient's allergy, condition, diagnosis, medication, or emergency contact, the verification status is tracked directly on the record via a `verified_by` JSON column. This applies equally to all four medical record types:
 
 - `allergies.verified_by`
 - `conditions.verified_by`
 - `diagnoses.verified_by`
 - `medications.verified_by`
+- \mergency_contacts.verified_by
 
 This enables:
 
@@ -37,7 +38,7 @@ This enables:
 
 ### How it works
 
-1. **Envelope submission**: When a professional submits a verification envelope via `POST /professional/patients/{patient}/envelopes`, the server automatically updates the `verified_by` JSON column on the target record.
+1. **Envelope submission**: When a professional submits a verification envelope (allergy_verification, condition_verification, diagnosis_verification, medication_verification, or emergency_contact_verification) via `POST /professional/patients/{patient}/envelopes`, the server automatically updates the `verified_by` JSON column on the target record.
 
 2. **Verification status**: `GET /professional/patients/{patient}/verifications` returns the current professional's verification status for each item type.
 
@@ -77,7 +78,7 @@ This was a deliberate simplification over the alternative (server always owns th
 
 ## Server-side shape
 
-- **Models**: `App\Models\Allergy`, `Condition`, `Diagnosis`, `Medication`, `EmergencyContact` — each `belongsTo(MedicalInformation::class)`, each with a UUID primary key (`public $incrementing = false; protected $keyType = 'string';`), each `use SoftDeletes`.
+- **Models**: `App\Models\Allergy`, `Condition`, `Diagnosis`, `Medication`, `EmergencyContact` — each `belongsTo(MedicalInformation::class)`, each with a UUID primary key (`public $incrementing = false; protected $keyType = 'string';`), each `use SoftDeletes`. `Allergy`, `Condition`, `Diagnosis`, `Medication`, and `EmergencyContact` also use the `HasVerifications` trait for professional verification tracking.
 - **Encryption**: PHI free-text fields use Laravel's `encrypted` cast (`allergen`, `reaction`, condition's `description`, diagnosis's `condition`, medication `name`/`dosage`/`notes`, contact `name`/`phone`) — same convention as `MedicalInformation` (see `docs/ARCHITECTURE.md` and the migration comments on each table for which fields are deliberately *not* encrypted, e.g. `severity` enums, and why).
 - **Ownership**: `App\Policies\AllergyPolicy`/`ConditionPolicy`/`DiagnosisPolicy`/`MedicationPolicy`/`EmergencyContactPolicy` — a user may act on a record only if they're one of the (possibly several) users linked to its parent `medical_information` row, mirroring `MedicalInformationPolicy`. Controllers return 404 (not 403) for a record that exists but isn't owned by the requester, matching the existing "never reveal a record exists to someone who doesn't own it" convention. **Diagnoses are the one exception to "patient-authored"**: authoring a diagnosis additionally requires the `VerifiedProfessional` permission (see "Diagnosis authorization" below). Allergies, conditions, medications, and emergency contacts remain patient-self-authored.
 - **CRUD logic**: `App\Services\Medical\PatientRecordService` (abstract) holds the shared create/update/delete/list logic — audit logging and the `PatientRecordUpdated` broadcast are identical across all five resources, so that part is centralized; `AllergyService`/`ConditionService`/`DiagnosisService`/`MedicationService`/`EmergencyContactService` are thin subclasses naming their model and record-type label. Controllers stay one-per-resource (`AllergyController` etc.) rather than a shared generic controller — PHP's parameter-type variance rules don't allow a shared base controller to accept different `FormRequest` subtypes per resource cleanly, and one-controller-per-resource also matches this codebase's existing convention (`MedicalInformationController` has no shared base either).
