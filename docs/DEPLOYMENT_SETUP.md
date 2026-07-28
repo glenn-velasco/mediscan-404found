@@ -525,15 +525,23 @@ Both are served by `WellKnownController` (`app/Http/Controllers/WellKnownControl
 
 ### 9.3 Configuration
 
-Add these to your production `.env`:
+#### GitHub Environment variables
+
+Add these to the **production** GitHub Environment (Settings → Environments → production → Environment variables → Add variable):
+
+| Name | Value |
+|---|---|
+| `ANDROID_SHA256_FINGERPRINT` | SHA-256 from `eas credentials --platform android` (see §9.4) |
+| `IOS_TEAM_ID` | Apple Developer Team ID (10 characters) — find at https://developer.apple.com/account → Membership |
+
+Also add `ANDROID_SHA256_FINGERPRINT` to the **staging** Environment if you want App Links on staging (same value, same keystore).
+
+#### Production `.env`
+
+`deploy.yml` writes these into the shipped `.env` automatically from the GitHub Environment variables:
 
 ```bash
-# Android: SHA-256 fingerprint of the signing certificate
-# Get it with: eas credentials --platform android
-ANDROID_SHA256_FINGERPRINT=AA:BB:CC:...
-
-# iOS: Apple Developer Team ID (10 characters)
-# Find it at https://developer.apple.com/account -> Membership
+ANDROID_SHA256_FINGERPRINT=4E:FE:A5:6D:4A:86:ED:0F:33:9B:AC:00:39:0B:E3:AE:58:3B:67:CD:BA:9A:35:03:A0:8B:E0:B8:53:F0:DA:30
 IOS_TEAM_ID=ABC1234567
 ```
 
@@ -541,16 +549,45 @@ These are read by `config/services.php` → `app_links` section.
 
 ### 9.4 Getting the SHA-256 fingerprint
 
+#### From EAS (recommended for Expo builds)
+
+EAS manages the keystore for you. Run this to get the SHA-256:
+
 ```bash
-# From EAS (production builds)
 eas credentials --platform android
+```
 
-# From local keystore (debug builds)
+Select your build profile (e.g., `production` or `preview`) → it shows:
+- Keystore alias
+- Keystore password
+- **SHA-256 fingerprint** ← copy this
+
+Example output:
+```
+Keystore alias: QHB7UwYX5r
+Keystore password: ***
+SHA-256: 0A:1B:2C:3D:4E:5F:6A:7B:8C:9D:0E:1F:2A:3B:4C:5D:6E:7F:8A:9B:0C:1D:2E:3F:4A:5B:6C:7D:8E:9F:0A:1B
+```
+
+You can also find it on the EAS dashboard:
+1. Go to [expo.dev](https://expo.dev)
+2. Select your project → **Credentials**
+3. Select **Android** → your build profile
+4. Copy the **SHA-256 fingerprint**
+
+#### From local keystore (debug builds only)
+
+```bash
 keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android
+```
 
-# From installed APK
+#### From installed APK
+
+```bash
 keytool -printcert -jarfile app.apk
 ```
+
+**Note**: The SHA-256 must match the signing certificate used to build the APK/AAB. For production App Links, use the EAS-managed keystore fingerprint, not the debug keystore.
 
 ### 9.5 Mobile app configuration
 
