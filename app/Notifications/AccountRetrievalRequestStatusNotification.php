@@ -50,7 +50,7 @@ class AccountRetrievalRequestStatusNotification extends Notification implements 
             ->subject('Your account retrieval request was denied')
             ->greeting('Hello!')
             ->line('Unfortunately your account retrieval request has been denied.')
-            ->line('Reason: ' . ($this->retrievalRequest->rejection_reason ?? 'No reason provided.'))
+            ->line('Reason: '.($this->retrievalRequest->rejection_reason ?? 'No reason provided.'))
             ->action('Continue', $url)
             ->line('You may submit a new request if you believe this was an error.');
     }
