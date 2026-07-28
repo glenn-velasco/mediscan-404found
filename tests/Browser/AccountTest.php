@@ -17,5 +17,7 @@ it('sends a verification email after changing account email', function () {
         ->press('Continue')
         ->assertNoJavascriptErrors();
 
+    $this->artisan('queue:work --once');
+
     Notification::assertSentTo($user->fresh(), VerifyEmail::class);
 });

@@ -107,6 +107,17 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
+      blink_detected:
+        custom: []
+        name: blink_detected
+        description: ''
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
     cleanBodyParameters:
       id_type: ph_prc
       date_of_birth: '1990-05-20'
@@ -114,6 +125,7 @@ endpoints:
         - red
         - green
         - blue
+      blink_detected: false
     fileParameters:
       id_photo: null
       selfie_frames:

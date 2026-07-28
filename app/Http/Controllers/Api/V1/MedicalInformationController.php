@@ -41,7 +41,7 @@ class MedicalInformationController extends Controller
      * @bodyParam middle_name string Example: Santos
      * @bodyParam last_name string required Example: Dela Cruz
      * @bodyParam suffix string One of: junior, senior, the_second, the_third, the_forth, the_fifth.
-     * @bodyParam dob string required Date of birth. Example: 1990-01-01
+     * @bodyParam date_of_birth string required Date of birth. Example: 1990-01-01
      * @bodyParam gender string required One of: male, female.
      * @bodyParam blood_type string One of: a_positive, a_negative, b_positive, b_negative, ab_positive, ab_negative, o_positive, o_negative.
      * @bodyParam religion string One of: catholic, christian, islam, buddhist, hindu, jewish, none, other.
@@ -85,7 +85,7 @@ class MedicalInformationController extends Controller
      * @bodyParam middle_name string
      * @bodyParam last_name string
      * @bodyParam suffix string
-     * @bodyParam dob string
+     * @bodyParam date_of_birth string Date of birth.
      * @bodyParam gender string
      * @bodyParam blood_type string
      * @bodyParam religion string

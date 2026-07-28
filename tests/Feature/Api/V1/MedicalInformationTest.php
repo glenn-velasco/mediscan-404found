@@ -8,14 +8,19 @@ use Laravel\Sanctum\Sanctum;
 function medicalInformationPayload(array $overrides = []): array
 {
     return array_merge([
+        'email' => 'juan@example.com',
         'first_name' => 'Juan',
         'last_name' => 'Dela Cruz',
-        'dob' => '1990-01-01',
+        'date_of_birth' => '1990-01-01',
         'gender' => 'male',
         'blood_type' => 'o_positive',
         'religion' => 'catholic',
         'address' => [
             'province' => 'Metro Manila',
+            'street' => '123 Rizal St',
+            'unit' => '4B',
+            'country' => 'PH',
+            'postal_code' => '1000',
             'city' => 'Manila',
         ],
         'no_blood_transfusion' => false,
@@ -81,6 +86,14 @@ it('updates medical information with nested contacts and invalidates the by-user
     expect(Cache::has("medical_information.by_user.{$user->id}"))->toBeTrue();
 
     $this->putJson("/api/v1/medical-information/{$medicalInformation->id}", [
+        'address' => [
+            'province' => 'Metro Manila',
+            'street' => '123 Rizal St',
+            'unit' => '4B',
+            'country' => 'PH',
+            'postal_code' => '1000',
+            'city' => 'Manila',
+        ],
         'contacts' => [
             ['name' => 'Maria Dela Cruz', 'relationship' => 'spouse', 'phone_number' => '+639171234567', 'phone_country_code' => 'PH'],
         ],

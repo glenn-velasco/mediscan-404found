@@ -75,7 +75,7 @@ class ProfessionalSyncController extends Controller
      * Get current professional's verification status for a patient.
      *
      * Returns the authenticated professional's verification status for each item type
-     * (allergies, conditions, diagnoses, medications). Used by the mobile app to
+     * (allergies, conditions, diagnoses, medications, emergency_contacts). Used by the mobile app to
      * correctly initialize toggle states when opening the manage-info sheet.
      *
      * The response groups verifications by type, with each entry containing:
@@ -97,6 +97,9 @@ class ProfessionalSyncController extends Controller
      *     "diagnoses": [],
      *     "medications": [
      *       {"item": "Metformin", "verified": true, "verified_at": "2026-07-24T09:00:00+00:00"}
+     *     ],
+     *     "emergency_contacts": [
+     *       {"item": "Maria Dela Cruz", "verified": true, "verified_at": "2026-07-24T08:00:00+00:00"}
      *     ]
      *   }
      * }

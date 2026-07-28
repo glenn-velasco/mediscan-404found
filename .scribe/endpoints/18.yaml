@@ -29,14 +29,14 @@ endpoints:
         name: patient_id
         description: 'The ID of the patient.'
         required: true
-        example: 1
+        example: 16
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      patient_id: 1
+      patient_id: 16
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -95,14 +95,14 @@ endpoints:
         name: patient_id
         description: 'The ID of the patient.'
         required: true
-        example: 1
+        example: 16
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      patient_id: 1
+      patient_id: 16
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
@@ -191,7 +191,7 @@ endpoints:
       title: "Get current professional's verification status for a patient."
       description: |-
         Returns the authenticated professional's verification status for each item type
-        (allergies, conditions, diagnoses, medications). Used by the mobile app to
+        (allergies, conditions, diagnoses, medications, emergency_contacts). Used by the mobile app to
         correctly initialize toggle states when opening the manage-info sheet.
 
         The response groups verifications by type, with each entry containing:
@@ -210,14 +210,14 @@ endpoints:
         name: patient_id
         description: 'The ID of the patient.'
         required: true
-        example: 1
+        example: 16
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      patient_id: 1
+      patient_id: 16
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -242,6 +242,9 @@ endpoints:
               "diagnoses": [],
               "medications": [
                 {"item": "Metformin", "verified": true, "verified_at": "2026-07-24T09:00:00+00:00"}
+              ],
+              "emergency_contacts": [
+                {"item": "Maria Dela Cruz", "verified": true, "verified_at": "2026-07-24T08:00:00+00:00"}
               ]
             }
           }
@@ -294,14 +297,14 @@ endpoints:
         name: patient_id
         description: 'The ID of the patient.'
         required: true
-        example: 1
+        example: 16
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      patient_id: 1
+      patient_id: 16
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:

@@ -28,14 +28,14 @@ endpoints:
         name: medicalInformation_id
         description: 'The ID of the medicalInformation.'
         required: true
-        example: 1
+        example: 16
         type: integer
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      medicalInformation_id: 1
+      medicalInformation_id: 16
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
