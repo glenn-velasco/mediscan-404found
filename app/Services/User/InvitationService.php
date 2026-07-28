@@ -149,6 +149,8 @@ class InvitationService
             'email' => $invitation->email,
         ]);
 
+        $user->markEmailAsVerified();
+
         if ($invitation->role_id) {
             $user->assignRole(Role::find($invitation->role_id));
         }
