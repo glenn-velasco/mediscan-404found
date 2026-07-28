@@ -14,6 +14,7 @@ use App\Services\Medical\MedicalInformationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Propaganistas\LaravelPhone\Rules\Phone;
 
@@ -72,6 +73,12 @@ class CreateNewUser implements CreatesNewUsers
     public function createOrStage(array $input): array
     {
         Validator::make($input, $this->registrationRules())->validate();
+
+        if (PendingRegistration::where('email', $input['email'])->exists()) {
+            throw ValidationException::withMessages([
+                'email' => ['The email has already been taken.'],
+            ]);
+        }
 
         return DB::transaction(function () use ($input) {
             $nameFields = [

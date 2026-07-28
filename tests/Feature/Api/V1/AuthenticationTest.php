@@ -178,6 +178,31 @@ it('holds a matched registration pending instead of creating an account', functi
     Notification::assertSentTo($primary, MedicalInformationRegistrationMatchNotification::class);
 });
 
+it('rejects registration when a pending registration already holds the email', function () {
+    $this->seed(RoleAndPermissionSeeder::class);
+
+    $primary = User::factory()->create();
+    $record = MedicalInformation::factory()->create([
+        'first_name' => 'Juan',
+        'middle_name' => null,
+        'last_name' => 'dela Cruz',
+        'suffix' => null,
+        'dob' => '1990-01-15',
+        'primary_user_id' => $primary->id,
+    ]);
+    $primary->forceFill(['medical_information_id' => $record->id])->save();
+
+    Notification::fake();
+
+    $this->postJson('/api/v1/register', ($this->validPayload)())->assertStatus(202);
+
+    $this->postJson('/api/v1/register', ($this->validPayload)())
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('email');
+
+    $this->assertDatabaseCount('pending_registrations', 1);
+});
+
 it('registration rejects a malformed phone number', function () {
     $this->seed(RoleAndPermissionSeeder::class);
 
