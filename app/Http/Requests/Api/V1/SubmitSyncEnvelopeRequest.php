@@ -31,7 +31,7 @@ class SubmitSyncEnvelopeRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:500',
-                'required_if:envelope_type,allergy_verification,condition_verification,diagnosis_verification,medication_verification',
+                'required_if:envelope_type,allergy_verification,condition_verification,diagnosis_verification,medication_verification,emergency_contact_verification',
             ],
             'verified' => ['nullable', 'boolean'],
         ];

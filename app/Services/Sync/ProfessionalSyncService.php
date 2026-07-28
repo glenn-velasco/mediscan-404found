@@ -8,6 +8,7 @@ use App\Events\PendingSyncEnvelopeCreated;
 use App\Models\Allergy;
 use App\Models\Condition;
 use App\Models\Diagnosis;
+use App\Models\EmergencyContact;
 use App\Models\Medication;
 use App\Models\PendingSyncEnvelope;
 use App\Models\User;
@@ -97,7 +98,7 @@ class ProfessionalSyncService
     /**
      * Get verification status for a professional's view of a patient.
      *
-     * @return array{allergies: list<array{item: string, verified: bool, verified_at: string|null}>, conditions: list<array{item: string, verified: bool, verified_at: string|null}>, diagnoses: list<array{item: string, verified: bool, verified_at: string|null}>, medications: list<array{item: string, verified: bool, verified_at: string|null}>}
+     * @return array{allergies: list<array{item: string, verified: bool, verified_at: string|null}>, conditions: list<array{item: string, verified: bool, verified_at: string|null}>, diagnoses: list<array{item: string, verified: bool, verified_at: string|null}>, medications: list<array{item: string, verified: bool, verified_at: string|null}>, emergency_contacts: list<array{item: string, verified: bool, verified_at: string|null}>}
      */
     public function getVerifications(User $professional, User $patient): array
     {
@@ -109,6 +110,7 @@ class ProfessionalSyncService
                 'conditions' => [],
                 'diagnoses' => [],
                 'medications' => [],
+                'emergency_contacts' => [],
             ];
         }
 
@@ -156,12 +158,24 @@ class ProfessionalSyncService
             ->values()
             ->toArray();
 
+        $emergencyContacts = EmergencyContact::where('medical_information_id', $medicalInformationId)
+            ->get()
+            ->map(fn (EmergencyContact $ec) => [
+                'item' => $ec->name,
+                'verified' => $ec->isVerifiedBy($professional->id),
+                'verified_at' => ($ec->getVerificationFor($professional->id) ?? [])['verified_at'] ?? null,
+            ])
+            ->filter(fn ($v) => $v['verified'] || $v['verified_at'] !== null)
+            ->values()
+            ->toArray();
+
         // @phpstan-ignore-next-line toArray() loses generic types but shape is correct per @return annotation
         return [
             'allergies' => $allergies,
             'conditions' => $conditions,
             'diagnoses' => $diagnoses,
             'medications' => $medications,
+            'emergency_contacts' => $emergencyContacts,
         ];
     }
 
@@ -210,6 +224,7 @@ class ProfessionalSyncService
             EnvelopeType::ConditionVerification->value => Condition::class,
             EnvelopeType::DiagnosisVerification->value => Diagnosis::class,
             EnvelopeType::MedicationVerification->value => Medication::class,
+            EnvelopeType::EmergencyContactVerification->value => EmergencyContact::class,
             default => null,
         };
 
@@ -249,6 +264,11 @@ class ProfessionalSyncService
                     'name' => $itemIdentifier,
                     'dosage' => '',
                     'frequency' => '',
+                ],
+                EnvelopeType::EmergencyContactVerification->value => [
+                    'id' => Str::uuid(),
+                    'medical_information_id' => $medicalInformationId,
+                    'name' => $itemIdentifier,
                 ],
                 default => null,
             };
@@ -311,6 +331,9 @@ class ProfessionalSyncService
             EnvelopeType::MedicationVerification->value => Medication::where('medical_information_id', $medicalInformationId)
                 ->where('name', $itemIdentifier)
                 ->first(),
+            EnvelopeType::EmergencyContactVerification->value => EmergencyContact::where('medical_information_id', $medicalInformationId)
+                ->where('name', $itemIdentifier)
+                ->first(),
             default => null,
         };
     }
@@ -325,6 +348,7 @@ class ProfessionalSyncService
             EnvelopeType::ConditionVerification->value,
             EnvelopeType::DiagnosisVerification->value,
             EnvelopeType::MedicationVerification->value,
+            EnvelopeType::EmergencyContactVerification->value,
         ]);
     }
 }

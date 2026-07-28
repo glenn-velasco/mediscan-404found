@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\RelationToPatient;
+use App\Models\Traits\HasVerifications;
 use Database\Factories\EmergencyContactFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,14 +26,14 @@ use Illuminate\Support\Carbon;
 class EmergencyContact extends Model
 {
     /** @use HasFactory<EmergencyContactFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasVerifications, SoftDeletes;
 
     public $incrementing = false;
 
     protected $keyType = 'string';
 
     // See Allergy::$fillable for why `id` is included here.
-    protected $fillable = ['id', 'medical_information_id', 'name', 'relationship', 'phone_country_code', 'phone', 'is_primary'];
+    protected $fillable = ['id', 'medical_information_id', 'name', 'relationship', 'phone_country_code', 'phone', 'is_primary', 'verified_by'];
 
     protected function casts(): array
     {
@@ -41,6 +42,7 @@ class EmergencyContact extends Model
             'relationship' => RelationToPatient::class,
             'phone' => 'encrypted',
             'is_primary' => 'boolean',
+            'verified_by' => 'array',
         ];
     }
 
