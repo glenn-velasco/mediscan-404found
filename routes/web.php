@@ -11,7 +11,6 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AcceptInvitationController;
 use App\Http\Controllers\Auth\VerifyApiEmailController;
 use App\Http\Controllers\BroadcastingDocsController;
-use App\Http\Controllers\MedicalInformationRegistrationMatchController;
 use App\Http\Controllers\ProfessionalApplicationController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\WellKnownController;
@@ -33,8 +32,6 @@ Route::inertia('/', 'welcome', [
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
-// Mobile app deep-link verification files. Serves the /.well-known files
-// that Android and iOS use to verify domain-to-app associations.
 Route::get('/.well-known/assetlinks.json', [WellKnownController::class, 'androidAssetLinks'])->name('well-known.assetlinks');
 Route::get('/.well-known/apple-app-site-association', [WellKnownController::class, 'appleAppSiteAssociation'])->name('well-known.apple-app-site-association');
 
@@ -51,26 +48,10 @@ Route::middleware('guest')->group(function () {
         ->name('invitation.store');
 });
 
-// Public verification landing page for links sent via the token-based API —
-// there is no web session at this point, so the signature is the only guard.
 Route::get('/verify-email/{id}/{hash}', VerifyApiEmailController::class)
     ->middleware(['signed', 'throttle:6,1'])
     ->name('email.verify');
 
-// Signed, no-login landing links emailed to a record's primary user when a
-// new registration's name+dob matches their record. The primary accepts or
-// denies without ever creating a session - same "signature is the only
-// guard" shape as the verify-email route above.
-Route::middleware(['signed', 'throttle:6,1'])
-    ->prefix('medical-information-registration-matches/{registrationMatch}')
-    ->name('medical-information-registration-matches.')
-    ->group(function () {
-        Route::get('/accept', [MedicalInformationRegistrationMatchController::class, 'accept'])->name('accept');
-        Route::get('/deny', [MedicalInformationRegistrationMatchController::class, 'deny'])->name('deny');
-    });
-
-// Uploading a government ID + biometric selfie is sensitive enough to also
-// require a verified email, unlike the dashboard group above.
 Route::middleware(['auth', 'verified', CheckUserActive::class])
     ->prefix('professional-application')->name('professional-application.')
     ->group(function () {
@@ -118,8 +99,6 @@ Route::prefix('admin')->name('admin.')
         Route::get('reports/{category}/users', [ReportController::class, 'searchUsers'])->name('reports.users.search');
     });
 
-require __DIR__.'/settings.php';
-
 Route::get('/avatars/{path}', function (string $path) {
     $disk = Storage::disk('s3');
     $fullPath = 'avatars/'.$path;
@@ -132,3 +111,5 @@ Route::get('/avatars/{path}', function (string $path) {
         ->header('Content-Type', $disk->mimeType($fullPath) ?: 'application/octet-stream')
         ->header('Cache-Control', 'public, max-age=86400');
 })->where('path', '.*');
+
+require __DIR__.'/settings.php';

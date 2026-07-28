@@ -2,6 +2,7 @@
 
 use App\Enums\Permission;
 use App\Http\Controllers\Api\V1\AccountController;
+use App\Http\Controllers\Api\V1\AccountRetrievalController;
 use App\Http\Controllers\Api\V1\AccountRetrievalRequestController;
 use App\Http\Controllers\Api\V1\AllergyController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PendingSyncController;
 use App\Http\Controllers\Api\V1\ProfessionalApplicationController;
 use App\Http\Controllers\Api\V1\ProfessionalSyncController;
+use App\Http\Controllers\Api\V1\RegistrationMatchController;
 use App\Http\Controllers\Api\V1\ScanController;
 use App\Http\Controllers\Api\V1\SyncController;
 use Illuminate\Http\Request;
@@ -35,6 +37,21 @@ Route::prefix('v1')->group(function () {
     Route::get('/verify-email/{id}/{hash}', MobileVerifyEmailController::class)
         ->middleware(['signed', 'throttle:6,1'])
         ->name('api.v1.email.verify');
+
+    Route::middleware(['signed', 'throttle:6,1'])
+        ->prefix('registration-matches/{registrationMatch}')
+        ->name('api.v1.registration-matches.')
+        ->group(function () {
+            Route::get('/accept', [RegistrationMatchController::class, 'accept'])->name('accept');
+            Route::get('/deny', [RegistrationMatchController::class, 'deny'])->name('deny');
+        });
+
+    Route::middleware(['signed', 'throttle:6,1'])
+        ->prefix('account-retrieval-requests/{accountRetrievalRequest}')
+        ->name('api.v1.account-retrieval.')
+        ->group(function () {
+            Route::get('/', [AccountRetrievalController::class, 'show'])->name('show');
+        });
 
     Route::post('/account-retrieval-requests', [AccountRetrievalRequestController::class, 'store'])->middleware('throttle:6,1');
 

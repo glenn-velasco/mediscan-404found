@@ -23,7 +23,7 @@ it('renders mail with a working signed accept URL and no deny link, without thro
 
     $allLines = [...$mail->introLines, ...$mail->outroLines];
 
-    expect($mail->actionUrl)->toContain('/medical-information-registration-matches/'.$match->id.'/accept')
+    expect($mail->actionUrl)->toContain('/api/v1/registration-matches/'.$match->id.'/accept')
         ->and($mail->actionUrl)->toContain('signature=')
         ->and(collect($allLines)->contains(fn (string $line) => str_contains($line, '/deny')))->toBeFalse()
         ->and(collect($allLines)->contains(fn (string $line) => str_contains($line, 'ignore')))->toBeTrue();

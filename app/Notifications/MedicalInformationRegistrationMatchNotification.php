@@ -27,7 +27,7 @@ class MedicalInformationRegistrationMatchNotification extends Notification imple
         $expires = Carbon::now()->addDays(MedicalInformationRegistrationMatch::PENDING_DAYS);
 
         $acceptUrl = URL::temporarySignedRoute(
-            'medical-information-registration-matches.accept',
+            'api.v1.registration-matches.accept',
             $expires,
             ['registrationMatch' => $this->match->id],
         );

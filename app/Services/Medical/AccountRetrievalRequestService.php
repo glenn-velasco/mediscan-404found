@@ -8,6 +8,7 @@ use App\Events\AccountRetrievalRequestStatusChanged;
 use App\Jobs\ProcessAccountRetrievalRequest;
 use App\Models\AccountRetrievalRequest;
 use App\Models\User;
+use App\Notifications\AccountRetrievalRequestStatusNotification;
 use App\Services\Audit\AuditLogger;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Password;
@@ -122,6 +123,8 @@ class AccountRetrievalRequestService
             'reviewed_at' => now(),
         ])->save();
 
+        $this->notifyRequester($retrievalRequest);
+
         $this->auditLogger->log(
             action: 'account_retrieval_request.approved',
             type: AuditLogType::Accepted,
@@ -154,6 +157,8 @@ class AccountRetrievalRequestService
             'reviewed_at' => now(),
         ])->save();
 
+        $this->notifyRequester($retrievalRequest);
+
         $this->auditLogger->log(
             action: 'account_retrieval_request.denied',
             type: AuditLogType::Denied,
@@ -167,6 +172,23 @@ class AccountRetrievalRequestService
             $retrievalRequest->id,
             $retrievalRequest->requester_user_id,
             WorkflowStatus::Denied->value,
+        );
+    }
+
+    /**
+     * Notify the requester of the outcome. Only sent when the request
+     * was submitted from a registered account (requester_user_id is set).
+     * Pre-registration requests are notified via the password-reset flow
+     * on approve, and silently ignored on deny (anti-enumeration).
+     */
+    private function notifyRequester(AccountRetrievalRequest $retrievalRequest): void
+    {
+        if ($retrievalRequest->requester_user_id === null) {
+            return;
+        }
+
+        $retrievalRequest->requester->notify(
+            new AccountRetrievalRequestStatusNotification($retrievalRequest)
         );
     }
 }
