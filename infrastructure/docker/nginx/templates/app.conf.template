@@ -43,6 +43,7 @@ server {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_read_timeout 65s;
+        proxy_next_upstream error timeout http_502 http_503;
     }
 
     # Vite's hashed build output - content-addressed filenames, safe to
@@ -108,5 +109,6 @@ server {
         proxy_send_timeout 120s;
         proxy_read_timeout 120s;
         client_body_timeout 120s;
+        proxy_next_upstream error timeout http_502 http_503;
     }
 }

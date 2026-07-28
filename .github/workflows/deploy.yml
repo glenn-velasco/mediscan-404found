@@ -75,6 +75,7 @@ jobs:
 
   deploy:
     needs: [prep, build]
+    if: needs.prep.outputs.environment == 'production'
     runs-on: ubuntu-latest
     environment: ${{ needs.prep.outputs.environment }}
     env:

@@ -17,6 +17,7 @@ services:
   app:
     image: ghcr.io/${GHCR_OWNER}/mediscan-app:${IMAGE_TAG}
     restart: unless-stopped
+    mem_limit: 1g
     environment:
       XDG_DATA_HOME: /caddy_storage
     env_file: .env
@@ -89,7 +90,7 @@ services:
     image: redis:7-alpine
     command: redis-server --appendonly yes --maxmemory-policy allkeys-lru
     restart: unless-stopped
-    mem_limit: 1g
+    mem_limit: 512m
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
