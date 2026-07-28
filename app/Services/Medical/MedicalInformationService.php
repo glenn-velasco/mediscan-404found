@@ -14,7 +14,6 @@ use App\Services\Audit\AuditLogger;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -325,12 +324,6 @@ class MedicalInformationService
             throw new MedicalInformationAvatarUploadFailedException;
         }
 
-        Log::info('Avatar stored to S3', [
-            'path' => $path,
-            'url' => Storage::disk('s3')->url($path),
-            'exists' => Storage::disk('s3')->exists($path),
-        ]);
-
         return $path;
     }
 
@@ -343,13 +336,6 @@ class MedicalInformationService
     {
         return DB::transaction(function () use ($medicalInformation, $avatarPath, $actor) {
             $medicalInformation->update(['avatar_path' => $avatarPath]);
-
-            Log::info('Avatar synced to medical information', [
-                'medical_information_id' => $medicalInformation->id,
-                'avatar_path' => $avatarPath,
-                'avatar_url' => $medicalInformation->fresh()->avatar,
-                's3_url' => Storage::disk('s3')->url($avatarPath),
-            ]);
 
             $linkedUsers = $medicalInformation->users;
             foreach ($linkedUsers as $linkedUser) {
