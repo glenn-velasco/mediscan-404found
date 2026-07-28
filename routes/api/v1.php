@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\EmergencyQrEventController;
 use App\Http\Controllers\Api\V1\MedicalInformationController;
 use App\Http\Controllers\Api\V1\MedicalInformationRegistrationMatchController;
 use App\Http\Controllers\Api\V1\MedicationController;
+use App\Http\Controllers\Api\V1\MobileVerifyEmailController;
 use App\Http\Controllers\Api\V1\PasswordResetController;
 use App\Http\Controllers\Api\V1\PendingSyncController;
 use App\Http\Controllers\Api\V1\ProfessionalApplicationController;
