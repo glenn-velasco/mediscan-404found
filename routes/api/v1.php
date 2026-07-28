@@ -32,11 +32,10 @@ Route::prefix('v1')->group(function () {
     Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:6,1');
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1');
 
-    // Reachable both pre-registration (no account yet) and from a logged-in
-    // fresh account - deliberately outside the auth:sanctum group. When a
-    // bearer token is present, $request->user('sanctum') still resolves it
-    // (Sanctum resolves on demand, independent of route middleware); when
-    // absent, requester_user_id is simply null.
+    Route::get('/verify-email/{id}/{hash}', MobileVerifyEmailController::class)
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('api.v1.email.verify');
+
     Route::post('/account-retrieval-requests', [AccountRetrievalRequestController::class, 'store'])->middleware('throttle:6,1');
 
     Route::middleware(['auth:sanctum', 'api.active', 'throttle:api'])->group(function () {
@@ -63,17 +62,12 @@ Route::prefix('v1')->group(function () {
 
         Route::post('/scans', [ScanController::class, 'store']);
 
-        // No 'verified' requirement here, matching the pre-existing web signed-URL accept/deny
-        // flow (routes/web.php), which never gated on the primary user's own verification status
-        // either - deciding a match isn't PHI access, it's a yes/no about someone else's claim.
         Route::get('/medical-information-registration-matches', [MedicalInformationRegistrationMatchController::class, 'index']);
         Route::post('/medical-information-registration-matches/{registrationMatch}/accept', [MedicalInformationRegistrationMatchController::class, 'accept']);
         Route::post('/medical-information-registration-matches/{registrationMatch}/deny', [MedicalInformationRegistrationMatchController::class, 'deny']);
 
         Route::post('/professional-applications', [ProfessionalApplicationController::class, 'store']);
         Route::get('/professional-applications', [ProfessionalApplicationController::class, 'index']);
-        // withTrashed: a denied application is soft-deleted (see ProfessionalApplicationService::reject())
-        // so the applicant can still be shown its status/rejection_reason until it's pruned.
         Route::get('/professional-applications/{professionalApplication}', [ProfessionalApplicationController::class, 'show'])->withTrashed();
 
         Route::get('/medical-information', [MedicalInformationController::class, 'index']);
@@ -92,7 +86,6 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/sync', [SyncController::class, 'index'])->middleware('throttle:sync');
 
-        // Professional sync: patient public key lookup and envelope submission
         Route::middleware('abilities:'.Permission::VerifiedProfessional->value)
             ->prefix('professional')->group(function () {
                 Route::get('/patients/{patient}/public-key', [ProfessionalSyncController::class, 'publicKey']);
