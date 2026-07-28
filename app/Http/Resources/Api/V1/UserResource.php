@@ -34,6 +34,7 @@ class UserResource extends JsonResource
             'is_active' => $this->isActive(),
             'roles' => $this->roles->pluck('name'),
             'permissions' => $this->getAllPermissions()->pluck('name'),
+            'medical_information' => new MedicalInformationResource($this->whenLoaded('medicalInformation')),
         ];
     }
 }

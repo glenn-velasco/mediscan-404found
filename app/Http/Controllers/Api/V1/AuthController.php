@@ -40,7 +40,7 @@ class AuthController extends Controller
             $request->validated('device_name'),
         );
 
-        $user = $token->accessToken->tokenable->load(['roles', 'permissions']);
+        $user = $token->accessToken->tokenable->load(['roles', 'permissions', 'medicalInformation']);
 
         return $this->success([
             'token' => $token->plainTextToken,
@@ -84,7 +84,7 @@ class AuthController extends Controller
         }
 
         $token = $outcome['token'];
-        $user = $token->accessToken->tokenable->load(['roles', 'permissions']);
+        $user = $token->accessToken->tokenable->load(['roles', 'permissions', 'medicalInformation']);
 
         return $this->success([
             'pending' => false,
@@ -121,7 +121,7 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return $this->success([
-            'user' => new UserResource($request->user()->load(['roles', 'permissions'])),
+            'user' => new UserResource($request->user()->load(['roles', 'permissions', 'medicalInformation'])),
         ]);
     }
 }
