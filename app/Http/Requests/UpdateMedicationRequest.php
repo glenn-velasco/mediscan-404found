@@ -22,7 +22,7 @@ class UpdateMedicationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['sometimes', 'required', 'string', 'min:1', 'max:255'],
             'dosage' => ['nullable', 'string', 'max:255'],
             'frequency' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],

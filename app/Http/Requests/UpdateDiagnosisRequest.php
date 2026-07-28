@@ -24,8 +24,8 @@ class UpdateDiagnosisRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'condition' => ['required', 'string', 'max:255'],
-            'date_of_diagnosis' => ['nullable', 'date', 'before_or_equal:today'],
+            'condition' => ['sometimes', 'required', 'string', 'min:1', 'max:255'],
+            'date_of_diagnosis' => ['nullable', 'date', 'date_format:Y-m-d', 'before_or_equal:today'],
             'severity' => ['nullable', new Enum(DiagnosisSeverity::class)],
             'verified_by' => ['nullable', 'array'],
         ];

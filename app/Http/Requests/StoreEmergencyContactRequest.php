@@ -18,10 +18,10 @@ class StoreEmergencyContactRequest extends FormRequest
     {
         return [
             'id' => ['required', 'uuid', 'unique:emergency_contacts,id'],
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'min:1', 'max:255'],
             'relationship' => ['nullable', new Enum(RelationToPatient::class)],
             'phone_country_code' => ['nullable', 'string', 'max:5'],
-            'phone' => ['nullable', 'string', 'max:32'],
+            'phone' => ['nullable', 'string', 'regex:/^[\d\s\-+()]*$/', 'max:32'],
             'is_primary' => ['sometimes', 'boolean'],
         ];
     }

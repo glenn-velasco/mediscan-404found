@@ -22,10 +22,8 @@ class StoreConditionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Client (mobile app)-generated UUID - see the `allergies`
-            // migration's comment on why this becomes the record's real id.
             'id' => ['required', 'uuid', 'unique:conditions,id'],
-            'description' => ['required', 'string', 'max:1000'],
+            'description' => ['required', 'string', 'min:1', 'max:1000'],
             'verified_by' => ['nullable', 'array'],
         ];
     }

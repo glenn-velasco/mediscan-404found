@@ -24,9 +24,9 @@ class UpdateAllergyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'allergen' => ['required', 'string', 'max:255'],
+            'allergen' => ['sometimes', 'required', 'string', 'min:1', 'max:255'],
             'reaction' => ['nullable', 'string', 'max:1000'],
-            'severity' => ['required', new Enum(AllergySeverity::class)],
+            'severity' => ['sometimes', 'required', new Enum(AllergySeverity::class)],
             'verified_by' => ['nullable', 'array'],
         ];
     }

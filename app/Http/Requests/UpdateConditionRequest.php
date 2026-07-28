@@ -22,7 +22,7 @@ class UpdateConditionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'description' => ['required', 'string', 'max:1000'],
+            'description' => ['sometimes', 'required', 'string', 'min:1', 'max:1000'],
             'verified_by' => ['nullable', 'array'],
         ];
     }
