@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('audit_logs', function (Blueprint $table) {
-            $table->string('type')->nullable()->after('action'); // App\Enums\AuditLogType
+            $table->string('type')->nullable()->after('action');
             $table->index('type');
         });
     }

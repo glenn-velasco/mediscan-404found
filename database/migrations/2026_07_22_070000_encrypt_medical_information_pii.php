@@ -15,11 +15,6 @@ return new class extends Migration
             $table->dropIndex(['national_id']);
         });
 
-        // Encrypted values are ciphertext, not queryable/indexable text of a
-        // predictable length - varchar(255)/date/json columns can't safely
-        // hold them (json in particular rejects non-JSON ciphertext on
-        // write), so every column that will carry an `encrypted` cast moves
-        // to `text`.
         Schema::table('medical_information', function (Blueprint $table) {
             $table->text('first_name')->change();
             $table->text('middle_name')->nullable()->change();
@@ -33,16 +28,6 @@ return new class extends Migration
         $this->encryptExistingRows();
     }
 
-    /**
-     * One-time backfill: encrypt plaintext values already in the table so
-     * existing rows aren't left readable once the model casts flip on.
-     *
-     * Uses `Crypt::encryptString()`, not the `encrypt()` helper - Eloquent's
-     * `encrypted`/`encrypted:array` casts decrypt with `Crypt::decryptString()`
-     * (no unserialize), so encrypting with the serializing `encrypt()` helper
-     * here would leave every value unreadable through the model (it'd come
-     * back as the raw serialized PHP string instead of the plaintext).
-     */
     private function encryptExistingRows(): void
     {
         DB::table('medical_information')->orderBy('id')->chunkById(200, function ($rows) {
@@ -54,10 +39,6 @@ return new class extends Migration
                     'suffix' => $row->suffix !== null ? Crypt::encryptString($row->suffix) : null,
                     'dob' => Crypt::encryptString($row->dob),
                     'national_id' => $row->national_id !== null ? Crypt::encryptString($row->national_id) : null,
-                    // `address` is a `json` column read via the query builder (no
-                    // Eloquent cast applied), so `$row->address` is already the raw
-                    // JSON text - exactly what `encrypted:array` expects to decrypt
-                    // back into via json_decode(), so it's encrypted as-is.
                     'address' => $row->address !== null ? Crypt::encryptString($row->address) : null,
                 ]);
             }

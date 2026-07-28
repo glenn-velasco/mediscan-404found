@@ -10,10 +10,6 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Encrypted values are ciphertext, not queryable/indexable text of a
-        // predictable length - varchar(255)/date columns can't safely hold
-        // them, so every column that will carry an `encrypted` cast (or the
-        // manual dob accessor) moves to `text`.
         Schema::table('users', function (Blueprint $table) {
             $table->text('first_name')->nullable()->change();
             $table->text('middle_name')->nullable()->change();
@@ -27,16 +23,6 @@ return new class extends Migration
         $this->encryptExistingRows();
     }
 
-    /**
-     * One-time backfill: encrypt plaintext values already in the table so
-     * existing rows aren't left readable once the model casts flip on.
-     *
-     * Uses `Crypt::encryptString()`, not the `encrypt()` helper - Eloquent's
-     * `encrypted` cast (and the manual dob accessor) decrypt with
-     * `Crypt::decryptString()` (no unserialize), so encrypting with the
-     * serializing `encrypt()` helper here would leave every value unreadable
-     * through the model.
-     */
     private function encryptExistingRows(): void
     {
         DB::table('users')->orderBy('id')->chunkById(200, function ($rows) {
@@ -67,9 +53,6 @@ return new class extends Migration
             $table->string('phone_number')->nullable()->change();
         });
 
-        // Postgres won't auto-cast text -> date even when every value is a
-        // valid date string - needs an explicit USING conversion, which
-        // Schema::table()->change() has no way to express.
         DB::statement('ALTER TABLE users ALTER COLUMN dob TYPE date USING dob::date');
     }
 

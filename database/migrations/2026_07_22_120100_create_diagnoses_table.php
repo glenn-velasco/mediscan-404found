@@ -14,7 +14,6 @@ return new class extends Migration
 
             $table->text('condition');
             $table->date('date_of_diagnosis')->nullable();
-            // Not encrypted: bounded enum (chronic/ongoing/acute/critical).
             $table->string('severity')->nullable();
 
             $table->timestamps();

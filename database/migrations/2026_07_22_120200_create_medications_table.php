@@ -14,8 +14,6 @@ return new class extends Migration
 
             $table->text('name');
             $table->text('dosage')->nullable();
-            // Not encrypted: short structured text ("twice daily"), not
-            // independently identifying the way a medication name is.
             $table->string('frequency')->nullable();
             $table->text('notes')->nullable();
 

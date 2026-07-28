@@ -11,10 +11,7 @@ return new class extends Migration
         Schema::create('emergency_contacts', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignId('medical_information_id')->constrained('medical_information')->cascadeOnDelete();
-
             $table->text('name');
-            // Not encrypted: bounded relationship label (parent/spouse/etc.),
-            // matches the existing RelationToPatient enum convention.
             $table->string('relationship')->nullable();
             $table->string('phone_country_code')->nullable();
             $table->text('phone')->nullable();

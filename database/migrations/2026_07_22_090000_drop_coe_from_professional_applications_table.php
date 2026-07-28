@@ -9,9 +9,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('professional_applications', function (Blueprint $table) {
-            // Certificate of Employment requirement removed from the
-            // professional application flow - dropped rather than left
-            // nullable/unused, per an explicit decision to fully remove it.
             $table->dropColumn(['coe_path', 'coe_original_filename']);
         });
     }
