@@ -60,7 +60,7 @@ export default function Show({ application }: ShowProps) {
         '.ProfessionalApplicationStatusChanged',
         () => router.reload(),
     );
-    
+
     useEffect(() => {
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
@@ -68,7 +68,12 @@ export default function Show({ application }: ShowProps) {
             }
         };
         document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+        return () =>
+            document.removeEventListener(
+                'visibilitychange',
+                handleVisibilityChange,
+            );
     }, []);
 
     const canResubmit =

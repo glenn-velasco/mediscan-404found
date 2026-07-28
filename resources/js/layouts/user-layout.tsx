@@ -47,8 +47,10 @@ export default function UsersLayout({ children }: { children: ReactNode }) {
         router.reload({ only: ['auth'] }),
     );
 
-    useEcho(`App.Models.User.${user?.id}`, '.ProfessionalApplicationStatusChanged', () =>
-        router.reload(),
+    useEcho(
+        `App.Models.User.${user?.id}`,
+        '.ProfessionalApplicationStatusChanged',
+        () => router.reload(),
     );
 
     return (
