@@ -33,6 +33,11 @@ Route::inertia('/', 'welcome', [
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
+// Mobile app deep-link verification files. Serves the /.well-known files
+// that Android and iOS use to verify domain-to-app associations.
+Route::get('/.well-known/assetlinks.json', [WellKnownController::class, 'androidAssetLinks'])->name('well-known.assetlinks');
+Route::get('/.well-known/apple-app-site-association', [WellKnownController::class, 'appleAppSiteAssociation'])->name('well-known.apple-app-site-association');
+
 Route::get('/docs/broadcasting', BroadcastingDocsController::class)
     ->middleware('scribe.docs-access')
     ->name('docs.broadcasting');
@@ -114,3 +119,16 @@ Route::prefix('admin')->name('admin.')
     });
 
 require __DIR__.'/settings.php';
+
+Route::get('/avatars/{path}', function (string $path) {
+    $disk = Storage::disk('s3');
+    $fullPath = 'avatars/'.$path;
+
+    if (! $disk->exists($fullPath)) {
+        abort(404);
+    }
+
+    return response($disk->get($fullPath))
+        ->header('Content-Type', $disk->mimeType($fullPath) ?: 'application/octet-stream')
+        ->header('Cache-Control', 'public, max-age=86400');
+})->where('path', '.*');

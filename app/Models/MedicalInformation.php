@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -172,9 +173,23 @@ class MedicalInformation extends Model
     protected function avatar(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->avatar_path
-                ? Storage::disk('public')->url($this->avatar_path)
-                : null,
+            get: function () {
+                if (! $this->avatar_path) {
+                    Log::info('Avatar accessor: no avatar_path', ['id' => $this->id]);
+
+                    return null;
+                }
+                $url = Storage::disk('s3')->url($this->avatar_path);
+                Log::info('Avatar accessor: generating URL', [
+                    'id' => $this->id,
+                    'avatar_path' => $this->avatar_path,
+                    'disk' => 's3',
+                    'url' => $url,
+                    'exists' => Storage::disk('s3')->exists($this->avatar_path),
+                ]);
+
+                return $url;
+            },
         );
     }
 

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
-    Storage::fake('public');
+    Storage::fake('s3');
 });
 
 it('sets the avatar from an uploaded photo', function () {
@@ -26,7 +26,7 @@ it('sets the avatar from an uploaded photo', function () {
         ->and($fresh->avatar)->not->toBeNull()
         ->and($user->fresh()->profile_photo_path)->toBe($fresh->avatar_path);
 
-    Storage::disk('public')->assertExists($fresh->avatar_path);
+    Storage::disk('s3')->assertExists($fresh->avatar_path);
 });
 
 it('rejects a non-image upload', function () {

@@ -14,6 +14,7 @@ use App\Services\Audit\AuditLogger;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -320,9 +321,15 @@ class MedicalInformationService
             ->scaleDown(width: self::AVATAR_MAX_IMAGE_DIMENSION, height: self::AVATAR_MAX_IMAGE_DIMENSION)
             ->encode(new JpegEncoder(quality: self::AVATAR_IMAGE_QUALITY));
 
-        if (! Storage::disk('public')->put($path, (string) $encoded)) {
+        if (! Storage::disk('s3')->put($path, (string) $encoded)) {
             throw new MedicalInformationAvatarUploadFailedException;
         }
+
+        Log::info('Avatar stored to S3', [
+            'path' => $path,
+            'url' => Storage::disk('s3')->url($path),
+            'exists' => Storage::disk('s3')->exists($path),
+        ]);
 
         return $path;
     }
@@ -336,6 +343,13 @@ class MedicalInformationService
     {
         return DB::transaction(function () use ($medicalInformation, $avatarPath, $actor) {
             $medicalInformation->update(['avatar_path' => $avatarPath]);
+
+            Log::info('Avatar synced to medical information', [
+                'medical_information_id' => $medicalInformation->id,
+                'avatar_path' => $avatarPath,
+                'avatar_url' => $medicalInformation->fresh()->avatar,
+                's3_url' => Storage::disk('s3')->url($avatarPath),
+            ]);
 
             $linkedUsers = $medicalInformation->users;
             foreach ($linkedUsers as $linkedUser) {
@@ -389,12 +403,18 @@ class MedicalInformationService
      */
     private function onlyFields(array $data): array
     {
-        return collect($data)->only([
+        $fields = collect($data)->only([
             'first_name', 'middle_name', 'last_name', 'suffix',
-            'dob', 'gender', 'blood_type', 'religion', 'national_id',
+            'gender', 'blood_type', 'religion', 'national_id',
             'address',
             'no_blood_transfusion',
         ])->all();
+
+        if (array_key_exists('date_of_birth', $data)) {
+            $fields['dob'] = $data['date_of_birth'];
+        }
+
+        return $fields;
     }
 
     /**

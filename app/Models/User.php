@@ -126,7 +126,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     {
         return Attribute::make(
             get: fn () => $this->profile_photo_path
-                ? Storage::disk('public')->url($this->profile_photo_path)
+                ? Storage::disk('s3')->url($this->profile_photo_path)
                 : null,
         );
     }

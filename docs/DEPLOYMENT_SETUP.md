@@ -231,7 +231,7 @@ Then fill in its own secrets/variables (its own **Environment secrets**/**Enviro
 | `DB_DATABASE` | variable | `mediscan` |
 | `DB_USERNAME` | variable | `mediscan` |
 | `APP_URL` | variable | `https://staging.mediscan.cloud` |
-| `AWS_URL` | variable | `https://cdnstaging.mediscan.cloud` |
+| `AWS_URL` | variable | `https://cdnstaging.mediscan.cloud/mediscan` |
 | `VITE_REVERB_HOST` | variable | `staging.mediscan.cloud` |
 | `APP_DEBUG` | variable | `true` |
 | `MAIL_FROM_ADDRESS` | variable | `noreply@mediscan.cloud` — must be on the `mediscan.cloud` domain verified with Resend (§4), or Resend rejects the send |
@@ -261,7 +261,7 @@ Same secrets/variables pattern:
 | `APP_KEY` | secret | generate per §3.5 — a **different** key from staging's, never shared |
 | `DB_URL` | secret | Supabase pooler connection string (§5 — not done yet, blocks a real production deploy until it is) |
 | `APP_URL` | variable | `https://app.mediscan.cloud` |
-| `AWS_URL` | variable | `https://cdn.mediscan.cloud` |
+| `AWS_URL` | variable | `https://cdn.mediscan.cloud/mediscan` |
 | `VITE_REVERB_HOST` | variable | `app.mediscan.cloud` |
 | `APP_DEBUG` | variable | `false` |
 | `MAIL_FROM_ADDRESS` | variable | `noreply@mediscan.cloud` — same address as staging is fine, since both share the one verified Resend domain (§4) |
@@ -409,6 +409,54 @@ ansible-playbook playbook.yml -i "<vps-ip>," -u mediscan --become \
 ```
 
 ---
+
+## 7. RustFS object storage
+
+RustFS (S3-compatible) stores all user-uploaded files: KYC documents, professional application photos, and profile avatars. Both staging and production run their own RustFS container on the internal Docker network; the public CDN hostname (`cdn.mediscan.cloud` / `cdnstaging.mediscan.cloud`) is a read-only nginx reverse proxy in front of it.
+
+### 7.1 How it works
+
+The Laravel app writes to RustFS directly over the internal network (`AWS_ENDPOINT=http://rustfs:9000`). Mobile and browser clients read files through the public CDN hostname (`AWS_URL`), which nginx proxies to RustFS:
+
+```
+Mobile app  →  https://cdn.mediscan.cloud/mediscan/avatars/...
+                  ↓ (Cloudflare → nginx → limit_except GET/HEAD)
+              http://rustfs:9000/mediscan/avatars/...
+```
+
+The `AWS_URL` GitHub variable **must include the bucket name as a path prefix** (e.g. `https://cdn.mediscan.cloud/mediscan`, not just `https://cdn.mediscan.cloud`). Laravel's S3 adapter generates public URLs by appending the object key to `AWS_URL`; without the bucket prefix, the resulting URLs point at the wrong path and return 404 from RustFS.
+
+### 7.2 Bucket policy
+
+`storage:ensure-bucket` (run on every deploy, see §6.1) creates the bucket if missing **and** sets an anonymous read policy so the CDN proxy can serve files without signing each request:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": "*",
+    "Action": ["s3:GetObject"],
+    "Resource": ["arn:aws:s3:::mediscan/*"]
+  }]
+}
+```
+
+This is safe because the CDN nginx config already restricts to `limit_except GET HEAD { deny all; }` — no writes through the public hostname. The internal `AWS_ENDPOINT` (used for writes) is only reachable from within the Docker network.
+
+### 7.3 What uses S3
+
+| Feature | Disk | Code path |
+|---|---|---|
+| Profile avatars | `s3` | `MedicalInformationService::storeAvatarImage()`, `MedicalInformation::$avatar` accessor |
+| KYC ID photos | `s3` | `ProfessionalApplicationService::storeResizedImageOrFail()` |
+| Professional application photos | `s3` | Same as above |
+
+All three use `Storage::disk('s3')` — the `FILESYSTEM_DISK=s3` env var makes this the default. The `public` disk (local filesystem) is unused in staging/production; it only exists for local dev without RustFS.
+
+### 7.4 Backup note
+
+RustFS data (avatar uploads, KYC photos) lives in a Docker volume on the VPS with no off-box backup. The production database gets Supabase's daily backups, but object storage does not. Consider a scheduled `mc mirror` to an off-VPS S3 provider (Backblaze B2, Cloudflare R2) once the volume of stored files grows — see [`BACKUPS.md`](BACKUPS.md) for the existing DB backup approach.
 
 ## 8. Google Cloud Vision (OCR + face detection)
 
