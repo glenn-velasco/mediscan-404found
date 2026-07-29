@@ -49,6 +49,8 @@ class CreateNewUser implements CreatesNewUsers
                 nameFields: $this->nameFields($user),
                 dob: $input['dob'],
                 gender: $input['gender'],
+                phone: $input['phone_number'] ?? null,
+                phoneCountryCode: $input['phone_country_code'] ?? null,
             );
 
             $user->forceFill(['medical_information_id' => $medicalInformation->id])->save();
@@ -98,6 +100,8 @@ class CreateNewUser implements CreatesNewUsers
                     nameFields: $nameFields,
                     dob: $input['dob'],
                     gender: $input['gender'],
+                    phone: $input['phone_number'] ?? null,
+                    phoneCountryCode: $input['phone_country_code'] ?? null,
                 );
 
                 $user->forceFill(['medical_information_id' => $medicalInformation->id])->save();

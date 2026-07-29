@@ -159,12 +159,14 @@ class MedicalInformationService
      *
      * @param  array{first_name: string, middle_name: ?string, last_name: string, suffix: ?string}  $nameFields
      */
-    public function createInterim(User $user, array $nameFields, string $dob, string $gender): MedicalInformation
+    public function createInterim(User $user, array $nameFields, string $dob, string $gender, ?string $phone = null, ?string $phoneCountryCode = null): MedicalInformation
     {
         $created = $this->repository->create([
             ...$nameFields,
             'dob' => $dob,
             'gender' => $gender,
+            'phone' => $phone,
+            'phone_country_code' => $phoneCountryCode,
             'primary_user_id' => $user->id,
         ]);
 
