@@ -58,6 +58,7 @@ Route::prefix('v1')->group(function () {
     Route::middleware(['auth:sanctum', 'api.active', 'throttle:api'])->group(function () {
         Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
         Route::post('/logout', [AuthController::class, 'logout']);
+        Route::post('/auth/refresh-token', [AuthController::class, 'refreshToken']);
         Route::get('/me', [AuthController::class, 'me']);
 
         Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])

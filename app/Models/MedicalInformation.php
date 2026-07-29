@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\Storage;
  * @property BloodType|null $blood_type
  * @property Religion|null $religion
  * @property string|null $national_id
+ * @property string|null $phone_country_code
+ * @property string|null $phone
  * @property array{province: ?string, street: ?string, unit: ?string, country: ?string, postal_code: ?string, city: ?string}|null $address
  * @property bool $no_blood_transfusion
  * @property string|null $avatar_path

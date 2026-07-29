@@ -74,6 +74,8 @@ class SyncService
             'blood_type' => $medicalInformation->blood_type?->value,
             'religion' => $medicalInformation->religion?->value,
             'national_id' => $medicalInformation->national_id,
+            'phone_country_code' => $medicalInformation->phone_country_code,
+            'phone' => $medicalInformation->phone,
             'address' => $medicalInformation->address,
             'no_blood_transfusion' => $medicalInformation->no_blood_transfusion,
             'updated_at' => $medicalInformation->updated_at?->toIso8601String(),

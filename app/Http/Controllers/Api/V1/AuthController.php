@@ -124,4 +124,31 @@ class AuthController extends Controller
             'user' => new UserResource($request->user()->load(['roles', 'permissions', 'medicalInformation'])),
         ]);
     }
+
+    /**
+     * Issue a fresh personal-access-token whose abilities reflect the
+     * authenticated user's current roles and permissions.  Called by the
+     * mobile client after a professional application is approved so the
+     * token picks up the `verified professional` ability that was
+     * missing when the token was originally issued at login/registration.
+     */
+    public function refreshToken(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Preserve the current token's device name so the refreshed token
+        // keeps the same label (e.g. "iPhone 15 Pro") in token-management UIs.
+        $currentToken = $user->currentAccessToken();
+        $deviceName = $currentToken->name ?? $request->input('device_name', 'mobile');
+
+        // Revoke the current token so it cannot be reused.
+        $currentToken->delete();
+
+        // Issue a new token with the user's up-to-date abilities.
+        $token = $user->createToken($deviceName, $user->tokenAbilities());
+
+        return $this->success([
+            'token' => $token->plainTextToken,
+        ], 'Token refreshed.');
+    }
 }

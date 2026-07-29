@@ -216,6 +216,10 @@ class ProfessionalApplicationService
                 'reviewed_at' => now(),
                 'role_granted' => $roleName,
             ])->save();
+
+            $application->user->tokens()->update([
+                'abilities' => $application->user->tokenAbilities(),
+            ]);
         });
 
         $this->auditLogger->log(
