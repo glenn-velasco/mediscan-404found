@@ -25,17 +25,21 @@ class MedicalInformationRepository extends BaseRepository implements MedicalInfo
     }
 
     /**
-     * Confident match: normalized name + exact dob. Returns null when there's
-     * no match or more than one (ambiguous) - name+dob alone is not proof of
-     * identity (twins, common names), so an ambiguous result must never be
-     * treated as a match.
+     * Confident match: normalized name + exact dob. Returns null when
+     * there's no match or the result is genuinely ambiguous (multiple
+     * primary-owned records for different people with the same name+dob,
+     * e.g. twins).
      *
-     * `$excludeId` matters because callers query this while the caller's own
-     * record already exists with the exact name+dob they're matching against
-     * (e.g. a fresh registrant's own brand-new interim record) - without
-     * excluding it, that record would count as a second "match" alongside
-     * the real candidate, making every genuine match look ambiguous and
-     * silently drop it.
+     * When multiple records match but only one has a primary_user (the
+     * "canonical" record that was first claimed), that record is returned
+     * — duplicate/orphan records left by prior bugs don't prevent matching.
+     *
+     * `$excludeId` matters because callers query this while the caller's
+     * own record already exists with the exact name+dob they're matching
+     * against (e.g. a fresh registrant's own brand-new interim record) —
+     * without excluding it, that record would count as a second "match"
+     * alongside the real candidate, making every genuine match look
+     * ambiguous and silently drop it.
      *
      * `first_name`/`middle_name`/`last_name`/`suffix`/`dob` are `encrypted`
      * casts, so the DB can't filter on them - every row is fetched and
@@ -63,7 +67,27 @@ class MedicalInformationRepository extends BaseRepository implements MedicalInfo
                 return $recordNormalized === $normalized && $record->dob->toDateString() === $dob;
             });
 
-        return $matches->count() === 1 ? $matches->first() : null;
+        if ($matches->count() === 0) {
+            return null;
+        }
+
+        if ($matches->count() === 1) {
+            return $matches->first();
+        }
+
+        // Multiple matches: return the canonical (primary-owned) record.
+        // Duplicate/orphan records without a primary_user are artifacts of
+        // the registration bug we're fixing — they don't represent different
+        // people, so they shouldn't cause ambiguity.
+        $primaryOwned = $matches->filter(fn (MedicalInformation $r) => $r->primary_user_id !== null);
+
+        if ($primaryOwned->count() === 1) {
+            return $primaryOwned->first();
+        }
+
+        // 0 or 2+ primary-owned records genuinely ambiguous — different
+        // people with the same name+dob (twins, etc.). Never match.
+        return null;
     }
 
     /**
