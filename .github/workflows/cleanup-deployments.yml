@@ -18,7 +18,7 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v9
         with:
           script: |
             const keepCount = parseInt('${{ inputs.keep_count }}') || 15;
